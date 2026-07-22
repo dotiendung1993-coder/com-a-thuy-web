@@ -1,0 +1,11 @@
+# Cấu hình Netlify cho landing Cơm A Thuý — trang TĨNH, không cần build.
+# Publish chính thư mục này. Deploy: xem scripts/deploy-landing.sh
+[build]
+  publish = "."
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"

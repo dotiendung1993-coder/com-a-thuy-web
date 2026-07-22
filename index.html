@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cơm A Thuý — Cơm nhà ấm bụng tại Ecopark</title>
+  <link rel="icon" type="image/png" href="assets/img/logo.png">
+  <meta name="description" content="Cơm A Thuý — quán cơm nhà tại KĐT Ecopark. Cơm phần, cơm mâm nấu mới mỗi ngày, sạch, thơm, giá hợp lý. Gọi 038 246 2678.">
+  <!-- Self-hosted (verified sha384) — tránh rủi ro CDN & lỗi CORS khi mở file trực tiếp -->
+  <script src="assets/js/tailwind-3.4.16.min.js"></script>
+  <script src="assets/js/iconify-icon-2.1.0.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Geist', 'sans-serif'],
+          },
+          colors: {
+            night: '#050a07',
+            surface: '#0a0f0c',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-display { font-family: 'Geist', sans-serif; }
+
+    /* ===== Spotlight card (mouse-tracking radial gradient) ===== */
+    .spotlight-card {
+      position: relative;
+      border-radius: 40px;
+      background: rgba(255, 255, 255, 0.04);
+      overflow: hidden;
+    }
+    .spotlight-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(16, 185, 129, 0.15), transparent 40%);
+      z-index: 1;
+      pointer-events: none;
+    }
+    .spotlight-card:hover::before { opacity: 1; }
+    .spotlight-inner {
+      position: relative;
+      border-radius: 40px;
+      background: #0a0f0c;
+      margin: 1px;
+      z-index: 2;
+      overflow: hidden;
+    }
+    .spotlight-inner::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(16, 185, 129, 0.06), transparent 40%);
+      pointer-events: none;
+    }
+    .spotlight-card:hover .spotlight-inner::after { opacity: 1; }
+
+    /* ===== Glass nav ===== */
+    .glass-nav {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: rgba(10, 20, 15, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* ===== Ticker ===== */
+    @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .ticker-track { animation: ticker 60s linear infinite; }
+    .ticker-wrap:hover .ticker-track { animation-play-state: paused; }
+
+    /* ===== Đồ uống: marquee 1 dòng chạy vô tận + hover phóng to (Task 4) ===== */
+    @keyframes drink-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .drink-marquee { animation: drink-marquee 32s linear infinite; width: max-content; }
+    .drink-marquee:hover { animation-play-state: paused; }      /* rê vào là dừng để xem */
+    .drink-card { transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.45s, box-shadow 0.45s, filter 0.45s, opacity 0.45s; }
+    .drink-card:hover {
+      transform: scale(1.55);                                    /* chỉ vào ảnh nào → ảnh đó phóng TO hẳn */
+      z-index: 30;
+      border-color: rgba(96, 165, 250, 0.65);
+      box-shadow: 0 26px 64px rgba(0, 0, 0, 0.6);
+    }
+    /* Rê vào 1 ly → các ly còn lại mờ + lùi nhẹ để ly đang xem nổi bật hẳn */
+    #do-uong-list:hover .drink-card:not(:hover) { filter: blur(3px) brightness(0.55); opacity: 0.5; transform: scale(0.92); }
+    @media (prefers-reduced-motion: reduce) { .drink-marquee { animation: none; } }
+
+    /* ===== Task: cờ quốc gia cho nút đổi ngôn ngữ — dùng SVG nhúng thay vì emoji cờ 🇻🇳/🇺🇸
+       (Windows/Chrome không có font glyph cho emoji cờ, tự fallback hiện chữ "VN"/"US" xấu) ===== */
+    .flag-icon {
+      display: inline-block; width: 20px; height: 14px; border-radius: 2px;
+      background-size: cover; background-position: center; box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
+      flex-shrink: 0;
+    }
+    #lang-toggle-label.flag-icon { width: 100%; height: 100%; border-radius: 50%; box-shadow: none; }
+    .flag-icon-vn { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20'%3E%3Crect width='30' height='20' fill='%23DA251D'/%3E%3Cpath fill='%23FFCD00' d='M15 4l1.76 5.42h5.7l-4.61 3.35 1.76 5.42L15 14.84l-4.61 3.35 1.76-5.42-4.61-3.35h5.7z'/%3E%3C/svg%3E"); }
+    .flag-icon-us { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20'%3E%3Crect width='30' height='20' fill='%23B22234'/%3E%3Cg fill='%23fff'%3E%3Crect y='1.54' width='30' height='1.54'/%3E%3Crect y='4.62' width='30' height='1.54'/%3E%3Crect y='7.69' width='30' height='1.54'/%3E%3Crect y='10.77' width='30' height='1.54'/%3E%3Crect y='13.85' width='30' height='1.54'/%3E%3Crect y='16.92' width='30' height='1.54'/%3E%3C/g%3E%3Crect width='12' height='10.77' fill='%233C3B6E'/%3E%3C/svg%3E"); }
+
+    /* ===== Beam button ===== */
+    @keyframes beam-spin { 100% { transform: rotate(360deg); } }
+    .beam-spin { animation: beam-spin 3s linear infinite; }
+    @keyframes dots-move { 0% { background-position: 0 0; } 100% { background-position: 24px 24px; } }
+    .dots-bg {
+      background-image: radial-gradient(rgba(255,255,255,0.25) 1px, transparent 1px);
+      background-size: 12px 12px;
+      animation: dots-move 4s linear infinite;
+    }
+
+    /* ===== Steam particles ===== */
+    @keyframes steam {
+      0% { transform: translateY(0) scale(1); opacity: 0; }
+      30% { opacity: 0.6; }
+      100% { transform: translateY(-60px) scale(1.6); opacity: 0; }
+    }
+    .steam-particle { animation: steam 3s infinite ease-out; }
+
+    /* ===== SVG dash flow ===== */
+    @keyframes dash { to { stroke-dashoffset: -110; } }
+    .animate-dash { stroke-dasharray: 10 100; animation: dash 3s linear infinite; }
+
+    /* ===== Bếp A Thuý: đường nối nguyên liệu → mâm cơm (Task 4) ===== */
+    @keyframes flow-dash { to { stroke-dashoffset: -1000; } }
+    .flow-line-anim { stroke-dasharray: 9 12; animation: flow-dash 10s linear infinite; }
+    .flow-card { position: relative; transition: transform 0.4s ease, border-color 0.4s ease; }
+    .flow-card:hover { transform: translateY(-3px); border-color: rgba(16,185,129,0.35); }
+    @media (prefers-reduced-motion: reduce) { .flow-line-anim { animation: none; } }
+
+    /* ===== Ping (reservation card) ===== */
+    @keyframes soft-ping { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(2.4); opacity: 0; } }
+    .soft-ping { animation: soft-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
+    /* ===== Món đặc biệt: chữ + ngôi sao nhấp nháy, đổi màu sặc sỡ (Task 4) ===== */
+    @keyframes special-flash {
+      0% { filter: hue-rotate(0deg) brightness(1); opacity: 1; }
+      50% { filter: hue-rotate(180deg) brightness(1.4); opacity: 0.45; }
+      100% { filter: hue-rotate(360deg) brightness(1); opacity: 1; }
+    }
+    .special-flash { animation: special-flash 1.8s linear infinite; }
+    @media (prefers-reduced-motion: reduce) { .special-flash { animation: none; } }
+
+    html { scroll-behavior: smooth; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-[#050a07] text-white antialiased selection:bg-emerald-500/30 overflow-x-hidden">
+
+  <!-- ===== Fixed background: cubes texture + vertical dashed grid ===== -->
+  <div class="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
+    <div class="absolute inset-0 opacity-40" style="background-image: url('https://www.transparenttextures.com/patterns/cubes.png'); mix-blend-mode: overlay;"></div>
+    <div class="relative mx-auto max-w-7xl h-full">
+      <div class="absolute left-1/4 top-0 h-full border-l border-dashed border-white/5"></div>
+      <div class="absolute left-1/2 top-0 h-full border-l border-dashed border-white/5"></div>
+      <div class="absolute left-3/4 top-0 h-full border-l border-dashed border-white/5"></div>
+    </div>
+  </div>
+
+  <!-- ===== Navigation ===== -->
+  <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-6xl">
+    <div class="glass-nav rounded-full px-5 py-3 flex items-center justify-between">
+      <a href="#top" class="flex items-center gap-2.5 shrink-0 whitespace-nowrap">
+        <span class="w-10 h-10 rounded-full bg-emerald-50/95 border border-emerald-500/30 flex items-center justify-center overflow-hidden p-1.5">
+          <img src="assets/img/logo-transparent.png" alt="Logo Cơm A Thuý" class="w-full h-full object-contain">
+        </span>
+        <span class="font-display font-semibold tracking-tight text-lg">Cơm A Thuý</span>
+      </a>
+      <div class="hidden xl:flex items-center gap-6 text-base font-semibold text-gray-200 whitespace-nowrap">
+        <a href="#menu" data-i18n="nav-menu" class="hover:text-emerald-400 transition-colors duration-500">Thực đơn</a>
+        <a href="#dat-hang" data-i18n="nav-dat-hang" class="hover:text-emerald-400 transition-colors duration-500">Đặt hàng nhanh</a>
+        <a href="#about" data-i18n="nav-about" class="hover:text-emerald-400 transition-colors duration-500">Bếp A Thuý</a>
+        <a href="#space" data-i18n="nav-space" class="hover:text-emerald-400 transition-colors duration-500">Khách nói gì</a>
+        <a href="#san-pham-khac" data-i18n="nav-san-pham-khac" class="hover:text-emerald-400 transition-colors duration-500">Sản phẩm khác</a>
+        <a href="#hours" data-i18n="nav-hours" class="hover:text-emerald-400 transition-colors duration-500">Giờ mở cửa</a>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <a href="tel:0382462678" class="hidden sm:inline-flex items-center gap-2 text-sm font-medium bg-emerald-500 hover:bg-emerald-400 text-[#050a07] rounded-full px-4 py-2 transition-colors duration-500">
+          <iconify-icon icon="solar:phone-calling-bold-duotone" width="16"></iconify-icon>
+          038 246 2678
+        </a>
+        <!-- Task 5: nút đổi ngôn ngữ EN/VI -->
+        <div class="relative">
+          <button id="lang-toggle-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Đổi ngôn ngữ / Change language"
+            class="w-9 h-9 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 flex items-center justify-center overflow-hidden transition-colors duration-300">
+            <span id="lang-toggle-label" class="flag-icon flag-icon-vn"></span>
+          </button>
+          <div id="lang-dropdown" class="hidden absolute right-0 top-12 w-44 rounded-2xl border border-white/10 bg-[#0a0f0c]/95 backdrop-blur-xl shadow-xl overflow-hidden py-1 z-50">
+            <button type="button" data-lang="vi" class="lang-option w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-200 hover:bg-white/5 transition-colors duration-200">
+              <span class="flag-icon flag-icon-vn"></span> Tiếng Việt
+            </button>
+            <button type="button" data-lang="en" class="lang-option w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-200 hover:bg-white/5 transition-colors duration-200">
+              <span class="flag-icon flag-icon-us"></span> English
+            </button>
+          </div>
+        </div>
+        <button id="mobile-menu-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="mobile-menu-dropdown" class="xl:hidden text-2xl text-gray-300" aria-label="Mở menu">
+          <iconify-icon icon="solar:hamburger-menu-bold-duotone"></iconify-icon>
+        </button>
+      </div>
+    </div>
+    <!-- Task 1 (2026-07-08): menu mobile — nút hamburger trước đây không mở gì cả (thiếu hẳn panel + JS) -->
+    <div id="mobile-menu-dropdown" class="hidden xl:hidden mt-3 glass-nav rounded-3xl px-3 py-3 flex flex-col gap-1 text-base font-semibold text-gray-200">
+      <a href="#menu" data-i18n="nav-menu" class="px-4 py-3 rounded-xl hover:bg-white/5 hover:text-emerald-400 transition-colors duration-300">Thực đơn</a>
+      <a href="#dat-hang" data-i18n="nav-dat-hang" class="px-4 py-3 rounded-xl hover:bg-white/5 hover:text-emerald-400 transition-colors duration-300">Đặt hàng nhanh</a>
+      <a href="#about" data-i18n="nav-about" class="px-4 py-3 rounded-xl hover:bg-white/5 hover:text-emerald-400 transition-colors duration-300">Bếp A Thuý</a>
+      <a href="#space" data-i18n="nav-space" class="px-4 py-3 rounded-xl hover:bg-white/5 hover:text-emerald-400 transition-colors duration-300">Khách nói gì</a>
+      <a href="#san-pham-khac" data-i18n="nav-san-pham-khac" class="px-4 py-3 rounded-xl hover:bg-white/5 hover:text-emerald-400 transition-colors duration-300">Sản phẩm khác</a>
+      <a href="#hours" data-i18n="nav-hours" class="px-4 py-3 rounded-xl hover:bg-white/5 hover:text-emerald-400 transition-colors duration-300">Giờ mở cửa</a>
+      <a href="tel:0382462678" class="mt-1 inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-[#050a07] px-4 py-3 text-sm">
+        <iconify-icon icon="solar:phone-calling-bold-duotone" width="16"></iconify-icon>
+        038 246 2678
+      </a>
+    </div>
+  </nav>
+
+  <main id="top" class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
+
+    <!-- ===== SECTION 1 — HERO ===== -->
+    <section class="mt-32">
+      <div class="spotlight-card">
+        <div class="spotlight-inner border border-white/[0.08]">
+          <div class="grid lg:grid-cols-2 gap-10 p-8 sm:p-12 lg:p-16">
+
+            <!-- Left: headline -->
+            <div class="flex flex-col justify-center">
+              <div class="inline-flex items-center gap-2 self-start rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium text-emerald-300 mb-8">
+                <span class="relative flex h-2 w-2">
+                  <span class="soft-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400"></span>
+                  <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+                </span>
+                <span data-i18n="hero-badge">Nấu mới mỗi ngày tại Ecopark</span>
+              </div>
+              <h1 data-i18n-html="hero-h1" class="font-display font-semibold tracking-[-0.05em] text-4xl sm:text-5xl lg:text-6xl leading-[1.2]">
+                Cơm nhà ấm bụng<br>
+                <span class="text-gray-500">Cơm gia đình</span><br>
+                <span class="text-gray-500 text-3xl sm:text-4xl lg:text-5xl whitespace-nowrap">Món ngon mỗi ngày</span>
+              </h1>
+              <p data-i18n="hero-p" class="mt-6 text-gray-400 leading-relaxed max-w-md">
+                Mang bữa cơm nhà đến người bận rộn: Cơm phần, Cơm mâm nấu mới mỗi ngày —
+                sạch sẽ, thơm ngon, giá hợp lý. Ăn tại quán hoặc mang về đều tiện.
+                Bận mấy thì bận, bữa trưa vẫn phải ấm bụng — để A Thuý nấu cho bạn.
+              </p>
+
+              <div class="mt-8 flex flex-wrap items-center gap-4">
+                <!-- Primary beam button -->
+                <a href="tel:0382462678" class="relative inline-flex overflow-hidden rounded-full p-[1.5px] group">
+                  <span class="beam-spin absolute inset-[-100%]" style="background: conic-gradient(from 90deg at 50% 50%, transparent 0%, #10b981 50%, transparent 100%);"></span>
+                  <span class="relative inline-flex items-center gap-2 rounded-full bg-[#0a1a12] px-7 py-3.5 text-sm font-semibold text-emerald-300 group-hover:text-emerald-200 transition-colors duration-500 overflow-hidden">
+                    <span class="dots-bg absolute inset-0 opacity-20"></span>
+                    <iconify-icon icon="solar:phone-calling-bold-duotone" width="18"></iconify-icon>
+                    <span data-i18n="hero-btn-call">Gọi đặt cơm — 038 246 2678</span>
+                  </span>
+                </a>
+                <!-- Secondary button -->
+                <a href="#menu" class="inline-flex items-center gap-2 rounded-full border border-white/15 hover:border-emerald-500/50 px-6 py-3.5 text-sm font-medium text-gray-300 hover:text-white transition-all duration-500">
+                  <span data-i18n="hero-btn-menu">Xem thực đơn</span>
+                  <iconify-icon icon="solar:arrow-right-up-bold-duotone" width="16"></iconify-icon>
+                </a>
+              </div>
+
+              <!-- Social proof -->
+              <div class="mt-10 flex items-center gap-4">
+                <div class="flex -space-x-3">
+                  <span class="w-10 h-10 rounded-full border-2 border-[#0a0f0c] bg-emerald-600 flex items-center justify-center text-xs font-semibold">L</span>
+                  <span class="w-10 h-10 rounded-full border-2 border-[#0a0f0c] bg-amber-500 flex items-center justify-center text-xs font-semibold text-[#050a07]">H</span>
+                  <span class="w-10 h-10 rounded-full border-2 border-[#0a0f0c] bg-blue-500 flex items-center justify-center text-xs font-semibold">M</span>
+                  <span class="w-10 h-10 rounded-full border-2 border-[#0a0f0c] bg-orange-500 flex items-center justify-center text-xs font-semibold">T</span>
+                  <span class="w-10 h-10 rounded-full border-2 border-[#0a0f0c] bg-rose-500 flex items-center justify-center text-xs font-semibold">N</span>
+                  <span class="w-10 h-10 rounded-full border-2 border-[#0a0f0c] bg-violet-500 flex items-center justify-center text-xs font-semibold">P</span>
+                  <span class="w-10 h-10 rounded-full border-2 border-[#0a0f0c] bg-emerald-500/20 border-emerald-500/40 flex items-center justify-center text-[10px] font-bold text-emerald-300">+450</span>
+                </div>
+                <p class="text-sm text-gray-500"><span data-i18n="hero-social-count" class="text-gray-200 font-semibold">+450 khách hàng</span><br><span data-i18n="hero-social-sub">quen Ecopark ghé quán mỗi trưa</span></p>
+              </div>
+            </div>
+
+            <!-- Right: card cluster -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 content-center">
+              <!-- Tall specialty card: carousel món tủ -->
+              <div id="signature-carousel" class="sm:row-span-2 relative rounded-[24px] overflow-hidden border border-white/[0.08] min-h-[320px] group">
+                <!-- Track ảnh trượt ngang -->
+                <div class="sig-track absolute inset-0 flex transition-transform duration-700 ease-in-out">
+                  <img src="assets/img/dishes/bo-kho-xot-vang.jpg" alt="Bò kho xốt vang" class="w-full h-full object-cover shrink-0">
+                  <img src="assets/img/dishes/ba-chi-quay-gion-bi.png" alt="Ba chỉ quay giòn bì" class="w-full h-full object-cover shrink-0">
+                  <img src="assets/img/dishes/ca-tram-kho-gieng.png" alt="Cá trắm kho giềng" class="w-full h-full object-cover shrink-0">
+                  <img src="assets/img/dishes/suon-xao-chua-ngot.png" alt="Sườn xào chua ngọt" class="w-full h-full object-cover shrink-0">
+                  <img src="assets/img/dishes/ba-chi-rang-cai-cay.png" alt="Ba chỉ rang cải cay" class="w-full h-full object-cover shrink-0">
+                  <img src="assets/img/dishes/chan-nam-huong-om-thit-bam.png" alt="Chân nấm hương om thịt băm" class="w-full h-full object-cover shrink-0">
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-[#050a07] via-[#050a07]/30 to-transparent pointer-events-none"></div>
+                <div class="relative h-full flex flex-col justify-end p-6 pointer-events-none">
+                  <span class="inline-flex self-start items-center gap-1.5 rounded-full bg-yellow-400/15 border border-yellow-400/30 text-yellow-300 text-[11px] font-medium px-3 py-1 mb-3">
+                    <iconify-icon icon="solar:star-bold-duotone" width="12"></iconify-icon>
+                    <span data-i18n="sig-badge">Món tủ của quán</span>
+                  </span>
+                  <div class="sig-caption transition-opacity duration-300">
+                    <h3 class="sig-name font-display font-semibold text-xl tracking-tight">Bò kho xốt vang</h3>
+                    <p class="sig-desc text-sm text-gray-400 mt-1">Kiểu Hà Nội — thịt mềm, sốt vang đỏ au, dậy mùi quế hồi.</p>
+                    <p class="sig-price font-mono font-bold tracking-[0.1em] text-emerald-400 mt-3">60.000đ / phần</p>
+                  </div>
+                  <!-- Chấm chuyển slide -->
+                  <div class="sig-dots flex gap-1.5 mt-4 pointer-events-auto"></div>
+                </div>
+              </div>
+
+              <!-- Reservation card -->
+              <div class="relative rounded-[24px] overflow-hidden border border-white/[0.08] bg-white/[0.04] px-4 py-6">
+                <div class="flex items-start justify-between">
+                  <span class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                    <!-- Utensils icon -->
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+                      <path d="M7 2v20"/>
+                      <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
+                    </svg>
+                  </span>
+                  <span class="relative flex h-2.5 w-2.5 mt-1">
+                    <span class="soft-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400"></span>
+                    <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
+                  </span>
+                </div>
+                <h4 data-i18n="rsv-title-1" class="font-display font-semibold tracking-tight mt-4">Đặt trước</h4>
+                <p data-i18n="rsv-p-1" class="text-sm text-gray-500 mt-1">Gọi hoặc inbox trước — đến ăn hoặc lấy là có cơm nóng</p>
+                <h4 data-i18n="rsv-title-2" class="font-display font-semibold tracking-tight mt-3">Ship tận nơi</h4>
+                <p data-i18n-html="rsv-p-2" class="text-xs leading-snug tracking-tight text-gray-500 mt-1 whitespace-nowrap">• Quán nhận ship quanh khu vực Ecopark<br>• Phí ship tùy khu vực</p>
+                <div class="flex flex-col items-start gap-y-2 mt-3">
+                  <a href="https://zalo.me/0382462678" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-sm text-emerald-400 hover:text-emerald-300 transition-colors duration-500">
+                    Zalo Profile
+                    <iconify-icon icon="solar:arrow-right-up-bold-duotone" width="14"></iconify-icon>
+                  </a>
+                  <a href="https://www.facebook.com/com.a.thuy.ecopark" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-sm text-emerald-400 hover:text-emerald-300 transition-colors duration-500">
+                    Facebook Profile
+                    <iconify-icon icon="solar:arrow-right-up-bold-duotone" width="14"></iconify-icon>
+                  </a>
+                  <a href="https://zalo.me/g/oexewd817" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 transition-colors duration-500">
+                    Zalo OA
+                    <iconify-icon icon="solar:arrow-right-up-bold-duotone" width="14"></iconify-icon>
+                  </a>
+                  <a href="https://www.facebook.com/profile.php?id=61576521156311" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 transition-colors duration-500">
+                    Facebook Fanpage
+                    <iconify-icon icon="solar:arrow-right-up-bold-duotone" width="14"></iconify-icon>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Our Space card -->
+              <div class="relative rounded-[24px] overflow-hidden border border-white/[0.08] bg-white/[0.04] p-6">
+                <span class="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-400/30 flex items-center justify-center text-blue-400">
+                  <iconify-icon icon="solar:map-point-bold-duotone" width="20"></iconify-icon>
+                </span>
+                <h4 data-i18n="space-title" class="font-display font-semibold tracking-tight mt-4">Địa chỉ</h4>
+                <p class="text-sm text-gray-500 mt-1">Thủy Tiên 2 – 01S11, KĐT Ecopark, Phụng Công, Hưng Yên.</p>
+                <a href="https://maps.app.goo.gl/MsVhpuoHm8sdxbvs7" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 mt-3 transition-colors duration-500">
+                  <span data-i18n="space-maps-link">Mở Google Maps</span>
+                  <iconify-icon icon="solar:arrow-right-up-bold-duotone" width="14"></iconify-icon>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ticker -->
+          <div class="ticker-wrap relative overflow-hidden border-t border-white/[0.08] py-4" style="mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);">
+            <!-- JS điền ĐỦ món cơm mâm hôm nay + 3 câu cố định (lặp 2 lần để loop mượt) -->
+            <div class="ticker-track flex whitespace-nowrap gap-8 w-max">
+              <div id="ticker-items" class="flex items-center gap-8 text-sm text-gray-500"></div>
+              <div id="ticker-items-dup" class="flex items-center gap-8 text-sm text-gray-500" aria-hidden="true"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 2 — MENU ===== -->
+    <section id="menu" class="mt-32 scroll-mt-28">
+      <div class="text-center max-w-2xl lg:max-w-none mx-auto">
+        <p data-i18n="menu-eyebrow" class="font-mono font-bold tracking-[0.1em] text-emerald-500 text-sm uppercase">Thực đơn</p>
+        <h2 data-i18n="menu-h2" class="font-display font-semibold tracking-[-0.05em] text-4xl sm:text-6xl mt-3">Hôm nay ăn gì nhỉ?</h2>
+        <p data-i18n="menu-p" class="text-gray-400 mt-4 leading-relaxed lg:whitespace-nowrap">Món thay đổi theo ngày, nấu mới từ sáng. Giá đã gồm cơm trắng, rau theo mùa và canh nóng.</p>
+      </div>
+
+      <!-- Sticky category bar -->
+      <div class="sticky top-24 z-40 mt-10">
+        <div class="backdrop-blur-xl bg-[#0a0f0c]/80 border border-white/[0.08] rounded-full px-2 py-2 flex gap-1 overflow-x-auto snap-x no-scrollbar max-w-xl mx-auto">
+          <a href="#mon-dac-biet" id="cat-mdb" data-i18n="cat-mdb" class="cat-link special-flash hidden snap-start shrink-0 rounded-full px-5 py-2 text-sm text-amber-300 hover:bg-amber-400/15 transition-colors duration-500">⭐ Món đặc biệt</a>
+          <a href="#com-phan" data-i18n="cat-com-phan" class="cat-link snap-start shrink-0 rounded-full px-5 py-2 text-sm text-gray-300 hover:bg-emerald-500/15 hover:text-emerald-300 transition-colors duration-500">🍚 Cơm phần</a>
+          <a href="#com-mam" data-i18n="cat-com-mam" class="cat-link snap-start shrink-0 rounded-full px-5 py-2 text-sm text-gray-300 hover:bg-emerald-500/15 hover:text-emerald-300 transition-colors duration-500">🍽️ Cơm mâm</a>
+          <a href="#do-uong" data-i18n="cat-do-uong" class="cat-link snap-start shrink-0 rounded-full px-5 py-2 text-sm text-gray-300 hover:bg-emerald-500/15 hover:text-emerald-300 transition-colors duration-500">🥤 Đồ uống</a>
+        </div>
+      </div>
+
+      <!-- Món đặc biệt — luôn hiện: món hôm nay (còn hàng) hoặc món GẦN NHẤT (hết hàng),
+           tự thay khi auto-content có bài món đặc biệt mới (JS điền từ MENU_TODAY) -->
+      <div id="mon-dac-biet" class="mt-10 scroll-mt-40 hidden">
+        <div class="spotlight-card">
+          <div class="spotlight-inner border border-amber-400/25 p-6 sm:p-8">
+            <div class="flex flex-wrap items-center gap-2 mb-5">
+              <iconify-icon icon="solar:star-bold-duotone" class="special-flash text-amber-300" width="22"></iconify-icon>
+              <h3 id="mdb-title" class="special-flash font-display font-semibold tracking-tight text-2xl">Món đặc biệt</h3>
+              <span id="mdb-date" class="font-mono font-bold tracking-[0.1em] text-xs text-gray-500 ml-1"></span>
+            </div>
+            <div id="mdb-list" class="space-y-6"></div>
+            <p id="mdb-note" data-i18n-html="mdb-note" class="text-xs text-gray-500 mt-4 hidden">* Món đặc biệt gần nhất của quán — theo dõi <a class="text-amber-300 hover:text-amber-200" href="https://www.facebook.com/com.a.thuy.ecopark/" target="_blank" rel="noopener">Facebook</a> để biết khi có món đặc biệt mới nhé.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature card: Ba chỉ quay giòn bì -->
+      <div class="spotlight-card mt-10">
+        <div class="spotlight-inner border border-white/[0.08]">
+          <div class="grid lg:grid-cols-2">
+            <div class="relative min-h-[300px] overflow-hidden">
+              <img src="assets/img/dishes/ba-chi-quay-gion-bi.png" alt="Cơm ba chỉ quay giòn bì" class="absolute inset-0 w-full h-full object-cover">
+              <div class="absolute inset-0 bg-gradient-to-r from-transparent to-[#0a0f0c] hidden lg:block"></div>
+              <div class="absolute inset-0 bg-gradient-to-t from-[#0a0f0c] to-transparent lg:hidden"></div>
+              <!-- steam particles -->
+              <div class="absolute bottom-1/3 left-1/3">
+                <span class="steam-particle absolute w-6 h-6 rounded-full bg-white/30 blur-md" style="animation-delay: 0s;"></span>
+                <span class="steam-particle absolute w-4 h-4 rounded-full bg-white/25 blur-md left-8" style="animation-delay: 1s;"></span>
+                <span class="steam-particle absolute w-5 h-5 rounded-full bg-white/20 blur-md left-4 -top-3" style="animation-delay: 2s;"></span>
+              </div>
+            </div>
+            <div class="relative p-8 sm:p-12 flex flex-col justify-center">
+              <span class="inline-flex self-start items-center gap-1.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-400 text-[11px] font-medium px-3 py-1">
+                <iconify-icon icon="solar:fire-bold-duotone" width="12"></iconify-icon>
+                <span data-i18n="bestseller-badge">Bán chạy nhất</span>
+              </span>
+              <h3 data-i18n="feature-title" class="font-display font-semibold tracking-[-0.05em] text-2xl sm:text-3xl mt-4">Ba chỉ quay giòn bì</h3>
+              <p data-i18n="feature-p" class="text-gray-400 mt-3 leading-relaxed">Bì nổ giòn rụm, thịt mềm ngọt bên trong. Ăn cùng cơm trắng nóng, rau theo mùa và bát canh — đúng vị bữa cơm nhà.</p>
+              <ul class="mt-6 space-y-3 text-sm">
+                <li class="flex items-center justify-between border-b border-dashed border-white/10 pb-3">
+                  <span class="text-gray-300 flex items-center gap-2"><iconify-icon icon="solar:check-circle-bold-duotone" class="text-emerald-500" width="16"></iconify-icon> <span data-i18n="feature-li1">Cơm Ba chỉ quay giòn bì</span><br><span data-i18n="feature-li1-note" class="text-xs text-gray-500 ml-6">(Kèm canh + rau theo mùa)</span></span>
+                  <span class="font-mono font-bold tracking-[0.1em] text-emerald-400 shrink-0">60.000đ</span>
+                </li>
+                <li class="border-b border-dashed border-white/10 pb-3">
+                  <div class="flex items-center gap-2 mb-2"><iconify-icon icon="solar:check-circle-bold-duotone" class="text-amber-400" width="16"></iconify-icon><span data-i18n="feature-li2" class="text-gray-300 font-semibold">Cơm mâm Ba chỉ quay giòn bì</span></div>
+                  <div class="ml-6 space-y-1.5 text-xs">
+                    <div class="flex justify-between"><span class="text-gray-400">Size S <span data-i18n="size-1-2" class="text-gray-500">(1-2 người)</span></span><span class="font-mono font-bold text-emerald-400">120.000đ</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Size M <span data-i18n="size-2-3" class="text-gray-500">(2-3 người)</span></span><span class="font-mono font-bold text-emerald-400">170.000đ</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Size L <span data-i18n="size-3-4" class="text-gray-500">(3-4 người)</span></span><span class="font-mono font-bold text-emerald-400">220.000đ</span></div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ĐẶT HÀNG NHANH (Task 1, 2026-07-21: chuyển vào giữa Best seller và Cơm phần) ===== -->
+      <div id="dat-hang" class="mt-16 scroll-mt-40">
+        <div class="text-center max-w-2xl lg:max-w-none mx-auto">
+          <p class="font-mono font-bold tracking-[0.1em] text-emerald-500 text-sm uppercase">Đặt hàng nhanh</p>
+          <h2 class="font-display font-semibold tracking-[-0.05em] text-4xl sm:text-5xl mt-3">Chọn hình thức đặt</h2>
+          <p class="text-gray-400 mt-4 leading-relaxed">Giao tận nơi, mang về hoặc ăn tại quán — không cần gọi điện hay nhắn A Thuý AI.</p>
+        </div>
+        <div class="grid sm:grid-cols-3 gap-6 mt-12">
+          <a href="order/?go=/ship" class="group relative rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-8 flex flex-col items-center text-center hover:border-emerald-500/40 hover:bg-emerald-500/[0.04] transition-all duration-500">
+            <span class="w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4"><iconify-icon icon="solar:delivery-bold-duotone" width="32"></iconify-icon></span>
+            <h3 class="font-display font-semibold text-xl tracking-tight">Giao hàng</h3>
+            <p class="text-sm text-gray-400 mt-2 leading-relaxed">Ship tận nơi quanh khu Ecopark. Đặt online, cơm giao đến cửa.</p>
+            <span class="mt-5 inline-flex items-center gap-1.5 text-emerald-400 text-sm font-medium">Đặt ngay <iconify-icon icon="solar:arrow-right-bold-duotone" width="16"></iconify-icon></span>
+          </a>
+          <a href="order/?go=/mang-ve" class="group relative rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-8 flex flex-col items-center text-center hover:border-amber-400/40 hover:bg-amber-400/[0.04] transition-all duration-500">
+            <span class="w-16 h-16 rounded-2xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-400 mb-4"><iconify-icon icon="solar:box-bold-duotone" width="32"></iconify-icon></span>
+            <h3 class="font-display font-semibold text-xl tracking-tight">Mang về</h3>
+            <p class="text-sm text-gray-400 mt-2 leading-relaxed">Đặt trước, đến quán lấy đồ. Nhanh gọn, không phải chờ xếp hàng.</p>
+            <span class="mt-5 inline-flex items-center gap-1.5 text-amber-400 text-sm font-medium">Đặt ngay <iconify-icon icon="solar:arrow-right-bold-duotone" width="16"></iconify-icon></span>
+          </a>
+          <a href="in-qr/ban/" class="group relative rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-8 flex flex-col items-center text-center hover:border-blue-400/40 hover:bg-blue-400/[0.04] transition-all duration-500">
+            <span class="w-16 h-16 rounded-2xl bg-blue-400/15 border border-blue-400/30 flex items-center justify-center text-blue-400 mb-4"><iconify-icon icon="solar:qr-code-bold-duotone" width="32"></iconify-icon></span>
+            <h3 class="font-display font-semibold text-xl tracking-tight">Ăn tại bàn</h3>
+            <p class="text-sm text-gray-400 mt-2 leading-relaxed">Chọn bàn, gọi món ngay từ điện thoại. Không cần chờ nhân viên.</p>
+            <span class="mt-5 inline-flex items-center gap-1.5 text-blue-400 text-sm font-medium">Chọn bàn <iconify-icon icon="solar:arrow-right-bold-duotone" width="16"></iconify-icon></span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Cơm phần grid -->
+      <div id="com-phan" class="mt-16 scroll-mt-40">
+        <div class="flex items-end justify-between mb-6">
+          <h3 class="font-display font-semibold tracking-tight text-2xl">🍚 <span data-i18n="com-phan-title">Cơm phần</span> <span data-i18n="com-phan-sub" class="text-gray-500 text-base font-normal">— 1 người, đủ món mặn + rau + canh</span></h3>
+          <span class="font-mono font-bold tracking-[0.1em] text-xs text-gray-500 hidden sm:block">50–65K</span>
+        </div>
+        <div id="com-phan-list" class="grid sm:grid-cols-2 gap-4"></div>
+      </div>
+
+      <!-- Cơm mâm grid -->
+      <div id="com-mam" class="mt-16 scroll-mt-40">
+        <div class="flex items-end justify-between mb-6">
+          <h3 class="font-display font-semibold tracking-tight text-2xl">🍽️ <span data-i18n="com-mam-title">Cơm mâm</span> <span data-i18n="com-mam-sub" class="text-gray-500 text-base font-normal">— cho nhóm &amp; gia đình, gọi món theo mâm</span></h3>
+          <span class="font-mono font-bold tracking-[0.1em] text-xs text-gray-500 hidden sm:block">GIÁ THEO SIZE</span>
+        </div>
+        <!-- Filter buttons (Task 3, 2026-07-10): single-select — bấm 1 nút chỉ hiện đúng loại đó,
+             nút đang chọn hiện rõ, các nút khác mờ đi. "Tất cả" = gộp 3 loại món ăn chính.
+             Task 4 (2026-07-10, đợt 2): đổi thứ tự hiển thị — Món ăn kèm lên trước Cơm - Canh - Rau. -->
+        <div class="flex flex-wrap gap-2 mb-4">
+          <button id="filter-tat-ca" class="filter-btn px-4 py-2 rounded-lg border border-gray-400/40 bg-white/10 text-gray-200 font-medium text-sm hover:bg-white/20 transition-colors" data-category="all">
+            Tất cả
+          </button>
+          <button id="filter-mon-chinh" class="filter-btn px-4 py-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 font-medium text-sm hover:bg-emerald-500/20 transition-colors" data-category="Món chính">
+            Món chính
+          </button>
+          <button id="filter-mon-phu" class="filter-btn px-4 py-2 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-300 font-medium text-sm hover:bg-amber-500/20 transition-colors" data-category="Món phụ">
+            Món phụ
+          </button>
+          <button id="filter-mon-an-kem" class="filter-btn px-4 py-2 rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-300 font-medium text-sm hover:bg-rose-500/20 transition-colors" data-category="Món ăn kèm">
+            Món ăn kèm
+          </button>
+          <button id="filter-com-canh-rau" class="filter-btn px-4 py-2 rounded-lg border border-blue-500/40 bg-blue-500/10 text-blue-300 font-medium text-sm hover:bg-blue-500/20 transition-colors" data-category="Cơm - Canh - Rau">
+            Cơm - Canh - Rau
+          </button>
+        </div>
+        <div id="com-mam-list" class="grid sm:grid-cols-2 gap-3"></div>
+      </div>
+
+      <!-- Đồ uống — carousel 1 dòng tự chạy, rê vào ảnh nào ảnh đó phóng to (Task 4) -->
+      <div id="do-uong" class="mt-16 scroll-mt-40">
+        <div class="flex items-end justify-between mb-6">
+          <h3 class="font-display font-semibold tracking-tight text-2xl">🥤 <span data-i18n="do-uong-title">Đồ uống</span> <span data-i18n="do-uong-sub" class="text-gray-500 text-base font-normal">— giải khát bán kèm bữa</span></h3>
+          <span class="font-mono font-bold tracking-[0.1em] text-xs text-gray-500 hidden sm:block">5–20K</span>
+        </div>
+        <!-- Mép trái/phải mờ dần để dòng chạy trông vô tận -->
+        <div class="relative overflow-hidden py-16 -my-8" style="mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);">
+          <div id="do-uong-list" class="flex gap-4"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 3 — BẾP A THUÝ (THE ESSENCE) ===== -->
+    <section id="about" class="mt-32 scroll-mt-28">
+      <div class="spotlight-card">
+        <div class="spotlight-inner border border-white/[0.08] p-8 sm:p-12 lg:p-16">
+          <div class="text-center max-w-2xl lg:max-w-none mx-auto">
+            <p data-i18n="about-eyebrow" class="font-mono font-bold tracking-[0.1em] text-emerald-500 text-sm uppercase">Bếp A Thuý</p>
+            <h2 data-i18n="about-h2" class="font-display font-semibold tracking-[-0.05em] text-4xl sm:text-6xl mt-3">Từ chợ sáng đến mâm cơm</h2>
+            <p data-i18n="about-p" class="text-gray-400 mt-4 leading-relaxed lg:whitespace-nowrap">Không hàng đông lạnh để qua ngày. Đồ đi chợ buổi sáng, sơ chế sạch, nấu mới — hết là thôi.</p>
+          </div>
+
+          <div class="relative mt-14 grid lg:grid-cols-2 gap-12 items-center">
+            <!-- Flow: 3 nguyên liệu -> recipe card (Task 4: đường nối động chảy xuống mâm) -->
+            <div id="bep-flow" class="relative">
+              <div class="grid grid-cols-3 gap-4">
+                <div class="flow-card rounded-2xl border border-white/[0.08] bg-white/[0.04] p-5 text-center">
+                  <span class="inline-flex w-11 h-11 rounded-full bg-emerald-500/15 border border-emerald-500/30 items-center justify-center text-emerald-400 mx-auto">
+                    <!-- Leaf icon -->
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                      <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+                    </svg>
+                  </span>
+                  <p data-i18n-html="flow-1-title" class="text-sm font-medium mt-3 leading-snug">Canh &amp; Rau<br>theo mùa</p>
+                  <p data-i18n="flow-1-sub" class="text-[11px] text-gray-500 mt-1">Chợ sáng mỗi ngày</p>
+                </div>
+                <div class="flow-card rounded-2xl border border-white/[0.08] bg-white/[0.04] p-5 text-center">
+                  <span class="inline-flex w-11 h-11 rounded-full bg-amber-400/15 border border-amber-400/30 items-center justify-center text-amber-300 mx-auto">
+                    <!-- Utensils icon -->
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+                      <path d="M7 2v20"/>
+                      <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
+                    </svg>
+                  </span>
+                  <p data-i18n-html="flow-2-title" class="text-sm font-medium mt-3 leading-snug">Thịt, Cá<br>tươi ngon</p>
+                  <p data-i18n="flow-2-sub" class="text-[11px] text-gray-500 mt-1">Sơ chế sạch sẽ</p>
+                </div>
+                <div class="flow-card rounded-2xl border border-white/[0.08] bg-white/[0.04] p-5 text-center">
+                  <span class="inline-flex w-11 h-11 rounded-full bg-rose-500/15 border border-rose-500/35 items-center justify-center text-rose-300 mx-auto">
+                    <!-- Chef hat icon -->
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/>
+                      <line x1="6" x2="18" y1="17" y2="17"/>
+                    </svg>
+                  </span>
+                  <p data-i18n-html="flow-3-title" class="text-sm font-medium mt-3 leading-snug">Gia vị kiểu<br>Miền Bắc</p>
+                  <p data-i18n="flow-3-sub" class="text-[11px] text-gray-500 mt-1">Vị nhà, không mì chính gắt</p>
+                </div>
+              </div>
+              <!-- Swipe gallery: mâm cơm gia đình đầy đủ (JS tự nạp assets/img/tray/tray-NN.png) -->
+              <div id="tray-gallery" class="relative mt-16 rounded-2xl border border-emerald-500/25 overflow-hidden shadow-[0_0_40px_rgba(16,185,129,0.08)]">
+                <div id="tray-track" class="flex overflow-x-auto snap-x snap-mandatory no-scrollbar" style="scroll-behavior: smooth; -webkit-overflow-scrolling: touch;"></div>
+                <button id="tray-prev" aria-label="Ảnh trước" class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-[#050a07]/70 backdrop-blur border border-white/15 text-white flex items-center justify-center hover:bg-emerald-500/30 transition-colors duration-300">
+                  <iconify-icon icon="solar:alt-arrow-left-bold" width="18"></iconify-icon>
+                </button>
+                <button id="tray-next" aria-label="Ảnh sau" class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-[#050a07]/70 backdrop-blur border border-white/15 text-white flex items-center justify-center hover:bg-emerald-500/30 transition-colors duration-300">
+                  <iconify-icon icon="solar:alt-arrow-right-bold" width="18"></iconify-icon>
+                </button>
+                <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 pointer-events-none">
+                  <span id="tray-counter" class="rounded-full bg-[#050a07]/70 backdrop-blur border border-white/15 text-[11px] text-gray-200 px-3 py-1 font-mono tracking-[0.1em]"></span>
+                </div>
+                <div class="absolute top-3 left-3 pointer-events-none">
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-[#050a07]/70 backdrop-blur border border-emerald-500/30 text-emerald-300 text-[11px] font-medium px-3 py-1">
+                    <iconify-icon icon="solar:hand-stars-bold-duotone" width="12"></iconify-icon>
+                    <span data-i18n="tray-badge">Vuốt xem mâm cơm nhà A Thuý</span>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Task 4: đường nối SỐNG ĐỘNG từ 3 nguyên liệu chảy xuống mâm cơm (JS vẽ path theo vị trí thật) -->
+              <svg id="flow-svg" class="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible" aria-hidden="true" preserveAspectRatio="none">
+                <defs>
+                  <filter id="flow-glow" x="-60%" y="-60%" width="220%" height="220%">
+                    <feGaussianBlur stdDeviation="2.4" result="b"></feGaussianBlur>
+                    <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+                  </filter>
+                </defs>
+                <g id="flow-paths"></g>
+              </svg>
+            </div>
+
+            <!-- Right: story -->
+            <div>
+              <h3 data-i18n="story-h3" class="font-display font-semibold tracking-tight text-2xl">Quán cơm nhà, không khoa trương</h3>
+              <p data-i18n="story-p" class="text-gray-400 mt-4 leading-relaxed">A Thuý nấu như nấu cho nhà mình ăn. Món Bắc là gốc — cá kho giềng, giả cày, rang cháy cạnh — thêm vài món quen miền Nam cho đủ vị. Không cầu kỳ trình bày, chỉ cần đúng vị, nóng hổi và sạch sẽ mỗi khi bạn ghé.</p>
+              <ul class="mt-6 space-y-4">
+                <li class="flex gap-3">
+                  <iconify-icon icon="solar:check-circle-bold-duotone" class="text-emerald-500 shrink-0 mt-0.5" width="20"></iconify-icon>
+                  <p data-i18n-html="story-li-1" class="text-sm text-gray-300"><span class="font-medium text-white">Suất ăn đủ no</span> — cơm, rau theo mùa và canh nóng đi kèm mỗi phần, ăn chắc bụng mới đủ sức làm việc buổi chiều.</p>
+                </li>
+                <li class="flex gap-3">
+                  <iconify-icon icon="solar:check-circle-bold-duotone" class="text-emerald-500 shrink-0 mt-0.5" width="20"></iconify-icon>
+                  <p data-i18n-html="story-li-2" class="text-sm text-gray-300"><span class="font-medium text-white">Món đổi theo ngày</span> — theo dõi Facebook để biết hôm nay quán có gì, món ngon thường hết sớm.</p>
+                </li>
+                <li class="flex gap-3">
+                  <iconify-icon icon="solar:check-circle-bold-duotone" class="text-emerald-500 shrink-0 mt-0.5" width="20"></iconify-icon>
+                  <p data-i18n-html="story-li-3" class="text-sm text-gray-300"><span class="font-medium text-white">Mang về &amp; đặt trước</span> — gọi điện hoặc inbox, đến là có cơm nóng mang đi, không phải chờ.</p>
+                </li>
+              </ul>
+              <p data-i18n="story-note" class="text-sm text-gray-500 mt-6">Bận mấy thì bận, gọi trước 15 phút là có phần cơm nóng chờ sẵn — khỏi lo hết món khi đến nơi.</p>
+              <div class="mt-6 flex flex-wrap items-center gap-4">
+                <a href="tel:0382462678" class="relative inline-flex overflow-hidden rounded-full p-[1.5px] group">
+                  <span class="beam-spin absolute inset-[-100%]" style="background: conic-gradient(from 90deg at 50% 50%, transparent 0%, #10b981 50%, transparent 100%);"></span>
+                  <span class="relative inline-flex items-center gap-2 rounded-full bg-[#0a1a12] px-6 py-3 text-sm font-semibold text-emerald-300 group-hover:text-emerald-200 transition-colors duration-500 overflow-hidden">
+                    <span class="dots-bg absolute inset-0 opacity-20"></span>
+                    <iconify-icon icon="solar:phone-calling-bold-duotone" width="18"></iconify-icon>
+                    <span data-i18n="story-btn-call">Gọi đặt cơm ngay</span>
+                  </span>
+                </a>
+                <a href="https://www.facebook.com/com.a.thuy.ecopark/" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-full border border-white/15 hover:border-emerald-500/50 px-6 py-3 text-sm font-medium text-gray-300 hover:text-white transition-all duration-500">
+                  <iconify-icon icon="solar:chat-round-like-bold-duotone" width="18" class="text-emerald-400"></iconify-icon>
+                  <span data-i18n="story-btn-fb">Món hôm nay trên Facebook</span>
+                  <iconify-icon icon="solar:arrow-right-up-bold-duotone" width="14"></iconify-icon>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 4 — KHÁCH NÓI GÌ (REVIEWS) ===== -->
+    <section id="space" class="mt-32 scroll-mt-28">
+      <div class="text-center max-w-2xl mx-auto">
+        <p data-i18n="rv-eyebrow" class="font-mono font-bold tracking-[0.1em] text-emerald-500 text-sm uppercase">Khách nói gì</p>
+        <h2 data-i18n="rv-h2" class="font-display font-semibold tracking-[-0.05em] text-4xl sm:text-6xl mt-3">Ăn một lần là thành khách quen</h2>
+        <p data-i18n="rv-p" class="text-gray-400 mt-4 leading-relaxed">Tổng hợp từ khách ghé quán, Google Maps &amp; Facebook.</p>
+      </div>
+
+      <div class="mt-12 columns-1 sm:columns-2 lg:columns-3 gap-4 [&>*]:mb-4">
+        <!-- Review card -->
+        <div class="break-inside-avoid rounded-[24px] bg-[#151515] border border-white/[0.08] p-6">
+          <div class="flex text-amber-400 gap-0.5">
+            <iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon>
+          </div>
+          <p data-i18n="rv1-q" class="text-sm text-gray-300 mt-4 leading-relaxed">"Cơm đúng vị nhà nấu, ba chỉ quay bì giòn tan. Trưa nào bận là mình lại ghé."</p>
+          <p data-i18n="rv1-a" class="text-xs text-gray-500 mt-4">— Khách văn phòng Ecopark</p>
+        </div>
+
+        <!-- Image card -->
+        <div class="break-inside-avoid relative rounded-[24px] overflow-hidden border border-white/[0.08] group">
+          <img src="assets/img/khong-gian-mon.png" alt="Món ăn Cơm A Thuý bên khung cửa" class="w-full object-cover group-hover:scale-105 transition-transform duration-700">
+          <div class="absolute inset-0 bg-gradient-to-t from-[#050a07]/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6">
+            <p data-i18n="img1-cap" class="text-sm text-gray-200">Món nấu mới, bày biện giản dị mà tươm tất.</p>
+          </div>
+        </div>
+
+        <!-- Review card -->
+        <div class="break-inside-avoid rounded-[24px] bg-[#151515] border border-white/[0.08] p-6">
+          <div class="flex text-amber-400 gap-0.5">
+            <iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon>
+          </div>
+          <p data-i18n="rv2-q" class="text-sm text-gray-300 mt-4 leading-relaxed">"Đặt cơm mâm cho cả đội 8 người, món nào cũng nóng, canh ngọt rau tươi. Giá rất hợp lý."</p>
+          <p data-i18n="rv2-a" class="text-xs text-gray-500 mt-4">— Nhóm khách đặt mâm</p>
+        </div>
+
+        <!-- Review card -->
+        <div class="break-inside-avoid rounded-[24px] bg-[#151515] border border-white/[0.08] p-6">
+          <div class="flex text-amber-400 gap-0.5">
+            <iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon>
+          </div>
+          <p data-i18n="rv3-q" class="text-sm text-gray-300 mt-4 leading-relaxed">"Cá trắm kho giềng đậm đà y như bà nội kho. Cơm trắng dẻo, xin thêm thoải mái."</p>
+          <p data-i18n="rv3-a" class="text-xs text-gray-500 mt-4">— Cư dân Thủy Nguyên</p>
+        </div>
+
+        <!-- Image card -->
+        <div class="break-inside-avoid relative rounded-[24px] overflow-hidden border border-white/[0.08] group">
+          <img src="assets/img/com-trang.png" alt="Cơm trắng và đồ ăn kèm" class="w-full object-cover group-hover:scale-105 transition-transform duration-700">
+          <div class="absolute inset-0 bg-gradient-to-t from-[#050a07]/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6">
+            <p data-i18n="img2-cap" class="text-sm text-gray-200">Cơm trắng nóng, rau và nước chấm pha sẵn mỗi bàn.</p>
+          </div>
+        </div>
+
+        <!-- Review card -->
+        <div class="break-inside-avoid rounded-[24px] bg-[#151515] border border-white/[0.08] p-6">
+          <div class="flex text-amber-400 gap-0.5">
+            <iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon>
+          </div>
+          <p data-i18n="rv4-q" class="text-sm text-gray-300 mt-4 leading-relaxed">"Mang về nhanh, gọi trước 15 phút là có. Hộp sạch sẽ, đồ nóng tới nhà vẫn ngon."</p>
+          <p data-i18n="rv4-a" class="text-xs text-gray-500 mt-4">— Khách mang về</p>
+        </div>
+
+        <!-- Review card -->
+        <div class="break-inside-avoid rounded-[24px] bg-[#151515] border border-white/[0.08] p-6">
+          <div class="flex items-center justify-between">
+            <div class="flex text-amber-400 gap-0.5">
+              <iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon>
+            </div>
+            <span class="text-[10px] text-gray-600 font-mono tracking-[0.1em]">GOOGLE MAPS</span>
+          </div>
+          <p data-i18n="rv5-q" class="text-sm text-gray-300 mt-4 leading-relaxed">"Quán sạch sẽ, cô chủ niềm nở. Cơm phần 55k mà đầy đặn, canh rau thoải mái. Sẽ quay lại!"</p>
+          <p data-i18n="rv5-a" class="text-xs text-gray-500 mt-4">— Minh Anh · cư dân Ecopark</p>
+        </div>
+
+        <!-- Review card -->
+        <div class="break-inside-avoid rounded-[24px] bg-[#151515] border border-white/[0.08] p-6">
+          <div class="flex items-center justify-between">
+            <div class="flex text-amber-400 gap-0.5">
+              <iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon>
+            </div>
+            <span class="text-[10px] text-gray-600 font-mono tracking-[0.1em]">GOOGLE MAPS</span>
+          </div>
+          <p data-i18n="rv6-q" class="text-sm text-gray-300 mt-4 leading-relaxed">"Ăn trưa ở đây gần 2 tháng nay. Món đổi liên tục không ngán, giả cày với cá kho là đỉnh nhất."</p>
+          <p data-i18n="rv6-a" class="text-xs text-gray-500 mt-4">— Tuấn Nguyễn · nhân viên văn phòng</p>
+        </div>
+
+        <!-- Review card -->
+        <div class="break-inside-avoid rounded-[24px] bg-[#151515] border border-white/[0.08] p-6">
+          <div class="flex text-amber-400 gap-0.5">
+            <iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon>
+          </div>
+          <p data-i18n="rv7-q" class="text-sm text-gray-300 mt-4 leading-relaxed">"Nhà có con nhỏ nên hay đặt mâm về. Đồ ăn nêm vừa, không dầu mỡ, bé nhà mình ăn được hết."</p>
+          <p data-i18n="rv7-a" class="text-xs text-gray-500 mt-4">— Mẹ bỉm khu Thủy Tiên</p>
+        </div>
+
+        <!-- Review card -->
+        <div class="break-inside-avoid rounded-[24px] bg-[#151515] border border-white/[0.08] p-6">
+          <div class="flex items-center justify-between">
+            <div class="flex text-amber-400 gap-0.5">
+              <iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon>
+            </div>
+            <span class="text-[10px] text-gray-600 font-mono tracking-[0.1em]">FACEBOOK</span>
+          </div>
+          <p data-i18n="rv8-q" class="text-sm text-gray-300 mt-4 leading-relaxed">"Trưa nào lướt Face thấy quán đăng món là thèm. Hôm nay thịt kho trứng nước dừa, chuẩn vị miền Nam."</p>
+          <p data-i18n="rv8-a" class="text-xs text-gray-500 mt-4">— Hương Giang</p>
+        </div>
+
+        <!-- Review card -->
+        <div class="break-inside-avoid rounded-[24px] bg-[#151515] border border-white/[0.08] p-6">
+          <div class="flex items-center justify-between">
+            <div class="flex text-amber-400 gap-0.5">
+              <iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon>
+            </div>
+            <span class="text-[10px] text-gray-600 font-mono tracking-[0.1em]">GOOGLE MAPS</span>
+          </div>
+          <p data-i18n="rv9-q" class="text-sm text-gray-300 mt-4 leading-relaxed">"Ship nhanh, gọi 11h kém là 11h15 có cơm ăn. Rau xanh, canh nóng, đúng kiểu cơm mẹ nấu."</p>
+          <p data-i18n="rv9-a" class="text-xs text-gray-500 mt-4">— Đức Long · khu Rừng Cọ</p>
+        </div>
+
+        <!-- Review card -->
+        <div class="break-inside-avoid rounded-[24px] bg-[#151515] border border-white/[0.08] p-6">
+          <div class="flex text-amber-400 gap-0.5">
+            <iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon>
+          </div>
+          <p data-i18n="rv10-q" class="text-sm text-gray-300 mt-4 leading-relaxed">"Sườn xào chua ngọt ở đây phải gọi là xuất sắc. Đến muộn là hết, ai muốn ăn nhớ gọi giữ phần."</p>
+          <p data-i18n="rv10-a" class="text-xs text-gray-500 mt-4">— Quang Huy · khách quen</p>
+        </div>
+
+        <!-- Review card -->
+        <div class="break-inside-avoid rounded-[24px] bg-[#151515] border border-white/[0.08] p-6">
+          <div class="flex items-center justify-between">
+            <div class="flex text-amber-400 gap-0.5">
+              <iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon>
+            </div>
+            <span class="text-[10px] text-gray-600 font-mono tracking-[0.1em]">GOOGLE MAPS</span>
+          </div>
+          <p data-i18n="rv11-q" class="text-sm text-gray-300 mt-4 leading-relaxed">"Công ty mình đặt mâm tiếp khách 2 lần rồi. Bày biện tươm tất, món nóng sốt, khách khen nức nở."</p>
+          <p data-i18n="rv11-a" class="text-xs text-gray-500 mt-4">— Thu Trang · văn phòng Aqua Bay</p>
+        </div>
+
+        <!-- Review card -->
+        <div class="break-inside-avoid rounded-[24px] bg-[#151515] border border-white/[0.08] p-6">
+          <div class="flex text-amber-400 gap-0.5">
+            <iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon>
+          </div>
+          <p data-i18n="rv12-q" class="text-sm text-gray-300 mt-4 leading-relaxed">"Giá sinh viên mà chất lượng nhà hàng. Trứng chưng cà chua 50k ăn no căng, cơm thêm miễn phí."</p>
+          <p data-i18n="rv12-a" class="text-xs text-gray-500 mt-4">— Bạn trẻ thuê nhà Ecopark</p>
+        </div>
+
+        <!-- Review card -->
+        <div class="break-inside-avoid rounded-[24px] bg-[#151515] border border-white/[0.08] p-6">
+          <div class="flex items-center justify-between">
+            <div class="flex text-amber-400 gap-0.5">
+              <iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon><iconify-icon icon="solar:star-bold" width="14"></iconify-icon>
+            </div>
+            <span class="text-[10px] text-gray-600 font-mono tracking-[0.1em]">FACEBOOK</span>
+          </div>
+          <p data-i18n="rv13-q" class="text-sm text-gray-300 mt-4 leading-relaxed">"Bà ngoại lên chơi khen cơm quán này nấu khéo, canh cua rau đay đúng vị quê. Vậy là chuẩn rồi!"</p>
+          <p data-i18n="rv13-a" class="text-xs text-gray-500 mt-4">— Gia đình khu Mimosa</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SẢN PHẨM KHÁC (Task 2, 2026-07-21: chuyển lên giữa Khách nói gì và Giờ mở cửa/Liên hệ) ===== -->
+    <section id="san-pham-khac" class="mt-32 scroll-mt-28">
+      <div class="text-center max-w-2xl lg:max-w-none mx-auto">
+        <p class="font-mono font-bold tracking-[0.1em] text-emerald-500 text-sm uppercase">Thêm từ nhà A Thuý</p>
+        <h2 class="font-display font-semibold tracking-[-0.05em] text-4xl sm:text-5xl mt-3">Sản phẩm khác</h2>
+        <p class="text-gray-400 mt-4 leading-relaxed">Ngoài cơm hằng ngày, nhà A Thuý còn có nhiều sản phẩm gia truyền đặc sắc khác.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
+        <a href="https://www.facebook.com/profile.php?id=61581530138920" target="_blank" rel="noopener"
+           class="group relative rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-6 flex flex-col items-center text-center hover:border-emerald-500/40 hover:bg-emerald-500/[0.04] transition-all duration-500">
+          <span class="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-3"><iconify-icon icon="solar:chef-hat-bold-duotone" width="26"></iconify-icon></span>
+          <h3 class="font-display font-semibold text-lg tracking-tight">Cốn Sủi</h3>
+          <p class="text-sm text-gray-500 mt-2 leading-relaxed">Sủi cảo truyền thống nhân thịt tươi, nước dùng ngọt thanh.</p>
+          <span class="mt-4 inline-flex items-center gap-1 text-emerald-400 text-xs font-medium">Xem Facebook <iconify-icon icon="solar:arrow-right-up-bold-duotone" width="12"></iconify-icon></span>
+        </a>
+        <a href="https://www.facebook.com/profile.php?id=61575480875429" target="_blank" rel="noopener"
+           class="group relative rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-6 flex flex-col items-center text-center hover:border-amber-400/40 hover:bg-amber-400/[0.04] transition-all duration-500">
+          <span class="w-14 h-14 rounded-2xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-400 mb-3"><iconify-icon icon="solar:donut-bold-duotone" width="26"></iconify-icon></span>
+          <h3 class="font-display font-semibold text-lg tracking-tight">Bánh Hạt Dẻ</h3>
+          <p class="text-sm text-gray-500 mt-2 leading-relaxed">Bánh hạt dẻ thơm bùi, làm thủ công, không phẩm màu.</p>
+          <span class="mt-4 inline-flex items-center gap-1 text-amber-400 text-xs font-medium">Xem Facebook <iconify-icon icon="solar:arrow-right-up-bold-duotone" width="12"></iconify-icon></span>
+        </a>
+        <a href="https://www.facebook.com/profile.php?id=61591763980886" target="_blank" rel="noopener"
+           class="group relative rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-6 flex flex-col items-center text-center hover:border-blue-400/40 hover:bg-blue-400/[0.04] transition-all duration-500">
+          <span class="w-14 h-14 rounded-2xl bg-blue-400/15 border border-blue-400/30 flex items-center justify-center text-blue-400 mb-3"><iconify-icon icon="solar:bottle-bold-duotone" width="26"></iconify-icon></span>
+          <h3 class="font-display font-semibold text-lg tracking-tight">Nước mắm Gia truyền</h3>
+          <p class="text-sm text-gray-500 mt-2 leading-relaxed">Nước mắm ủ truyền thống, đậm vị, thơm ngon đúng kiểu Bắc.</p>
+          <span class="mt-4 inline-flex items-center gap-1 text-blue-400 text-xs font-medium">Xem Facebook <iconify-icon icon="solar:arrow-right-up-bold-duotone" width="12"></iconify-icon></span>
+        </a>
+        <div class="relative rounded-[24px] border border-white/[0.04] bg-white/[0.02] p-6 flex flex-col items-center text-center opacity-50">
+          <span class="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-gray-500 mb-3"><iconify-icon icon="solar:scissors-square-bold-duotone" width="26"></iconify-icon></span>
+          <h3 class="font-display font-semibold text-lg tracking-tight text-gray-500">Mài dao kéo</h3>
+          <p class="text-sm text-gray-600 mt-2 leading-relaxed">Dịch vụ mài dao, kéo tại nhà. Sắc như mới.</p>
+          <span class="mt-4 text-xs text-gray-600">Sắp cập nhật…</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 5 — GIỜ MỞ CỬA & LIÊN HỆ ===== -->
+    <section id="hours" class="mt-32 scroll-mt-28">
+      <div class="spotlight-card">
+        <div class="spotlight-inner border border-white/[0.08] p-8 sm:p-12 lg:p-16">
+          <div class="grid lg:grid-cols-2 gap-12">
+            <div>
+              <p data-i18n="hours-eyebrow" class="font-mono font-bold tracking-[0.1em] text-emerald-500 text-sm uppercase">Giờ mở cửa</p>
+              <h2 data-i18n="hours-h2" class="font-display font-semibold tracking-[-0.05em] text-3xl sm:text-4xl mt-3">Cơm chín rồi đây!</h2>
+              <div class="mt-8 space-y-4">
+                <div class="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.03] px-5 py-4">
+                  <div class="flex items-center gap-3">
+                    <iconify-icon icon="solar:sun-bold-duotone" class="text-amber-300" width="22"></iconify-icon>
+                    <div><p data-i18n="hours-lunch-label" class="font-medium">Bữa trưa</p><p data-i18n="hours-daily" class="text-xs text-gray-500">Hằng ngày</p></div>
+                  </div>
+                  <span id="hours-lunch" class="font-mono font-bold tracking-[0.1em] text-emerald-400">10:30 – 14:00</span>
+                </div>
+                <div class="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.03] px-5 py-4">
+                  <div class="flex items-center gap-3">
+                    <iconify-icon icon="solar:moon-stars-bold-duotone" class="text-blue-300" width="22"></iconify-icon>
+                    <div><p data-i18n="hours-dinner-label" class="font-medium">Bữa tối</p><p id="hours-dinner-days" class="text-xs text-gray-500">Thứ 2 – Thứ 6</p></div>
+                  </div>
+                  <span id="hours-dinner" class="font-mono font-bold tracking-[0.1em] text-emerald-400">17:30 – 20:00</span>
+                </div>
+                <div id="hours-closed-row" class="flex items-center justify-between rounded-xl border border-rose-500/15 bg-rose-500/[0.04] px-5 py-4">
+                  <div class="flex items-center gap-3">
+                    <iconify-icon icon="solar:bed-bold-duotone" class="text-rose-300" width="22"></iconify-icon>
+                    <div><p id="hours-closed" class="font-medium">Tối thứ 7 &amp; tối Chủ nhật</p><p data-i18n="hours-weekly" class="text-xs text-gray-500">Hàng tuần (trưa vẫn bán bình thường)</p></div>
+                  </div>
+                  <span data-i18n="hours-closed-badge" class="font-mono font-bold tracking-[0.1em] text-rose-300">QUÁN NGHỈ</span>
+                </div>
+              </div>
+              <p data-i18n="hours-note" class="text-sm text-gray-500 mt-4">* Món ngon dễ hết sớm — gọi trước để chắc chắn còn phần nhé.</p>
+            </div>
+            <div id="contact" class="scroll-mt-28">
+              <p data-i18n="contact-eyebrow" class="font-mono font-bold tracking-[0.1em] text-emerald-500 text-sm uppercase">Liên hệ</p>
+              <h2 data-i18n="contact-h2" class="font-display font-semibold tracking-[-0.05em] text-3xl sm:text-4xl mt-3">Ghé quán ăn tí cơm nhé</h2>
+              <div class="mt-8 space-y-4">
+                <a href="tel:0382462678" class="flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] px-5 py-4 hover:border-emerald-500/40 transition-colors duration-500">
+                  <span class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400"><iconify-icon icon="solar:phone-calling-bold-duotone" width="20"></iconify-icon></span>
+                  <div><p data-i18n="contact-call-label" class="text-xs text-gray-500">Gọi đặt cơm (đặt mâm) / Giao hàng</p><p class="font-medium">038 246 2678</p></div>
+                </a>
+                <a href="https://maps.app.goo.gl/MsVhpuoHm8sdxbvs7" target="_blank" rel="noopener" class="flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] px-5 py-4 hover:border-blue-400/40 transition-colors duration-500">
+                  <span class="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-400/30 flex items-center justify-center text-blue-400"><iconify-icon icon="solar:map-point-bold-duotone" width="20"></iconify-icon></span>
+                  <div><p data-i18n="contact-address-label" class="text-xs text-gray-500">Địa chỉ</p><p class="font-medium">Thủy Tiên 2 – 01S11, KĐT Ecopark<br>Phụng Công, Hưng Yên</p></div>
+                </a>
+                <a href="https://zalo.me/0382462678" target="_blank" rel="noopener" class="flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] px-5 py-4 hover:border-blue-400/40 transition-colors duration-500">
+                  <!-- Logo Zalo -->
+                  <span class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 48 48" width="40" height="40" aria-label="Zalo">
+                      <rect width="48" height="48" rx="10" fill="#0068FF"/>
+                      <text x="24" y="31" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#fff" font-style="italic">Zalo</text>
+                    </svg>
+                  </span>
+                  <div><p data-i18n="contact-zalo-label" class="text-xs text-gray-500">Zalo — đặt cơm (đặt mâm) / Giao hàng</p><p class="font-medium">zalo.me/0382462678</p></div>
+                </a>
+                <a href="https://www.facebook.com/com.a.thuy.ecopark/" target="_blank" rel="noopener" class="flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] px-5 py-4 hover:border-blue-500/40 transition-colors duration-500">
+                  <!-- Logo Facebook -->
+                  <span class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 48 48" width="40" height="40" aria-label="Facebook">
+                      <circle cx="24" cy="24" r="24" fill="#1877F2"/>
+                      <path fill="#fff" d="M31.5 30.7l1.06-6.9h-6.62v-4.48c0-1.89.92-3.73 3.89-3.73h3.01V9.72s-2.73-.47-5.34-.47c-5.45 0-9.01 3.3-9.01 9.28v5.26h-6.06v6.9h6.06V47.4a24.1 24.1 0 0 0 7.46 0V30.7h5.55z"/>
+                    </svg>
+                  </span>
+                  <div><p data-i18n="contact-fb-label" class="text-xs text-gray-500">Facebook — món mới mỗi ngày</p><p class="font-medium">fb.com/com.a.thuy.ecopark</p></div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="mt-24 mb-10 border-t border-white/[0.08] pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+      <div class="flex items-center gap-2">
+        <span class="w-8 h-8 rounded-full bg-emerald-50/95 border border-emerald-500/30 flex items-center justify-center overflow-hidden p-0.5">
+          <img src="assets/img/logo.png" alt="Logo Cơm A Thuý" class="w-full h-full object-contain">
+        </span>
+        <span>© 2026 Cơm A Thuý — Ecopark</span>
+      </div>
+      <p id="footer-hours" class="font-mono tracking-[0.1em] text-xs">TRƯA HẰNG NGÀY 10:30–14:00 · TỐI T2–T6 17:30–20:00 · NGHỈ TỐI T7 &amp; CN</p>
+    </footer>
+  </main>
+
+  <script src="assets/data/menu-today.js"></script>
+  <script src="assets/data/tray-images.js"></script>
+  <script>
+    // Spotlight: cập nhật --mouse-x / --mouse-y theo vị trí chuột
+    document.querySelectorAll('.spotlight-card').forEach(function (card) {
+      card.addEventListener('mousemove', function (e) {
+        var rect = card.getBoundingClientRect();
+        var x = e.clientX - rect.left;
+        var y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', x + 'px');
+        card.style.setProperty('--mouse-y', y + 'px');
+        var inner = card.querySelector('.spotlight-inner');
+        if (inner) {
+          inner.style.setProperty('--mouse-x', x + 'px');
+          inner.style.setProperty('--mouse-y', y + 'px');
+        }
+      });
+    });
+
+    // Menu HÔM NAY — render từ assets/data/menu-today.js (sync bởi scripts/sync-landing-menu.js)
+    window.__renderMenuToday = function () {
+      var M = (window.CURRENT_LANG === 'en' && window.MENU_TODAY_EN) ? window.MENU_TODAY_EN : window.MENU_TODAY;
+      var isEn = window.CURRENT_LANG === 'en';
+      var fmt = function (p) { return p > 0 ? p.toLocaleString('vi-VN') + 'đ' : (isEn ? 'ASK STAFF' : 'HỎI QUÁN'); };
+      var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+      // Task 4: "yyyy-mm-dd" -> "Thứ x - dd-mm-yyyy" (Chủ Nhật cho Chủ nhật, khớp cách gọi thứ đang dùng ở Giờ mở cửa)
+      var fmtSpecialDate = function (s) {
+        var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || ''));
+        if (!m) return s || '';
+        var d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+        if (isNaN(d.getTime())) return s;
+        var dow = d.getDay();
+        var DOW_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        var label = window.CURRENT_LANG === 'en' ? DOW_EN[dow] : (dow === 0 ? 'Chủ Nhật' : 'Thứ ' + (dow + 1));
+        return label + ' - ' + m[3] + '-' + m[2] + '-' + m[1];
+      };
+      // Markdown-lite cho bài viết món đặc biệt: escape an toàn → **đậm** thành <strong>, tách đoạn theo dòng trống.
+      var mdLite = function (s) {
+        return String(s).split(/\n{2,}/).map(function (para) {
+          var safe = esc(para).replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white font-semibold">$1</strong>').replace(/\n/g, '<br>');
+          return '<p>' + safe + '</p>';
+        }).join('');
+      };
+
+      // Task 5: nhãn "Món tủ"/"Best-seller" hiện NGAY SAU tên món, KHÁC MÀU với tên (tên trắng, nhãn xanh/vàng)
+      // để khách lướt qua cũng phải dừng lại đọc.
+      // Task 11 (2026-07-10, đợt 4): trước hardcode 2 danh sách tên món cố định — giờ đọc field
+      // is_signature/is_bestseller do sync-landing-menu.js gắn sẵn từ DB (chủ quán sửa qua Sheet,
+      // xem menu-source.js buildSnapshot() + pos-server.js baseBadge()).
+      var dishBadge = function (d) {
+        var isEn = window.CURRENT_LANG === 'en';
+        if (d && d.is_bestseller)
+          return ' <span class="dish-badge inline-flex items-center gap-1 align-middle ml-1.5 text-[11px] font-bold text-red-300 bg-red-500/15 border border-red-500/40 rounded-full px-2 py-0.5 whitespace-nowrap shadow-[0_0_14px_rgba(239,68,68,0.3)]"><iconify-icon icon="solar:fire-bold-duotone" width="12"></iconify-icon>' + (isEn ? 'Best-seller' : 'Bán chạy nhất') + '</span>';
+        if (d && d.is_signature)
+          return ' <span class="dish-badge inline-flex items-center gap-1 align-middle ml-1.5 text-[11px] font-bold text-yellow-300 bg-yellow-400/15 border border-yellow-400/40 rounded-full px-2 py-0.5 whitespace-nowrap shadow-[0_0_14px_rgba(234,179,8,0.3)]"><iconify-icon icon="solar:star-bold-duotone" width="12"></iconify-icon>' + (isEn ? "Chef's Specialty" : 'Món tủ') + '</span>';
+        return '';
+      };
+
+      // Task 3 (2026-07-10, đợt 3): món hết hàng — vẫn hiện (không ẩn hẳn) nhưng ảnh/tên/giá chuyển
+      // xám + chèn 1 tem "HẾT HÀNG" giữa tên và giá, giống cách xử lý bên POS web order.
+      var oosStampImg = function () { return '<img src="assets/img/hethang-stamp.svg" alt="Hết hàng" class="block w-16 my-1">'; };
+      var oosImgCls = function (avail) { return avail === false ? ' grayscale opacity-60' : ''; };
+      var oosTextCls = function (avail) { return avail === false ? ' text-gray-500' : ''; };
+
+      var cp = document.getElementById('com-phan-list');
+      var cm = document.getElementById('com-mam-list');
+      var du = document.getElementById('do-uong-list');
+      if (!M) {
+        var note = isEn
+          ? '<p class="text-gray-500 text-sm col-span-full">Menu is updating — see today\'s dishes on <a class="text-emerald-400" href="https://www.facebook.com/com.a.thuy.ecopark/" target="_blank" rel="noopener">the quán\'s Facebook</a>.</p>'
+          : '<p class="text-gray-500 text-sm col-span-full">Menu đang cập nhật — xem món hôm nay trên <a class="text-emerald-400" href="https://www.facebook.com/com.a.thuy.ecopark/" target="_blank" rel="noopener">Facebook của quán</a> nhé.</p>';
+        cp.innerHTML = note; cm.innerHTML = note; du.innerHTML = note;
+        return;
+      }
+
+      // Task 2 (2026-07-11): món hết hàng luôn xuống CUỐI danh sách — áp dụng cho cả 3 nhóm Cơm
+      // phần/Cơm mâm/Đồ uống. Task 4 (2026-07-15): trong mỗi nhóm (còn hàng/hết hàng) sắp xếp theo
+      // alphabet tiếng Việt đúng (localeCompare 'vi' — dữ liệu từ Sheet không có collation tiếng
+      // Việt nên dấu bị sắp sai thứ tự).
+      var byStockThenOrder = function (a, b) {
+        var stockDiff = (a.available === false ? 1 : 0) - (b.available === false ? 1 : 0);
+        if (stockDiff !== 0) return stockDiff;
+        return String(a.name).localeCompare(String(b.name), 'vi');
+      };
+      M.com_phan = (M.com_phan || []).slice().sort(byStockThenOrder);
+      M.com_mam = (M.com_mam || []).slice().sort(byStockThenOrder);
+      M.do_uong = (M.do_uong || []).slice().sort(byStockThenOrder);
+
+      // Cơm phần: zigzag SO LE TỪNG MÓN 1-by-1 — món này ảnh trái, món kế ảnh phải, luân phiên liên tục.
+      cp.innerHTML = M.com_phan.map(function (d, i) {
+        var reverse = i % 2 === 1;
+        var oos = d.available === false;
+        var imgClass = 'w-2/5 h-48 object-cover shrink-0' + oosImgCls(d.available) + (reverse ? ' rounded-r-2xl' : ' rounded-l-2xl');
+        var media = d.img
+          ? '<img src="' + d.img + '" alt="' + esc(d.name) + '" loading="lazy" class="' + imgClass + '">'
+          : '<div class="w-2/5 h-48 shrink-0 ' + (reverse ? 'rounded-r-2xl' : 'rounded-l-2xl') + ' bg-gradient-to-br from-emerald-500/20 to-amber-400/10 flex items-center justify-center text-6xl' + oosImgCls(d.available) + '">🍚</div>';
+        var textAlign = reverse ? 'text-right' : '';
+        return '<div class="dish-item flex overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] hover:border-emerald-500/40 transition-colors duration-500' + (reverse ? ' flex-row-reverse' : '') + '">'
+          + media
+          + '<div class="flex-1 p-6 flex flex-col justify-center min-w-0 ' + textAlign + '">'
+          + '<p class="font-semibold text-lg leading-tight' + oosTextCls(d.available) + '">' + esc(d.name) + dishBadge(d) + '</p>'
+          + (d.desc ? '<p class="text-sm text-gray-500 mt-2 line-clamp-3">' + esc(d.desc) + '</p>' : '')
+          + (oos ? (reverse ? '<div class="flex justify-end">' : '') + oosStampImg() + (reverse ? '</div>' : '') : '')
+          + '<p class="font-mono font-bold tracking-[0.1em] text-base mt-3' + (oos ? ' text-gray-500' : ' text-emerald-400') + '">' + fmt(d.price) + '</p>'
+          + '</div></div>';
+      }).join('');
+
+      // Cơm mâm (Task 3): ảnh TO bên trái + tên/size/giá bên phải (na ná Cơm phần).
+      // BỎ size XS — chỉ hiện S/M/L. Giá size lấy từ Sheet "Cơm Mâm".
+      // Thêm data-category để filter theo loại món.
+      cm.innerHTML = M.com_mam.map(function (d) {
+        var oos = d.available === false;
+        var sizes = (d.sizes || []).filter(function (s) { return String(s.size).toUpperCase() !== 'XS'; });
+        var body;
+        if (sizes.length) {
+          body = '<div class="mt-3 space-y-1.5">' + sizes.map(function (s) {
+            return '<div class="flex items-center justify-between border-b border-dashed border-white/10 pb-1.5 last:border-0 last:pb-0">'
+              + '<span class="text-sm text-gray-300"><span class="font-display font-semibold text-amber-300">' + esc(s.size) + '</span>'
+              + '<span class="text-xs text-gray-500 ml-2">' + esc(s.serves) + '</span></span>'
+              + '<span class="font-mono font-bold tracking-[0.05em] text-sm' + (oos ? ' text-gray-500' : ' text-emerald-400') + '">' + fmt(s.price) + '</span></div>';
+          }).join('') + '</div>';
+        } else {
+          body = '<p class="font-mono font-bold tracking-[0.1em] text-sm mt-3' + (oos ? ' text-gray-500' : ' text-amber-300') + '">' + fmt(d.price) + (isEn ? ' / small tray' : ' / mâm nhỏ') + '</p>';
+        }
+        var media = d.img
+          ? '<img src="' + d.img + '" alt="' + esc(d.name) + '" loading="lazy" class="w-2/5 h-44 object-cover shrink-0 rounded-l-2xl' + oosImgCls(d.available) + '">'
+          : '<div class="w-2/5 h-44 shrink-0 rounded-l-2xl bg-gradient-to-br from-amber-400/20 to-emerald-500/10 flex items-center justify-center text-5xl' + oosImgCls(d.available) + '">🍽️</div>';
+        var category = d.category || 'Món chính';
+        return '<div class="dish-item flex overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] hover:border-amber-400/40 transition-colors duration-500" data-category="' + esc(category) + '">'
+          + media
+          + '<div class="flex-1 p-5 flex flex-col justify-center min-w-0"><p class="font-semibold text-lg leading-tight' + oosTextCls(d.available) + '">' + esc(d.name) + dishBadge(d) + '</p>' + (oos ? oosStampImg() : '') + body + '</div></div>';
+      }).join('')
+        // Task 5 (2026-07-15): "Món ăn kèm" giờ CÓ món thật với giá từ Sheet — chỉ hiện ghi chú tĩnh
+        // "HỎI QUÁN" khi Sheet CHƯA có món nào thuộc loại này (trước đây luôn thêm dòng này, gây
+        // trùng lặp/lấn át các món ăn kèm thật đã lên từ Sheet).
+        + (M.com_mam.some(function (d) { return d.category === 'Món ăn kèm'; }) ? '' :
+          '<div class="dish-item flex items-center justify-between rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5" data-category="Món ăn kèm"><p class="font-medium text-gray-300">' + (isEn ? '+ Extras: egg, tofu, veggies, soup…' : '+ Món phụ: trứng, đậu phụ, rau, canh…') + '</p><span class="font-mono font-bold tracking-[0.1em] text-gray-500 text-sm shrink-0 ml-4">' + (isEn ? 'ASK STAFF' : 'HỎI QUÁN') + '</span></div>');
+
+      // Filter tabs cho Cơm Mâm (Task 3, 2026-07-10): single-select — bấm nút nào chỉ hiện đúng
+      // loại đó, "Tất cả" hiện hết. Nút đang chọn hiện rõ (opacity 1), các nút khác mờ đi (.4).
+      var activeMamFilter = 'all';
+      function applyMamFilter() {
+        document.querySelectorAll('.filter-btn').forEach(function (btn) {
+          btn.style.opacity = (btn.dataset.category === activeMamFilter) ? '1' : '.4';
+        });
+        document.querySelectorAll('#com-mam-list .dish-item[data-category]').forEach(function (item) {
+          var show = activeMamFilter === 'all' || item.dataset.category === activeMamFilter;
+          item.style.display = show ? 'flex' : 'none';
+        });
+      }
+      document.querySelectorAll('.filter-btn').forEach(function (btn) {
+        if (btn.__mamFilterBound) return; // tránh gắn trùng listener khi đổi ngôn ngữ render lại
+        btn.__mamFilterBound = true;
+        btn.addEventListener('click', function () {
+          activeMamFilter = this.dataset.category;
+          applyMamFilter();
+        });
+      });
+      applyMamFilter();
+
+      // Đồ uống (Task 4): mỗi loại 1 thẻ nhỏ; cả dòng tự chạy vô tận, rê vào thẻ nào thẻ đó phóng to.
+      // Ảnh object-contain để ảnh đã xóa nền "nổi" trên thẻ. Nhân đôi danh sách để chạy lặp liền mạch.
+      var drinkCard = function (d) {
+        var oos = d.available === false;
+        var media = d.img
+          ? '<img src="' + d.img + '" alt="' + esc(d.name) + '" loading="eager" class="max-w-full max-h-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.45)]' + oosImgCls(d.available) + '">'
+          : '<span class="text-5xl' + oosImgCls(d.available) + '">🥤</span>';
+        return '<div class="drink-card shrink-0 w-36 sm:w-40 overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.04]">'
+          + '<div class="aspect-square flex items-center justify-center p-3 bg-gradient-to-br from-white/[0.07] to-transparent">' + media + '</div>'
+          + '<div class="px-3 py-2.5 text-center"><p class="font-medium text-sm truncate' + oosTextCls(d.available) + '">' + esc(d.name) + '</p>'
+          + (oos ? '<div class="flex justify-center">' + oosStampImg() + '</div>' : '')
+          + '<p class="font-mono font-bold tracking-[0.1em] text-sm mt-0.5' + (oos ? ' text-gray-500' : ' text-blue-300') + '">' + fmt(d.price) + '</p></div></div>';
+      };
+      var drinkHtml = M.do_uong.map(drinkCard).join('');
+      du.className = 'flex gap-4 drink-marquee';
+      // 2 bản sao: bản gốc + bản lặp (ẩn với trình đọc màn hình) → translateX(-50%) chạy liền mạch.
+      du.innerHTML = drinkHtml + drinkHtml;
+      if (M.do_uong.length <= 2) du.classList.remove('drink-marquee'); // quá ít thì khỏi chạy
+
+      // Ticker (Task 2): ĐỦ món cơm mâm hôm nay + 3 câu cố định
+      var tickerItems = M.com_mam.map(function (d) { return d.name; })
+        .concat(isEn ? ['Seasonal veggies & soup', 'Easy takeaway', 'Home delivery available'] : ['Rau & Canh theo mùa', 'Mang về tiện lợi', 'Giao hàng tận nơi']);
+      var tickerHtml = tickerItems.map(function (t) {
+        return '<span>' + esc(t) + '</span><span class="text-emerald-500">✦</span>';
+      }).join('');
+      document.getElementById('ticker-items').innerHTML = tickerHtml;
+      document.getElementById('ticker-items-dup').innerHTML = tickerHtml;
+
+      // Món đặc biệt (Task 1): LUÔN hiện món gần nhất — còn hàng nếu là hôm nay,
+      // hết hàng nếu là món cũ (chờ auto-content có món mới thay thế)
+      var box = document.getElementById('mon-dac-biet');
+      var catBtn = document.getElementById('cat-mdb');
+      if (M.specials && M.specials.length) {
+        var isToday = M.specials.some(function (d) { return d.available; });
+        document.getElementById('mdb-title').textContent = (window.CURRENT_LANG === 'en')
+          ? (isToday ? "Today's Special" : "Chef's Special")
+          : (isToday ? 'Món đặc biệt hôm nay' : 'Món đặc biệt');
+        document.getElementById('mdb-date').textContent = fmtSpecialDate(M.specials[0].date || M.date || '');
+        document.getElementById('mdb-note').classList.toggle('hidden', isToday);
+        // Task 1: ẢNH TO bên trái + BÀI VIẾT đầy đủ (đã bỏ hashtag) bên phải để khách đọc.
+        document.getElementById('mdb-list').innerHTML = M.specials.map(function (d) {
+          var media = d.img
+            ? '<div class="relative min-h-[280px] lg:min-h-[440px]"><img src="' + d.img + '" alt="' + esc(d.name) + '" class="absolute inset-0 w-full h-full object-cover' + (d.available ? '' : ' grayscale-[0.3]') + '"><div class="absolute inset-0 bg-gradient-to-t from-[#0a0f0c] to-transparent lg:bg-gradient-to-r"></div></div>'
+            : '<div class="min-h-[280px] lg:min-h-[440px] bg-gradient-to-br from-amber-400/20 to-emerald-500/10 flex items-center justify-center text-7xl">⭐</div>';
+          var badge = d.available
+            ? '<span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 rounded-full px-2.5 py-0.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>' + (isEn ? 'Available' : 'Còn hàng') + '</span>'
+            : '<span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-gray-400 bg-white/[0.06] border border-white/15 rounded-full px-2.5 py-0.5"><span class="w-1.5 h-1.5 rounded-full bg-gray-500"></span>' + (isEn ? 'Sold out' : 'Hết hàng') + '</span>';
+          var article = d.article ? mdLite(d.article) : (d.desc ? '<p>' + esc(d.desc) + '</p>' : '<p class="text-gray-500">' + (isEn ? 'Follow the quán\'s Facebook to read about today\'s special.' : 'Theo dõi Facebook của quán để đọc bài về món đặc biệt nhé.') + '</p>');
+          return '<div class="grid lg:grid-cols-2 rounded-3xl overflow-hidden border border-amber-400/20 bg-amber-400/[0.04]">'
+            + media
+            + '<div class="p-6 sm:p-8 flex flex-col min-w-0">'
+            +   '<div class="flex flex-wrap items-center gap-2"><h4 class="font-display font-semibold text-2xl">' + esc(d.name) + '</h4>' + badge + '</div>'
+            +   '<div class="flex flex-wrap items-center gap-3 mt-2"><span class="font-mono font-bold tracking-[0.1em] text-amber-300 text-lg">' + fmt(d.price) + '</span>'
+            +     (d.limit ? '<span class="text-[11px] text-amber-200/80 border border-amber-400/30 rounded-full px-2 py-0.5">' + (isEn ? 'Only ' + d.limit + ' servings' : 'Chỉ ' + d.limit + ' suất') + '</span>' : '') + '</div>'
+            +   '<div class="mt-4 text-sm text-gray-300 leading-relaxed space-y-3 lg:max-h-[320px] lg:overflow-y-auto pr-1 no-scrollbar">' + article + '</div>'
+            + '</div></div>';
+        }).join('');
+        box.classList.remove('hidden');
+        catBtn.classList.remove('hidden');
+      } else {
+        box.classList.add('hidden');
+        catBtn.classList.add('hidden');
+      }
+
+      // Giờ mở cửa (Task 2) — điền từ Sheet "Cấu Hình" qua MENU_TODAY.hours.
+      // Giá trị mặc định (hard-code trong HTML) giữ nguyên nếu thiếu → web không bao giờ trống.
+      var H = M.hours;
+      if (H) {
+        var setTxt = function (id, v) { var el = document.getElementById(id); if (el && v) el.textContent = v; };
+        setTxt('hours-lunch', H.lunch);
+        setTxt('hours-dinner', H.dinner);
+        setTxt('hours-dinner-days', H.dinnerDays);
+        var closedRow = document.getElementById('hours-closed-row');
+        var closedEl = document.getElementById('hours-closed');
+        if (H.closedNote) {
+          if (closedEl) closedEl.textContent = H.closedNote;
+          if (closedRow) closedRow.classList.remove('hidden');
+        } else if (closedRow) {
+          closedRow.classList.add('hidden');   // để trống "Nghỉ tối" = quán không nghỉ tối nào
+        }
+        var fh = document.getElementById('footer-hours');
+        if (fh) {
+          var nb = function (s) { return String(s || '').replace(/ /g, ''); };
+          var isEn = window.CURRENT_LANG === 'en';
+          var parts = [(isEn ? 'LUNCH DAILY ' : 'TRƯA HẰNG NGÀY ') + nb(H.lunch),
+                       (isEn ? 'DINNER ' : 'TỐI ') + (H.dinnerDays || '') + ' ' + nb(H.dinner)];
+          if (H.closedNote) parts.push((isEn ? 'CLOSED ' : 'NGHỈ ') + String(H.closedNote).toUpperCase());
+          fh.textContent = parts.join(' · ');
+        }
+      }
+    };
+    window.__renderMenuToday();
+
+    // Carousel món tủ: tự trượt, bấm chấm để chuyển
+    (function () {
+      var root = document.getElementById('signature-carousel');
+      if (!root) return;
+      var slides = [
+        { name: 'Bò kho xốt vang', nameEn: 'Beef Stew in Red Wine Sauce', desc: 'Kiểu Hà Nội — thịt mềm, sốt vang đỏ au, dậy mùi quế hồi.', descEn: 'Hanoi style — tender beef in a rich red wine sauce, fragrant with star anise and cinnamon.', price: '60.000đ / phần', priceEn: '60,000đ / portion' },
+        { name: 'Ba chỉ quay giòn bì', nameEn: 'Crispy Pork Belly', desc: 'Bì nổ giòn rụm, thịt mềm ngọt — best-seller của quán.', descEn: 'Crackling crispy skin, tender juicy meat — the quán\'s best-seller.', price: '60.000đ / phần', priceEn: '60,000đ / portion' },
+        { name: 'Cá trắm kho giềng', nameEn: 'Grass Carp Braised with Galangal', desc: 'Đậm đà thơm giềng, màu cánh gián — cực đưa cơm.', descEn: 'Rich and savory with galangal, deep amber color — irresistible with rice.', price: '55.000đ / phần', priceEn: '55,000đ / portion' },
+        { name: 'Sườn xào chua ngọt', nameEn: 'Sweet & Sour Spare Ribs', desc: 'Vàng óng, ngoài giòn trong mềm, chua ngọt hài hòa.', descEn: 'Golden and glossy, crisp outside and tender inside, sweet-and-sour balance.', price: '60.000đ / phần', priceEn: '60,000đ / portion' },
+        { name: 'Ba chỉ rang cải cay', nameEn: 'Stir-Fried Pork Belly with Pickled Mustard Greens', desc: 'Dưa cải chua dịu cân vị béo, ăn hoài không ngán.', descEn: 'Mild pickled mustard greens balance the richness — never gets boring.', price: '55.000đ / phần', priceEn: '55,000đ / portion' },
+        { name: 'Chân nấm hương om thịt băm', nameEn: 'Shiitake Mushrooms Braised with Minced Pork', desc: 'Nấm thấm đẫm nước thịt, đậm vị umami.', descEn: 'Shiitake mushrooms soaked in savory minced-pork broth, deep umami flavor.', price: '55.000đ / phần', priceEn: '55,000đ / portion' }
+      ];
+      var track = root.querySelector('.sig-track');
+      var caption = root.querySelector('.sig-caption');
+      var dotsWrap = root.querySelector('.sig-dots');
+      var idx = 0, timer = null;
+
+      slides.forEach(function (_, i) {
+        var dot = document.createElement('button');
+        dot.setAttribute('aria-label', 'Xem món ' + slides[i].name);
+        dot.className = 'h-1.5 rounded-full transition-all duration-500 ' + (i === 0 ? 'w-5 bg-emerald-400' : 'w-1.5 bg-white/30');
+        dot.addEventListener('click', function () { go(i); restart(); });
+        dotsWrap.appendChild(dot);
+      });
+
+      function go(i) {
+        idx = i;
+        track.style.transform = 'translateX(-' + (idx * 100) + '%)';
+        caption.style.opacity = '0';
+        setTimeout(function () {
+          var sigEn = window.CURRENT_LANG === 'en';
+          root.querySelector('.sig-name').textContent = (sigEn && slides[idx].nameEn) ? slides[idx].nameEn : slides[idx].name;
+          root.querySelector('.sig-desc').textContent = (sigEn && slides[idx].descEn) ? slides[idx].descEn : slides[idx].desc;
+          root.querySelector('.sig-price').textContent = (sigEn && slides[idx].priceEn) ? slides[idx].priceEn : slides[idx].price;
+          caption.style.opacity = '1';
+        }, 300);
+        [].forEach.call(dotsWrap.children, function (d, j) {
+          d.className = 'h-1.5 rounded-full transition-all duration-500 ' + (j === idx ? 'w-5 bg-emerald-400' : 'w-1.5 bg-white/30');
+        });
+      }
+      function next() { go((idx + 1) % slides.length); }
+      function restart() { clearInterval(timer); timer = setInterval(next, 4000); }
+      restart();
+      // Task 5: cho phép nút đổi ngôn ngữ refresh lại caption đang hiển thị
+      window.__refreshSignatureCaption = function () { go(idx); };
+    })();
+
+    // Swipe gallery mâm cơm (Task 6): tự nạp assets/img/tray/tray-01..20.png, ảnh lỗi tự gỡ
+    (function () {
+      var track = document.getElementById('tray-track');
+      var gallery = document.getElementById('tray-gallery');
+      if (!track) return;
+      var counter = document.getElementById('tray-counter');
+      // Ưu tiên manifest (assets/data/tray-images.js) — không có thì dò tray-01..20 (ảnh lỗi tự gỡ)
+      var sources = window.TRAY_IMAGES;
+      if (!sources || !sources.length) {
+        sources = [];
+        for (var p = 1; p <= 20; p++) sources.push('assets/img/tray/tray-' + (p < 10 ? '0' : '') + p + '.png');
+      }
+      sources.forEach(function (src, i) {
+        var img = document.createElement('img');
+        img.src = src;
+        img.alt = 'Mâm cơm gia đình Cơm A Thuý ' + (i + 1);
+        // eager: ảnh không tồn tại phải fire onerror NGAY để gỡ khỏi track (lazy chỉ fire khi cuộn tới)
+        img.loading = 'eager';
+        img.className = 'w-full shrink-0 snap-center object-cover aspect-[4/3]';
+        img.addEventListener('error', function () {
+          this.remove();
+          updateCounter();
+        });
+        track.appendChild(img);
+      });
+      // cur = index hiện tại. Nút bấm dùng cur (KHÔNG đọc scrollLeft giữa animation — dễ lệch);
+      // vuốt tay thì scroll-listener debounce cập nhật lại cur theo vị trí thật.
+      var cur = 0, scrollDebounce = null;
+      function slides() { return track.querySelectorAll('img'); }
+      function updateCounter() {
+        var total = slides().length;
+        if (!total) { gallery.classList.add('hidden'); return; }
+        counter.textContent = (Math.min(cur + 1, total)) + ' / ' + total;
+      }
+      function goTo(i) {
+        var total = slides().length;
+        if (!total) return;
+        cur = ((i % total) + total) % total;
+        track.scrollTo({ left: cur * track.clientWidth, behavior: 'smooth' });
+        updateCounter();
+      }
+      document.getElementById('tray-prev').addEventListener('click', function () { goTo(cur - 1); });
+      document.getElementById('tray-next').addEventListener('click', function () { goTo(cur + 1); });
+      track.addEventListener('scroll', function () {
+        clearTimeout(scrollDebounce);
+        scrollDebounce = setTimeout(function () {
+          cur = Math.round(track.scrollLeft / (track.clientWidth || 1));
+          updateCounter();
+        }, 150);
+      }, { passive: true });
+      updateCounter();
+    })();
+
+    // Scroll-spy cho thanh danh mục menu
+    var catLinks = document.querySelectorAll('.cat-link');
+    var sections = ['mon-dac-biet', 'com-phan', 'com-mam', 'do-uong'].map(function (id) { return document.getElementById(id); });
+    function updateSpy() {
+      var current = null;
+      sections.forEach(function (sec) {
+        if (sec && sec.offsetParent !== null && sec.getBoundingClientRect().top < window.innerHeight * 0.4) current = sec.id;
+      });
+      catLinks.forEach(function (link) {
+        var active = link.getAttribute('href') === '#' + current;
+        link.classList.toggle('bg-emerald-500/15', active);
+        link.classList.toggle('text-emerald-300', active);
+      });
+    }
+    window.addEventListener('scroll', updateSpy, { passive: true });
+    updateSpy();
+
+    // Task 4: đường nối động từ 3 khung nguyên liệu → chảy vào mâm cơm.
+    // Vẽ path theo VỊ TRÍ THẬT của thẻ + gallery (chuẩn ở mọi cỡ màn hình), hạt sáng chạy dọc path.
+    (function () {
+      var wrap = document.getElementById('bep-flow');
+      var svg = document.getElementById('flow-svg');
+      var g = document.getElementById('flow-paths');
+      var tray = document.getElementById('tray-gallery');
+      if (!wrap || !svg || !g || !tray) return;
+      var cards = wrap.querySelectorAll('.flow-card');
+      if (cards.length < 3) return;
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var NS = 'http://www.w3.org/2000/svg';
+      var colors = ['#34d399', '#fbbf24', '#fb7185']; // canh/rau · thịt cá · gia vị (rose, khớp ô Gia vị)
+      var lanes = [];
+      for (var i = 0; i < cards.length; i++) {
+        var base = document.createElementNS(NS, 'path');
+        base.setAttribute('fill', 'none'); base.setAttribute('stroke', colors[i]);
+        base.setAttribute('stroke-opacity', '0.26'); base.setAttribute('stroke-width', '3');
+        var anim = document.createElementNS(NS, 'path');
+        anim.setAttribute('fill', 'none'); anim.setAttribute('stroke', colors[i]);
+        anim.setAttribute('stroke-width', '3.8'); anim.setAttribute('stroke-linecap', 'round');
+        anim.setAttribute('class', 'flow-line-anim'); anim.setAttribute('filter', 'url(#flow-glow)');
+        anim.style.animationDelay = (i * -2.3) + 's';
+        var dot = document.createElementNS(NS, 'circle');
+        dot.setAttribute('r', '5.5'); dot.setAttribute('fill', '#ffffff');
+        dot.setAttribute('filter', 'url(#flow-glow)'); dot.setAttribute('opacity', '0');
+        g.appendChild(base); g.appendChild(anim); g.appendChild(dot);
+        lanes.push({ anim: anim, base: base, dot: dot, phase: i / cards.length, len: 0 });
+      }
+      // Đường nối VUÔNG GÓC (kiểu mạch điện tử): xuống thẳng → rẽ ngang → xuống thẳng vào mâm,
+      // bo tròn nhẹ ở khớp nối (radius) cho gọn gàng thay vì góc nhọn cứng.
+      function orthoPath(x1, y1, x2, y2, yMid, radius) {
+        var dir = x2 > x1 ? 1 : (x2 < x1 ? -1 : 0);
+        if (dir === 0) return 'M ' + x1 + ' ' + y1 + ' L ' + x2 + ' ' + y2;
+        var rr = Math.max(0, Math.min(radius, Math.abs(x2 - x1) / 2, Math.abs(yMid - y1), Math.abs(y2 - yMid)));
+        return 'M ' + x1 + ' ' + y1
+          + ' L ' + x1 + ' ' + (yMid - rr)
+          + ' Q ' + x1 + ' ' + yMid + ' ' + (x1 + rr * dir) + ' ' + yMid
+          + ' L ' + (x2 - rr * dir) + ' ' + yMid
+          + ' Q ' + x2 + ' ' + yMid + ' ' + x2 + ' ' + (yMid + rr)
+          + ' L ' + x2 + ' ' + y2;
+      }
+      function layout() {
+        var wr = wrap.getBoundingClientRect();
+        if (!wr.width || !wr.height) return;
+        svg.setAttribute('viewBox', '0 0 ' + wr.width + ' ' + wr.height);
+        var tr = tray.getBoundingClientRect();
+        var tx = tr.left - wr.left + tr.width / 2;
+        var ty = tr.top - wr.top - 10;                 // điểm hội tụ NẰM NGOÀI ảnh mâm (ngay phía trên)
+        var firstCard = cards[0].getBoundingClientRect();
+        var sy0 = firstCard.bottom - wr.top - 4;
+        var yMid = sy0 + (ty - sy0) * 0.45;             // hành lang ngang DÙNG CHUNG cho cả 3 đường
+        lanes.forEach(function (l, i) {
+          var r = cards[i].getBoundingClientRect();
+          var sx = r.left - wr.left + r.width / 2;
+          var sy = r.bottom - wr.top - 4;
+          var d = orthoPath(sx, sy, tx, ty, yMid, 14);
+          l.base.setAttribute('d', d); l.anim.setAttribute('d', d);
+          l.len = l.anim.getTotalLength();
+        });
+      }
+      var t0 = null;
+      function tick(ts) {
+        if (t0 === null) t0 = ts;
+        var el = (ts - t0) / 1000;
+        lanes.forEach(function (l) {
+          if (!l.len) return;
+          var p = ((el / 2.1) + l.phase) % 1;         // ~2.1s mỗi hạt đi hết path (nhanh, sống động)
+          var pt = l.anim.getPointAtLength(p * l.len);
+          l.dot.setAttribute('cx', pt.x); l.dot.setAttribute('cy', pt.y);
+          l.dot.setAttribute('opacity', Math.sin(p * Math.PI).toFixed(3)); // mờ dần ở 2 đầu
+        });
+        requestAnimationFrame(tick);
+      }
+      layout();
+      if (!reduce) requestAnimationFrame(tick);
+      var rz; window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(layout, 120); }, { passive: true });
+      window.addEventListener('load', layout);
+      setTimeout(layout, 400); setTimeout(layout, 1200); // ảnh mâm tải xong → chiều cao đổi, vẽ lại
+    })();
+  </script>
+  <!-- Task 5: nút đổi ngôn ngữ EN/VI. Dịch nội dung TĨNH trong HTML (nav, hero, mô tả, review...).
+       Món ăn/giá + giờ bán hàng lấy từ Sheet (menu-today.js) — dịch bằng scripts/sync-landing-menu.js
+       + src/knowledge/menu-translate-en.js (Ollama local, cache), ghi ra window.MENU_TODAY_EN. -->
+  <script>
+    (function () {
+      var LANG_KEY = 'com-a-thuy-lang';
+      var EN = {
+        'nav-menu': 'Menu', 'nav-about': 'Our Kitchen', 'nav-space': 'Reviews', 'nav-hours': 'Hours',
+        'nav-dat-hang': 'Quick Order', 'nav-san-pham-khac': 'More Products',
+        'hero-badge': 'Freshly cooked every day at Ecopark',
+        'hero-p': 'Homestyle meals for busy people: Rice Set and Family Tray dishes cooked fresh every day — clean, tasty, fairly priced. Eat in or take away, whichever suits you. However busy your day gets, lunch should still be warm and filling — let A Thuý cook for you.',
+        'hero-btn-call': 'Call to order — 038 246 2678',
+        'hero-btn-menu': 'View menu',
+        'hero-social-count': '+450 customers',
+        'hero-social-sub': 'in Ecopark drop by every lunch',
+        'sig-badge': "Chef's Specialty",
+        'rsv-title-1': 'Reservations',
+        'rsv-p-1': 'Call or message ahead — dine in or pick up, your rice will be hot and ready',
+        'rsv-title-2': 'Delivery',
+        'space-title': 'Address',
+        'space-maps-link': 'Open in Google Maps',
+        'menu-eyebrow': 'Menu',
+        'menu-h2': "What's cooking today?",
+        'menu-p': 'Dishes change daily, cooked fresh each morning. Price includes rice, seasonal veggies and hot soup.',
+        'cat-mdb': "⭐ Chef's Special", 'cat-com-phan': '🍚 Rice Set', 'cat-com-mam': '🍽️ Family Tray', 'cat-do-uong': '🥤 Drinks',
+        'feature-title': 'Roasted Pork Belly with Crispy Skin',
+        'feature-li1': 'Roasted Pork Belly Rice with Crispy Skin',
+        'feature-li2': 'Family Tray — Roasted Pork Belly with Crispy Skin',
+        'feature-p': 'Crackling crispy skin, tender juicy meat inside. Served with hot rice, seasonal veggies and soup — real homestyle comfort food.',
+        'feature-li1-note': '(soup + seasonal veggies included)',
+        'size-1-2': '(1-2 people)', 'size-2-3': '(2-3 people)', 'size-3-4': '(3-4 people)',
+        'com-phan-title': 'Rice Set', 'com-mam-title': 'Family Tray', 'do-uong-title': 'Drinks',
+        'com-phan-sub': '— for 1 person, meat + veggies + soup included',
+        'com-mam-sub': '— for groups & families, order by the tray',
+        'do-uong-sub': '— refreshments to go with your meal',
+        'about-eyebrow': "A Thuý's Kitchen",
+        'about-h2': 'From Morning Market to Your Table',
+        'about-p': "No frozen leftovers held over. Bought fresh at the morning market, cleaned and cooked fresh — once it's gone, it's gone.",
+        'flow-1-sub': 'Fresh from the morning market',
+        'flow-2-sub': 'Cleaned and prepped fresh',
+        'flow-3-sub': 'Homestyle taste, no harsh MSG',
+        'tray-badge': "Swipe to see A Thuý's family trays",
+        'story-h3': 'A humble home kitchen, no fuss',
+        'story-p': "A Thuý cooks like she's cooking for her own family. Northern dishes are the root — braised fish with galangal, giả cày, pan-seared crispy pork — plus a few Southern favorites to round it out. No fancy plating, just the right taste, hot and clean every time you visit.",
+        'story-note': 'However busy you are, call 15 minutes ahead and a hot meal will be waiting — no worries about dishes running out when you arrive.',
+        'story-btn-call': 'Call to order now',
+        'story-btn-fb': "Today's dishes on Facebook",
+        'rv-eyebrow': 'Reviews',
+        'rv-h2': "One bite and you're a regular",
+        'rv-p': 'Gathered from guests at the quán, Google Maps & Facebook.',
+        'rv1-q': '"Tastes just like home cooking, the crispy pork belly is amazing. Whenever I\'m swamped at lunch, I come back here."',
+        'rv1-a': '— Ecopark office worker',
+        'img1-cap': 'Freshly cooked, simply plated but always neat.',
+        'rv2-q': '"Ordered a family tray for a team of 8, every dish arrived hot, soup was sweet and veggies fresh. Very fair price."',
+        'rv2-a': '— Group ordering a tray',
+        'rv3-q': "\"The braised fish with galangal is as rich as my grandma's. Rice is soft and fluffy, seconds are no problem.\"",
+        'rv3-a': '— Thủy Nguyên resident',
+        'img2-cap': 'Hot rice, veggies and dipping sauce prepped fresh at every table.',
+        'rv4-q': '"Fast takeaway, call 15 minutes ahead and it\'s ready. Clean containers, food still tastes great by the time it gets home."',
+        'rv4-a': '— Takeaway customer',
+        'rv5-q': '"Clean place, friendly owner. The 55k rice set is generous, help yourself to more soup and veggies. Will be back!"',
+        'rv5-a': '— Minh Anh · Ecopark resident',
+        'rv6-q': "\"I've been having lunch here for almost 2 months. Dishes rotate constantly so it never gets old — the giả cày and braised fish are the best.\"",
+        'rv6-a': '— Tuấn Nguyễn · office worker',
+        'rv7-q': '"We have a small kid at home so we order trays often. Seasoning is just right, not oily, my little one can eat everything."',
+        'rv7-a': '— Mom from Thủy Tiên area',
+        'rv8-q': "\"Every lunchtime I scroll Facebook and get hungry seeing what they've posted. Today it was braised pork & eggs in coconut water, spot-on Southern style.\"",
+        'rv8-a': '— Hương Giang',
+        'rv9-q': "\"Fast delivery, called at 11am and it arrived by 11:15. Fresh veggies, hot soup, exactly like mom's cooking.\"",
+        'rv9-a': '— Đức Long · Rừng Cọ area',
+        'rv10-q': '"The sweet and sour ribs here are outstanding. If you come late they\'re sold out, so call ahead to reserve a portion."',
+        'rv10-a': '— Quang Huy · regular customer',
+        'rv11-q': '"Our company has ordered trays to host clients twice now. Beautifully plated, dishes piping hot, guests loved it."',
+        'rv11-a': '— Thu Trang · Aqua Bay office',
+        'rv12-q': '"Student prices with restaurant quality. The tomato steamed eggs at 50k is filling, and extra rice is free."',
+        'rv12-a': '— Young renter in Ecopark',
+        'rv13-q': "\"My grandma visited and complimented the cooking — the crab and jute soup tastes just like back home. That's the real deal.\"",
+        'rv13-a': '— Mimosa area family',
+        'hours-eyebrow': 'Hours', 'hours-h2': 'Rice is ready!',
+        'hours-lunch-label': 'Lunch', 'hours-daily': 'Daily',
+        'hours-dinner-label': 'Dinner',
+        'hours-weekly': 'Weekly (lunch still open as usual)',
+        'hours-closed-badge': 'CLOSED',
+        'hours-note': '* Good dishes sell out early — call ahead to make sure yours is saved.',
+        'contact-eyebrow': 'Contact', 'contact-h2': 'Come have a meal with us',
+        'contact-call-label': 'Call to order (or a tray) / Delivery',
+        'contact-address-label': 'Address',
+        'contact-zalo-label': 'Zalo — order (or a tray) / Delivery',
+        'contact-fb-label': 'Facebook — new dishes every day',
+        'bestseller-badge': 'Best-seller'
+      };
+      var EN_HTML = {
+        'hero-h1': 'Warm Homestyle Rice<br><span class="text-gray-500">Family-style Cooking</span><br><span class="text-gray-500 text-3xl sm:text-4xl lg:text-5xl whitespace-nowrap">Delicious Every Day</span>',
+        'rsv-p-2': '• We deliver around the Ecopark area<br>• Delivery fee varies by area',
+        'mdb-note': '* The quán\'s most recent special — follow <a class="text-amber-300 hover:text-amber-200" href="https://www.facebook.com/com.a.thuy.ecopark/" target="_blank" rel="noopener">Facebook</a> to know when a new special drops.',
+        'flow-1-title': 'Soup &amp; Veggies<br>in season',
+        'flow-2-title': 'Meat &amp; Fish<br>fresh &amp; good',
+        'flow-3-title': 'Northern-style<br>seasoning',
+        'story-li-1': '<span class="font-medium text-white">Full, filling meals</span> — rice, seasonal veggies and hot soup come with every portion, so you have the energy for the afternoon.',
+        'story-li-2': '<span class="font-medium text-white">Dishes change daily</span> — follow Facebook to see what\'s cooking today, the good ones sell out fast.',
+        'story-li-3': '<span class="font-medium text-white">Takeaway &amp; pre-order</span> — call or message ahead, pick up hot rice with no waiting.'
+      };
+      var viCache = new WeakMap();
+      var viHtmlCache = new WeakMap();
+
+      function applyLanguage(lang) {
+        window.CURRENT_LANG = lang;
+        document.querySelectorAll('[data-i18n]').forEach(function (el) {
+          if (!viCache.has(el)) viCache.set(el, el.textContent);
+          var key = el.getAttribute('data-i18n');
+          el.textContent = (lang === 'en' && EN[key]) ? EN[key] : viCache.get(el);
+        });
+        document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+          if (!viHtmlCache.has(el)) viHtmlCache.set(el, el.innerHTML);
+          var key = el.getAttribute('data-i18n-html');
+          el.innerHTML = (lang === 'en' && EN_HTML[key]) ? EN_HTML[key] : viHtmlCache.get(el);
+        });
+        document.documentElement.lang = lang;
+        var label = document.getElementById('lang-toggle-label');
+        if (label) label.className = 'flag-icon ' + (lang === 'en' ? 'flag-icon-us' : 'flag-icon-vn');
+        document.querySelectorAll('.lang-option').forEach(function (btn) {
+          btn.classList.toggle('bg-white/10', btn.getAttribute('data-lang') === lang);
+        });
+        try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+        // Đồng bộ lại phần render động (Món đặc biệt/ngày/giờ mở cửa footer) theo lang mới
+        if (window.__renderMenuToday) window.__renderMenuToday();
+        if (window.__refreshSignatureCaption) window.__refreshSignatureCaption();
+      }
+
+      var toggleBtn = document.getElementById('lang-toggle-btn');
+      var dropdown = document.getElementById('lang-dropdown');
+      if (toggleBtn && dropdown) {
+        toggleBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var open = dropdown.classList.toggle('hidden') === false;
+          toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        dropdown.querySelectorAll('.lang-option').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            applyLanguage(btn.getAttribute('data-lang'));
+            dropdown.classList.add('hidden');
+            toggleBtn.setAttribute('aria-expanded', 'false');
+          });
+        });
+        document.addEventListener('click', function (e) {
+          if (!dropdown.contains(e.target) && e.target !== toggleBtn) {
+            dropdown.classList.add('hidden');
+            toggleBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+
+      var saved = 'vi';
+      try { saved = localStorage.getItem(LANG_KEY) || 'vi'; } catch (e) {}
+      applyLanguage(saved);
+    })();
+  </script>
+  <!-- Task 1 (2026-07-08): toggle menu mobile (nút hamburger) — cùng kiểu với lang-toggle-btn ở trên. -->
+  <script>
+    (function () {
+      var menuBtn = document.getElementById('mobile-menu-btn');
+      var menuDropdown = document.getElementById('mobile-menu-dropdown');
+      if (!menuBtn || !menuDropdown) return;
+      function closeMenu() {
+        menuDropdown.classList.add('hidden');
+        menuBtn.setAttribute('aria-expanded', 'false');
+      }
+      menuBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var open = menuDropdown.classList.toggle('hidden') === false;
+        menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      menuDropdown.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', closeMenu);
+      });
+      document.addEventListener('click', function (e) {
+        if (!menuDropdown.contains(e.target) && e.target !== menuBtn && !menuBtn.contains(e.target)) closeMenu();
+      });
+      window.addEventListener('resize', function () { if (window.innerWidth >= 768) closeMenu(); });
+    })();
+  </script>
+  <!-- Chatbot đặt món (sales-bot). chat-config.js đặt URL công khai, TỰ cập nhật khi tunnel đổi. -->
+  <script src="assets/js/chat-config.js"></script>
+  <script src="assets/js/chat-widget.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cơm A Thuý — Đang mở Content Studio…</title>
+<meta name="robots" content="noindex">
+<!-- Trang trung gian CỐ ĐỊNH cho Content Studio (Task 2, 2026-07-15) — y hệt cơ chế /order/ và
+     /chat/: domain GitHub Pages không bao giờ đổi, trang này tự chuyển tiếp sang URL content-app
+     hiện tại (tunnel — hay đổi mỗi lần restart). URL đọc từ ../assets/js/content-config.js, TỰ cập
+     nhật + deploy lại bởi scripts/content-tunnel.sh mỗi khi tunnel đổi URL. Đăng nhập vẫn cần đúng
+     PIN như trước (CHAT_ADMIN_PIN, chung với Chat Center). -->
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:#0d0d14; color:#eeeaf8; text-align:center;
+    font-family:'Be Vietnam Pro','Segoe UI',system-ui,sans-serif; padding:24px;
+  }
+  .card { max-width:340px; }
+  .logo { font-size:44px; margin-bottom:14px; }
+  h1 { font-size:20px; font-weight:700; margin-bottom:8px; }
+  p  { font-size:14px; color:#8a86a0; line-height:1.6; }
+  .spin {
+    width:34px; height:34px; margin:20px auto 0; border-radius:50%;
+    border:3px solid rgba(238,234,248,.15); border-top-color:#a855f7;
+    animation:r .8s linear infinite;
+  }
+  @keyframes r { to { transform:rotate(360deg); } }
+  #err { display:none; margin-top:18px; }
+  #err a { color:#a855f7; text-decoration:none; font-weight:600; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">📝</div>
+    <h1>Content Studio — Cơm A Thuý</h1>
+    <p>Đang mở Content Studio (viết bài tự động), chờ xíu nha…</p>
+    <div class="spin" id="spin"></div>
+    <div id="err">
+      <p>⚠️ Content Studio đang tạm nghỉ (server chưa bật hoặc tunnel vừa đổi).<br>
+      Thử lại sau vài giây, hoặc</p>
+      <p style="margin-top:8px"><a href="../">← Về trang chính</a></p>
+    </div>
+  </div>
+  <script src="../assets/js/content-config.js"></script>
+  <script>
+    (function () {
+      var base = (window.CONTENT_APP_PUBLIC_URL || '').replace(/\/+$/, '');
+      if (base) {
+        location.replace(base + '/');
+        // Nếu 6s vẫn chưa rời trang (server chết / mạng lỗi) → hiện hướng dẫn
+        setTimeout(function () {
+          document.getElementById('spin').style.display = 'none';
+          document.getElementById('err').style.display = 'block';
+        }, 6000);
+      } else {
+        document.getElementById('spin').style.display = 'none';
+        document.getElementById('err').style.display = 'block';
+      }
+    })();
+  </script>
+</body>
+</html>

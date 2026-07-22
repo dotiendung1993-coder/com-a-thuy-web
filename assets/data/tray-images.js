@@ -1,0 +1,2 @@
+// File tự sinh bởi scripts/gen-landing-extra-images.js — ĐỪNG sửa tay
+window.TRAY_IMAGES = ["assets/img/tray/tray-01.png","assets/img/tray/tray-02.png","assets/img/tray/tray-03.png","assets/img/tray/tray-04.png","assets/img/tray/tray-05.png","assets/img/tray/tray-06.png","assets/img/tray/tray-07.png","assets/img/tray/tray-08.png","assets/img/tray/tray-09.png","assets/img/tray/tray-10.png","assets/img/tray/tray-11.png","assets/img/tray/tray-12.png","assets/img/tray/tray-13.png","assets/img/tray/tray-14.png","assets/img/tray/tray-15.png","assets/img/tray/tray-16.png"];
