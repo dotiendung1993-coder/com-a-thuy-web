@@ -1,0 +1,1208 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   POS MANAGER — Giao diện sao chép app Sổ Bán Hàng
+   GĐ9 (04/08/2026): bảng màu đo BẰNG getComputedStyle TRÊN TRANG SỐNG
+   app.sobanhang.com (tài khoản Cơm A Thúy) — xem output/sobanhang-survey/KHAO-SAT-TOAN-BO.md
+     Bản WEB dùng XANH LÁ #169939, KHÔNG phải xanh dương #005DF9 (màu đó là của file APK).
+   Mọi tên class cũ (GĐ1–GĐ8) được giữ nguyên để 36 màn hình cũ không phải sửa.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --primary: #169939;
+  --primary-dark: #05803A;
+  --primary-soft: #E7F5EC;
+  --brand-green: #169939;
+
+  /* Thanh điều hướng của bản web: dải màu từ trên xuống */
+  --rail-from: #1B7A4A;
+  --rail-to: #228B47;
+
+  /* Tên cũ giữ lại làm bí danh — các màn GĐ1–GĐ6 vẫn dùng var(--green) */
+  --green: var(--primary);
+  --green-dark: var(--primary-dark);
+  --green-light: var(--primary-soft);
+
+  /* Màu số tiền: vào = lá, ra = đỏ (giống app) */
+  --money-in: #169939;
+  --money-out: #D92B2B;
+
+  --text: #1E2226;
+  --text-2: #73787D;
+  --text-3: #A6A6A6;
+  --line: #EAEBEC;
+  --bg: #F2F3F4;
+  --surface: #FFFFFF;
+  --danger: #D92B2B;
+  --warn: #B45309;
+
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(60, 69, 79, .06), 0 1px 3px rgba(60, 69, 79, .04);
+  --shadow-md: 0 4px 12px rgba(60, 69, 79, .12);
+
+  --tabbar-h: 62px;
+  --header-h: 52px;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  /* GĐ8 mục L — cỡ chữ toàn app nhân với --font-scale (js/display.js đặt theo cài đặt).
+     Mặc định 1 để máy chưa chỉnh gì vẫn y như cũ. */
+  font-size: calc(15px * var(--font-scale, 1));
+  -webkit-font-smoothing: antialiased;
+}
+/* GĐ8 mục L — "Nút bấm to": nới chiều cao chạm tối thiểu cho người lớn tuổi đỡ bấm trượt. */
+body.big-touch button,
+body.big-touch .btn,
+body.big-touch input,
+body.big-touch select { min-height: 52px; }
+body.big-touch .chip { padding: 10px 16px; }
+.hidden { display: none !important; }
+h2 { font-size: 19px; font-weight: 700; margin: 0 0 12px; letter-spacing: -.2px; }
+h3 { font-size: 16px; font-weight: 700; }
+
+/* ── Nút & ô nhập ───────────────────────────────────────────────────────── */
+button, .btn {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  min-height: 44px;
+  min-width: 44px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  background: #EDF1F6;
+  color: var(--text);
+  transition: filter .12s ease;
+}
+button:active, .btn:active { filter: brightness(.94); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:active { background: var(--primary-dark); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:active { background: #B01B1B; }
+.btn-ghost { background: #fff; border: 1px solid var(--line); color: var(--text); }
+/* .btn dùng cho cả <a> (ví dụ "+ Tạo đơn hàng" nhảy sang màn Bán hàng). Thẻ <a> không tự căn
+   giữa chữ và mặc định bị gạch chân, nên phải khai riêng — chỉ chạm thẻ <a>, không đụng <button>. */
+a.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 14px; text-decoration: none;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: 16px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  width: 100%;
+  background: #fff;
+  color: var(--text);
+}
+textarea { padding: 10px 12px; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary-soft); border-color: var(--primary); }
+
+/* Icon nhỏ nằm chung dòng với chữ (trong nút, nhãn, bảng) */
+.inline-ico { display: inline-flex; align-items: center; vertical-align: -3px; }
+.inline-ico svg { width: 17px; height: 17px; }
+.perm-yes { color: var(--money-in); }
+.ok-note { color: var(--money-in); display: flex; align-items: center; gap: 6px; }
+.thumb-ico { color: var(--primary); opacity: .55; }
+.thumb-ico svg { width: 30px; height: 30px; }
+button > svg { width: 20px; height: 20px; }
+
+/* ── Thanh tiêu đề ──────────────────────────────────────────────────────── */
+.app-header {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+  background: var(--primary); color: #fff;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; font-weight: 600; z-index: 20;
+}
+#app-user { font-size: 13px; opacity: .9; font-weight: 500; }
+/* GĐ8 mục K — chuông thông báo + chấm số chưa đọc trên thanh tiêu đề */
+.app-header-right { display: flex; align-items: center; gap: 10px; }
+.app-notif {
+  position: relative; background: none; border: none; color: #fff;
+  padding: 4px; min-height: auto; display: flex; align-items: center;
+}
+.app-notif > svg { width: 22px; height: 22px; }
+.app-notif-badge {
+  position: absolute; top: -2px; right: -4px; min-width: 17px; height: 17px;
+  padding: 0 4px; border-radius: 9px; background: #E11D48; color: #fff;
+  font-size: 10.5px; font-weight: 700; line-height: 17px; text-align: center;
+}
+
+/* ── Vùng nội dung ──────────────────────────────────────────────────────── */
+.view {
+  padding-top: calc(var(--header-h) + 14px);
+  padding-bottom: calc(var(--tabbar-h) + 20px);
+  padding-left: 16px;
+  padding-right: 16px;
+  min-height: 100vh;
+}
+body.no-nav .view { padding-top: 12px; padding-bottom: 12px; }
+/* Trang chủ có nền gradient xanh nhạt giống app */
+body.home-bg { background: var(--bg); }
+
+/* ── Thanh tab dưới (điện thoại) ────────────────────────────────────────── */
+.tabbar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  min-height: var(--tabbar-h);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  display: flex; background: #fff; border-top: 1px solid var(--line); z-index: 20;
+}
+.tabbar a {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 11px; text-decoration: none; color: var(--text-3); gap: 3px; padding: 8px 2px;
+  font-weight: 500;
+}
+.tabbar a svg { width: 24px; height: 24px; display: block; }
+.tabbar a.active { color: var(--primary); font-weight: 600; }
+
+/* ── Nút tròn nổi ───────────────────────────────────────────────────────── */
+.fab {
+  position: fixed; right: 18px; bottom: calc(var(--tabbar-h) + 18px);
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none; box-shadow: 0 6px 16px rgba(22, 153, 57, .38); z-index: 21;
+}
+.fab svg { width: 26px; height: 26px; }
+
+/* ── Cột trái theo phong cách Sổ Bán Hàng ──────────────────────────────── */
+:root {
+  --sidebar-full: 240px;
+  --sidebar-slim: 64px;
+}
+
+.sidebar {
+  position: fixed; top: var(--header-h); left: 0; bottom: 0;
+  width: var(--sidebar-full);
+  background: linear-gradient(180deg, var(--rail-from) 0%, var(--rail-to) 100%);
+  z-index: 15; overflow-y: auto; overflow-x: hidden;
+  display: flex; flex-direction: column;
+  transition: width 0.22s ease;
+}
+.sidebar.collapsed { width: var(--sidebar-slim); }
+
+/* Nút ≡ toggle thu nhỏ/mở rộng */
+.sidebar-toggle {
+  width: 100%; height: 48px; min-height: 48px; background: rgba(0,0,0,.1); border: none;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.85); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex: none; transition: background .1s;
+}
+.sidebar-toggle:hover { background: rgba(0,0,0,.18); }
+.sidebar-toggle svg { width: 22px; height: 22px; }
+
+/* Links chung (Trang chủ, các mục con) */
+.sidebar a {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; text-decoration: none; color: rgba(255,255,255,.82); font-size: 14px;
+  font-weight: 500; white-space: nowrap; border-radius: 0; transition: background .1s;
+}
+.sidebar a svg { width: 22px; height: 22px; flex: none; }
+.sidebar a:hover { background: rgba(255,255,255,.1); }
+.sidebar a.active {
+  background: rgba(145,158,171,.4); color: #fff; font-weight: 600;
+  border-left: 3px solid rgba(255,255,255,.7);
+}
+.sidebar-child { padding-left: 48px !important; font-size: 13.5px; }
+.sidebar-child.active { padding-left: 45px !important; }
+
+/* Nút tiêu đề nhóm */
+.sidebar-group-btn {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 10px 14px; background: none; border: none;
+  border-top: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.6); font-size: 11px; font-weight: 700; letter-spacing: .5px;
+  text-transform: uppercase; cursor: pointer; white-space: nowrap; min-height: 40px; text-align: left;
+  transition: background .1s, color .1s;
+}
+.sidebar-group-btn:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.9); }
+.sidebar-group.has-active > .sidebar-group-btn { color: rgba(255,255,255,.9); }
+.sbh-icon { width: 22px; height: 22px; flex: none; display: flex; }
+.sbh-icon svg { width: 22px; height: 22px; }
+.g-label { flex: 1; min-width: 0; overflow: hidden; }
+.chevron { width: 14px; height: 14px; flex: none; transition: transform .18s; }
+.sidebar-group.open > .sidebar-group-btn .chevron { transform: rotate(180deg); }
+
+/* Nhóm: mở/đóng bằng max-height animation */
+.sidebar-group-items { overflow: hidden; max-height: 0; transition: max-height .22s ease; }
+.sidebar-group.open > .sidebar-group-items { max-height: 800px; }
+
+/* Mode icon-only (sau khi thu nhỏ) */
+.sidebar.collapsed .g-label,
+.sidebar.collapsed .chevron,
+.sidebar.collapsed .sidebar-group-items,
+.sidebar.collapsed a span { display: none !important; }
+.sidebar.collapsed .sidebar-group-btn { justify-content: center; padding: 12px 0; }
+.sidebar.collapsed a { justify-content: center; padding: 12px 0; }
+.sidebar.collapsed a.active { border-left: none; border-bottom: 3px solid rgba(255,255,255,.7); }
+
+@media (min-width: 1024px) {
+  .tabbar, .fab { display: none !important; }
+  .view { margin-left: var(--sidebar-full); padding-bottom: 20px; transition: margin-left .22s ease; }
+  body.sidebar-slim .view { margin-left: var(--sidebar-slim); }
+}
+
+/* ── Thông báo nổi ──────────────────────────────────────────────────────── */
+.toast-root {
+  position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + 16px); transform: translateX(-50%);
+  z-index: 50; display: flex; flex-direction: column; gap: 8px; align-items: center;
+}
+.toast {
+  background: #1F2937; color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 14px;
+  max-width: 90vw; box-shadow: var(--shadow-md);
+}
+.toast.error { background: var(--danger); }
+
+/* ── Hộp thoại ──────────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15, 23, 35, .45);
+  display: flex; align-items: flex-end; justify-content: center; z-index: 60;
+}
+@media (min-width: 640px) { .modal-overlay { align-items: center; } }
+.modal-box {
+  background: #fff; border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 20px;
+  width: 100%; max-width: 440px; max-height: 84vh; overflow-y: auto;
+}
+@media (min-width: 640px) { .modal-box { border-radius: var(--radius-lg); } }
+.modal-box h3 { margin-top: 0; }
+.modal-close-row { text-align: right; margin-top: 12px; }
+
+/* ═══ TRANG CHỦ (dashboard giống app Sổ Bán Hàng) ═══════════════════════ */
+.home-greet { margin-bottom: 14px; }
+.home-greet .hi { font-size: 13px; color: var(--text-2); }
+.home-greet .store { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+
+/* Thẻ "Hôm nay" — 3 ô số liệu có icon, giống ic_summary_* của app */
+.today-card {
+  background: #fff; border-radius: var(--radius-lg); padding: 14px;
+  box-shadow: var(--shadow-sm); border: 1px solid var(--line);
+}
+.today-card-title {
+  font-size: 12px; letter-spacing: .6px; color: var(--text-3); font-weight: 700; margin-bottom: 10px;
+}
+.today-card-loading { color: var(--text-3); font-size: 14px; }
+.today-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.today-stat {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 8px; border-radius: 10px; background: #F7F9FC;
+}
+.today-stat .stat-ico { width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.today-stat .stat-ico svg { width: 15px; height: 15px; }
+.today-stat .label { font-size: 11.5px; color: var(--text-2); }
+.today-stat .value { font-size: 16px; font-weight: 700; letter-spacing: -.3px; }
+.today-stat .value.money { color: var(--money-in); }
+.today-stat .value.profit-empty {
+  font-size: 13px; color: var(--primary); text-decoration: none; display: flex; flex-direction: column;
+}
+.today-stat .value.profit-empty small { font-size: 10.5px; font-weight: 500; color: var(--text-3); }
+
+/* Nhãn từng khu + nút "Chỉnh sửa" bên phải */
+.section-label {
+  margin-top: 22px; margin-bottom: 8px; font-size: 14px; color: var(--text); font-weight: 700;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.section-label .edit-link {
+  font-size: 13px; color: var(--primary); font-weight: 600; background: none;
+  min-height: auto; padding: 4px 2px; display: inline-flex; align-items: center; gap: 4px;
+}
+.section-label .edit-link svg { width: 15px; height: 15px; }
+
+/* Lưới tính năng — thẻ trắng, icon nhiều màu, chữ dưới (đúng như ảnh edit_home_feature.png) */
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.feature-grid.shortcuts { grid-template-columns: repeat(4, 1fr); }
+.feature-card {
+  background: #fff; border-radius: var(--radius); padding: 14px 6px 11px; text-align: center;
+  text-decoration: none; color: var(--text); box-shadow: var(--shadow-sm);
+  border: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  font-size: 12.5px; font-weight: 500; line-height: 1.25; position: relative;
+}
+.feature-card .icon { display: block; }
+.feature-card .icon svg { width: 26px; height: 26px; display: block; }
+.feature-grid.shortcuts .feature-card { padding: 12px 4px 9px; font-size: 11.5px; }
+.feature-grid.shortcuts .feature-card .icon svg { width: 24px; height: 24px; }
+
+/* Chế độ chỉnh sửa: hiện dấu + / − ở góc thẻ */
+.feature-card .pick-badge {
+  position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--primary); color: #fff; font-size: 15px; font-weight: 700; line-height: 22px;
+  min-height: 22px; min-width: 22px; padding: 0;
+}
+.feature-card .pick-badge.remove { background: var(--danger); }
+.picker-hint { font-size: 12.5px; color: var(--text-2); margin: 4px 0 10px; }
+
+/* Màn "Thêm" — chia nhóm giống app */
+.group-block { margin-bottom: 18px; }
+.group-title { font-size: 13px; font-weight: 700; color: var(--text-2); margin-bottom: 8px; }
+
+/* ═══ CÁC MÀN GĐ1–GĐ6 (giữ nguyên tên class, chỉnh lại cho hợp bảng màu) ══ */
+
+/* Bán hàng */
+.sell-search { margin-bottom: 10px; }
+/* Hàng nút lọc cuộn ngang — màn Quản lý bàn (khu vực) và Thông báo vẫn dùng. */
+.sell-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; }
+.chip {
+  flex: none; padding: 8px 14px; border-radius: 20px; background: #fff; border: 1px solid var(--line);
+  font-size: 14px; cursor: pointer; white-space: nowrap; min-height: 38px; font-weight: 500;
+}
+.chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+/* Chiều cao ô ĐẶT CỨNG (không dùng aspect-ratio hay đệm-%): mọi thứ trong thẻ món đều
+   position:absolute nên hai cách kia không góp chiều cao vào hàng lưới → các thẻ đè lên nhau,
+   chỉ còn thấy nhãn giá. Đặt cứng thì hàng nào cũng đúng, kể cả khi lưới tự cuộn. */
+.sell-grid { display: grid; grid-template-columns: repeat(2, 1fr); grid-auto-rows: 160px; gap: 12px; margin: 12px 0; }
+@media (min-width: 640px) { .sell-grid { grid-template-columns: repeat(4, 1fr); } }
+.sell-empty { color: var(--text-3); }
+/* GĐ12 — thẻ món giống ảnh khảo sát /pos: ảnh phủ kín ô vuông, giá ở góc trên phải trên nền tối,
+   tên món trên dải mờ dưới đáy, chấm xanh số lượng khi món đã có trong đơn đang mở. */
+.item-card {
+  position: relative; background: #fff; border-radius: var(--radius); overflow: hidden;
+  text-align: left; padding: 0; height: 100%;
+  box-shadow: var(--shadow-sm); border: 1.5px solid var(--line); cursor: pointer; min-height: 0;
+}
+.item-card.unavailable { opacity: .45; }
+.item-card.picked { border-color: var(--primary); }
+.item-card .thumb {
+  position: absolute; inset: 0; background: var(--primary-soft);
+  display: flex; align-items: center; justify-content: center;
+}
+.item-card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.item-card .item-price {
+  position: absolute; top: 0; right: 0; background: rgba(30, 34, 38, .72); color: #fff;
+  font-size: 12px; font-weight: 600; padding: 3px 7px; border-radius: 0 0 0 6px;
+}
+.item-card .item-qty {
+  position: absolute; left: 0; bottom: 34px; min-width: 22px; height: 22px; line-height: 22px;
+  text-align: center; background: var(--primary); color: #fff; font-size: 12px; font-weight: 700;
+  padding: 0 5px; border-radius: 0 6px 0 0;
+}
+.item-card .item-name {
+  position: absolute; left: 0; right: 0; bottom: 0; background: rgba(30, 34, 38, .72); color: #fff;
+  font-size: 12.5px; font-weight: 600; line-height: 1.25; padding: 6px 8px; text-align: center;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* ── Task 2 mục 1 (2026-08-08): thanh công cụ kiểu hiển thị / sắp xếp / lọc ─────────────────────
+   Chủ quán muốn đổi nhanh giữa lưới ảnh và danh sách gọn, kèm sắp xếp + lọc món còn hàng. */
+.sell-toolbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: 12px 0 0; padding: 8px 10px; background: #fff;
+  border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm);
+}
+.sell-view-switch { display: flex; background: var(--primary-soft); border-radius: 8px; padding: 2px; gap: 2px; }
+.sell-view-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; min-height: 34px;
+  border: 0; background: transparent; border-radius: 6px; cursor: pointer;
+  font-size: 13.5px; font-weight: 600; color: var(--primary-dark);
+}
+.sell-view-btn svg { width: 16px; height: 16px; }
+.sell-view-btn.active { background: var(--primary); color: #fff; box-shadow: var(--shadow-sm); }
+.sell-tool-field { display: inline-flex; align-items: center; gap: 6px; }
+.sell-tool-label { font-size: 13px; color: var(--text-3); font-weight: 500; }
+.sell-toolbar select {
+  min-height: 34px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px;
+  background: #fff; font-size: 13.5px; font-weight: 500; cursor: pointer;
+}
+.sell-count { margin-left: auto; font-size: 13px; color: var(--text-3); white-space: nowrap; }
+@media (max-width: 640px) {
+  .sell-view-btn span { display: none; }   /* điện thoại: chỉ còn icon cho đỡ chật */
+  .sell-count { margin-left: 0; }
+}
+
+/* Kiểu DANH SÁCH: bỏ lưới, mỗi món một dòng cao cố định — đọc nhanh khi thực đơn dài.
+   Dùng chung #sell-grid nên phải huỷ grid-auto-rows của kiểu lưới, nếu không dòng sẽ bị ép 160px. */
+.sell-grid.as-list { display: flex; flex-direction: column; gap: 6px; grid-auto-rows: auto; }
+.item-row {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; min-height: 58px;
+  background: #fff; border: 1.5px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); cursor: pointer; text-align: left;
+}
+.item-row.unavailable { opacity: .45; }
+.item-row.picked { border-color: var(--primary); background: var(--primary-soft); }
+.item-row .row-thumb {
+  flex: none; width: 42px; height: 42px; border-radius: 8px; overflow: hidden;
+  background: var(--primary-soft); display: flex; align-items: center; justify-content: center;
+}
+.item-row .row-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.item-row .row-thumb .thumb-ico svg { width: 20px; height: 20px; }
+.item-row .row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.item-row .row-name {
+  font-size: 14.5px; font-weight: 600; color: var(--text-1);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.item-row .row-sub { font-size: 12px; color: var(--text-3); }
+.item-row .row-qty {
+  flex: none; min-width: 24px; height: 24px; line-height: 24px; text-align: center;
+  background: var(--primary); color: #fff; font-size: 12.5px; font-weight: 700;
+  padding: 0 6px; border-radius: 12px;
+}
+.item-row .row-price { flex: none; font-size: 14.5px; font-weight: 700; color: var(--text-1); }
+
+.size-options { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.size-options button {
+  display: flex; justify-content: space-between; align-items: center; padding: 0 14px;
+  background: var(--primary-soft); color: var(--primary-dark); font-weight: 600;
+}
+
+/* Bán nhanh — Task 2 mục 2 (2026-08-08): dựng lại thành một thẻ gọn gàng có mệnh giá bấm nhanh,
+   ô số lượng và dòng thành tiền, thay vì 3 khối rời rạc trôi giữa nền trắng. */
+.quick-sell { max-width: 380px; margin: 0 auto; }
+.qs-card {
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); padding: 16px;
+}
+.qs-hint, .mgr-hint { font-size: 12.5px; color: var(--text-3); margin: 0 0 12px; line-height: 1.45; }
+.qs-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.qs-chips .chip { font-size: 13px; padding: 6px 12px; min-height: 32px; }
+.qs-amount-block { margin-top: 14px; }
+.qs-amount-label { font-size: 13px; font-weight: 600; color: var(--text-3); }
+.qs-price-display {
+  text-align: center; font-size: 32px; font-weight: 700; color: var(--primary);
+  background: var(--primary-soft); border-radius: var(--radius); padding: 14px; margin: 6px 0 0;
+  border: 1px solid var(--line); letter-spacing: -.5px;
+}
+.qs-qty-row { display: flex; align-items: center; justify-content: space-between; margin: 14px 0 10px; }
+.qs-stepper { display: flex; align-items: center; gap: 2px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.qs-stepper button {
+  width: 40px; min-height: 38px; border: 0; background: #fff; cursor: pointer;
+  font-size: 20px; font-weight: 700; color: var(--primary-dark);
+}
+.qs-stepper button:active { background: var(--primary-soft); }
+.qs-stepper span { min-width: 44px; text-align: center; font-size: 16px; font-weight: 700; }
+.qs-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.qs-key {
+  background: #fff; font-size: 20px; font-weight: 600; min-height: 56px;
+  border: 1px solid var(--line); border-radius: 10px; cursor: pointer;
+}
+.qs-key:active { background: var(--primary-soft); }
+.qs-key.fn { background: var(--bg, #F5F6F7); font-size: 16px; color: var(--text-3); }
+.qs-total-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 14px 0 10px; padding-top: 12px; border-top: 1px dashed var(--line); font-size: 15px;
+}
+.qs-total-row b { font-size: 20px; color: var(--primary); }
+.qs-confirm { width: 100%; min-height: 48px; font-size: 15.5px; }
+.qs-confirm:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Quản lý bàn */
+.tables-top-actions { display: flex; gap: 10px; margin-bottom: 12px; }
+.tables-top-actions .btn { flex: 1; }
+/* GĐ11 — dùng chung tab gạch chân .tab-row; chỉ giữ khoảng cách dưới riêng của màn bàn. */
+.tables-status-tabs { margin-bottom: 8px; }
+.tables-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 10px; }
+.table-card {
+  background: #fff; border-radius: var(--radius); padding: 10px; text-align: left; position: relative;
+  border: 1.5px solid var(--line);
+}
+.table-card.dang-dung { border-color: #F5A524; background: #FFFBF2; }
+.table-card.trong { border-color: var(--line); }
+.table-no { font-weight: 700; font-size: 15px; }
+.table-zone { font-size: 11px; color: var(--text-3); }
+.table-status-badge { font-size: 11px; font-weight: 600; margin-top: 4px; color: var(--money-in); }
+.table-card.dang-dung .table-status-badge { color: #B4690E; }
+.table-total { font-weight: 700; margin-top: 4px; }
+.table-seated { font-size: 11px; color: var(--text-3); }
+.table-qr-btn { position: absolute; top: 8px; right: 8px; font-size: 11px; }
+
+/* Đơn hàng */
+/* GĐ11 — dùng chung tab gạch chân .tab-row (giống ảnh screens/03-orders.jpeg). */
+.orders-tabs { margin-bottom: 10px; }
+.orders-filters-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.orders-filters-row input, .orders-filters-row select { flex: 1; min-width: 110px; }
+.orders-filters-row .btn { flex: 0 0 auto; }
+/* Task 2 mục 4 (2026-08-08): hàng chip chọn nhanh khoảng thời gian (Hôm nay / Hôm qua / 7 ngày /
+   Tháng này) — cuộn ngang trên điện thoại thay vì xuống dòng làm cao thêm phần lọc. */
+.ord-quick-range { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; padding-bottom: 2px; }
+.ord-quick-range .chip { white-space: nowrap; }
+.order-card {
+  display: block; width: 100%; background: #fff; border-radius: var(--radius); padding: 12px;
+  margin-bottom: 8px; text-align: left; border: 1px solid var(--line); box-shadow: var(--shadow-sm);
+}
+.order-card-top { display: flex; justify-content: space-between; align-items: center; }
+.order-code { font-weight: 700; }
+.order-status-badge {
+  font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+  background: var(--primary-soft); color: var(--primary);
+}
+.order-status-badge.status-cancelled { background: #FEE2E2; color: var(--danger); }
+.order-status-badge.status-returned { background: #FFF3E0; color: #B4690E; }
+.order-card-mid { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-2); margin-top: 4px; }
+.order-card-bottom { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-3); margin-top: 4px; }
+.order-total { font-weight: 700; color: var(--money-in); font-size: 14px; }
+.order-detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.order-detail-actions .btn { flex: 1; min-width: 120px; }
+
+/* Nhân viên */
+.table-scroll { overflow-x: auto; background: #fff; border-radius: var(--radius); padding: 10px; border: 1px solid var(--line); }
+.roles-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.roles-table th, .roles-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.roles-table .perm-cell { text-align: center; }
+.staff-row {
+  display: flex; justify-content: space-between; align-items: center; background: #fff;
+  border-radius: var(--radius); padding: 12px; margin-bottom: 8px; gap: 8px; flex-wrap: wrap;
+  border: 1px solid var(--line);
+}
+.staff-row.inactive { opacity: .55; }
+.staff-name { font-weight: 700; }
+.staff-meta { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.staff-row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.staff-row-actions button { font-size: 12px; min-height: 34px; padding: 0 10px; }
+
+/* Giỏ hàng */
+.cart-panel { margin-top: 20px; background: #fff; border-radius: var(--radius); padding: 14px; border: 1px solid var(--line); }
+.cart-empty { color: var(--text-3); text-align: center; padding: 30px 0; display: flex;
+  flex-direction: column; align-items: center; gap: 10px; font-size: 14px; }
+.cart-empty-ico { color: var(--line); }
+.cart-empty-ico svg { width: 56px; height: 56px; }
+.cart-item { border-bottom: 1px solid var(--line); padding: 10px 0; }
+.cart-item:last-child { border-bottom: none; }
+/* GĐ12 — một dòng giỏ hàng xếp ngang như ảnh 21-pos-cart: tên+đơn giá · − SL + · thành tiền · xoá */
+.cart-item-top { display: flex; align-items: center; gap: 8px; }
+.cart-item-info { flex: 1; min-width: 0; }
+.cart-item-name { font-weight: 600; font-size: 14px; }
+.cart-item-size { font-size: 12px; color: var(--text-2); }
+.cart-item-money { font-weight: 600; color: var(--text); white-space: nowrap; font-size: 14px; }
+.cart-item-remove { background: none; color: var(--text-3); min-height: auto; min-width: auto; padding: 4px; }
+.cart-item-remove svg { width: 16px; height: 16px; }
+.cart-item-remove:hover { color: var(--danger); }
+.qty-row { display: flex; align-items: center; gap: 6px; flex: none; }
+.qty-num { min-width: 22px; text-align: center; font-weight: 600; }
+.qty-btn { width: 30px; height: 30px; min-height: 30px; min-width: 30px; background: #fff;
+  border: 1px solid var(--line); color: var(--primary); font-size: 17px; border-radius: 6px; }
+.cart-item-note { margin-top: 6px; font-size: 13px; min-height: 36px; }
+.cart-total-row { display: flex; justify-content: space-between; font-weight: 700; padding-top: 10px; margin-top: 6px; border-top: 2px solid var(--line); }
+
+/* Đầu giỏ: ô tìm khách + nút hình thức nhận (viền xanh) — giống ảnh khảo sát. */
+.cart-head { display: flex; align-items: flex-start; gap: 8px; }
+.cart-head .field { flex: 1; margin-bottom: 8px; }
+.cart-type-btn {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px;
+  background: #fff; border: 1px solid var(--primary); color: var(--primary); font-weight: 600;
+  white-space: nowrap;
+}
+.cart-type-btn svg { width: 18px; height: 18px; }
+/* Nút thanh toán 2 dòng: chữ trên, số tiền dưới (như "Thanh toán (F1) / 555.555" của app). */
+.cart-pay-btn {
+  width: 100%; margin-top: 10px; min-height: 56px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+}
+.cart-pay-btn b { font-size: 15px; font-weight: 700; }
+.cart-pay-btn span { font-size: 15px; font-weight: 700; }
+
+.delivery-tabs { display: flex; gap: 8px; margin: 12px 0 8px; }
+.delivery-tabs button { flex: 1; background: #fff; border: 1px solid var(--line); }
+.delivery-tabs button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.customer-suggestions { position: relative; }
+.suggestion-list {
+  position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--line);
+  border-radius: 8px; z-index: 5; max-height: 160px; overflow-y: auto; box-shadow: var(--shadow-md);
+}
+.suggestion-list div { padding: 8px 12px; cursor: pointer; font-size: 14px; }
+.suggestion-list div:hover { background: var(--primary-soft); }
+
+/* Màn hình nghỉ */
+.offline-screen {
+  position: fixed; inset: 0; background: var(--primary); color: #fff;
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+.offline-box { text-align: center; padding: 24px; }
+.offline-icon { font-size: 48px; margin-bottom: 12px; }
+.offline-box .btn { margin-top: 16px; background: #fff; color: var(--primary); padding: 0 24px; }
+
+/* Đăng nhập — GĐ12: căn GIỮA màn hình cả chiều ngang lẫn chiều dọc, khung thẻ trắng như app. */
+/* Chưa đăng nhập thì KHÔNG có cột trái, phải bỏ luôn phần chừa chỗ cho nó — nếu không khung
+   đăng nhập bị đẩy lệch sang phải đúng 240px (bề rộng cột trái) chứ không nằm giữa màn hình. */
+body.no-nav .view { display: flex; align-items: center; justify-content: center; margin-left: 0 !important; }
+.login-wrap {
+  width: 100%; max-width: 380px; margin: 0 auto; text-align: center;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md); padding: 28px 24px 26px;
+}
+.login-logo {
+  width: 64px; height: 64px; margin: 0 auto 14px; border-radius: 18px;
+  background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 20px rgba(22, 153, 57, .3);
+}
+.login-logo svg { width: 34px; height: 34px; }
+.login-wrap h1 { color: var(--text); font-size: 22px; margin: 0 0 6px; letter-spacing: -.4px; }
+.login-sub { color: var(--text-2); font-size: 13.5px; margin: 0 0 22px; }
+.login-wrap .field { margin-bottom: 12px; text-align: left; }
+.login-wrap label { display: block; font-size: 13px; margin-bottom: 4px; color: var(--text-2); }
+
+/* Thanh toán */
+.pay-summary { margin: 12px 0; font-size: 14px; }
+.pay-summary > div { display: flex; justify-content: space-between; padding: 4px 0; }
+.pay-summary .pay-total {
+  border-top: 1px solid var(--line); margin-top: 6px; padding-top: 8px;
+  font-size: 18px; font-weight: 700; color: var(--money-in);
+}
+.pay-warn { color: var(--warn); font-size: 13px; }
+.pay-methods { display: flex; gap: 8px; margin-bottom: 12px; }
+.pay-methods button { flex: 1; }
+#pay-detail label { display: block; font-size: 13px; color: var(--text-2); margin-bottom: 4px; }
+#pay-detail input { width: 100%; font-size: 20px; padding: 10px; }
+.pay-change { margin: 10px 0; font-size: 15px; }
+.pay-qr { display: block; width: 100%; max-width: 280px; margin: 0 auto 8px; }
+.pay-qr-note { text-align: center; font-size: 13px; margin-bottom: 12px; }
+
+/* Tiền */
+.cash-account-row {
+  display: flex; justify-content: space-between; align-items: flex-start; background: #fff;
+  border-radius: var(--radius); padding: 12px; margin-bottom: 8px; gap: 8px; flex-wrap: wrap;
+  border: 1px solid var(--line);
+}
+.cash-account-row.inactive { opacity: .55; }
+.cash-account-name { font-weight: 700; }
+.cash-account-meta { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.cash-account-balance { font-weight: 700; color: var(--money-in); white-space: nowrap; }
+.cash-account-actions { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
+.cash-account-actions button { font-size: 12px; min-height: 34px; padding: 0 10px; }
+.badge-default {
+  display: inline-block; font-size: 10px; font-weight: 700; background: var(--primary-soft);
+  color: var(--primary); border-radius: 999px; padding: 2px 8px; margin-left: 6px;
+}
+
+.tc-actions { display: flex; gap: 10px; margin-bottom: 12px; }
+.tc-actions .btn { flex: 1; }
+.tc-totals { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.tc-total-box { flex: 1; min-width: 100px; background: #fff; border-radius: var(--radius); padding: 10px 12px; border: 1px solid var(--line); }
+.tc-total-box .label { display: block; font-size: 11px; color: var(--text-3); }
+.tc-total-box .value { display: block; font-size: 16px; font-weight: 700; margin-top: 2px; }
+.tc-total-box .value.thu { color: var(--money-in); }
+.tc-total-box .value.chi { color: var(--money-out); }
+.tc-filters { margin-bottom: 10px; }
+.tc-filters .orders-filters-row { margin-top: 8px; }
+.tc-row {
+  display: flex; justify-content: space-between; align-items: center; background: #fff;
+  border-radius: var(--radius); padding: 12px; margin-bottom: 8px; gap: 8px; flex-wrap: wrap;
+  border: 1px solid var(--line);
+}
+.tc-row.voided { opacity: .55; text-decoration: line-through; }
+.tc-row-main { flex: 1; min-width: 180px; }
+.tc-row-top { display: flex; justify-content: space-between; gap: 8px; }
+.tc-code { font-weight: 700; }
+.tc-amount { font-weight: 700; }
+.tc-amount.thu { color: var(--money-in); }
+.tc-amount.chi { color: var(--money-out); }
+.tc-row-meta { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.tc-voided-label { font-size: 11px; font-weight: 700; color: var(--danger); margin-top: 4px; }
+.sq-quick-range { display: flex; gap: 8px; overflow-x: auto; }
+.sq-quick-range .chip { white-space: nowrap; }
+.debt-row {
+  display: block; width: 100%; background: #fff; border-radius: var(--radius); padding: 12px;
+  margin-bottom: 8px; text-align: left; border: 1.5px solid var(--line);
+}
+.debt-row.overdue { border-color: var(--danger); background: #FFF5F5; }
+.debt-row-top { display: flex; justify-content: space-between; align-items: center; }
+.debt-partner { font-weight: 700; }
+.debt-remaining { font-weight: 700; color: var(--money-in); }
+.debt-row.overdue .debt-remaining { color: var(--danger); }
+.debt-row-meta { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+
+/* Báo cáo */
+.rp-note { font-size: 12px; color: var(--text-3); margin: 6px 0 12px; }
+.rp-warning-banner { background: #FFF8E1; border: 1px solid #FFCA28; color: #7A5C00; border-radius: var(--radius); padding: 12px; margin-bottom: 12px; font-size: 13px; }
+.rp-warning-banner a { color: var(--primary); font-weight: 600; }
+.pay-total.rp-positive { color: var(--money-in); }
+.pay-total.rp-negative { color: var(--money-out); }
+.rp-exempt-box { background: var(--primary-soft); color: var(--primary-dark); border-radius: var(--radius); padding: 14px; margin: 12px 0; }
+.rp-exempt-box .rp-what-if { font-size: 12px; margin-top: 8px; opacity: .9; }
+.rp-disclaimer { font-size: 11px; color: var(--text-3); background: #EEF2F7; border-radius: 10px; padding: 10px; margin-top: 16px; }
+.rp-stats-line { font-size: 13px; color: var(--text-2); margin: 8px 0 12px; }
+.rp-readonly-note { font-size: 12px; color: var(--warn); margin-top: 8px; }
+.rp-cost-input { max-width: 110px; min-height: 36px; padding: 0 8px; }
+.rp-savebar { position: sticky; bottom: 0; background: var(--bg); padding: 10px 0; margin-top: 12px; }
+.rp-margin-pos { color: var(--money-in); font-weight: 600; }
+.rp-margin-neg { color: var(--money-out); font-weight: 600; }
+
+/* Hàng hoá & kho */
+.field { margin-bottom: 12px; text-align: left; }
+.field label { display: block; font-size: 13px; color: var(--text-2); margin-bottom: 4px; }
+.hint { font-size: 12px; color: var(--text-3); margin: 8px 0; }
+
+/* GĐ11 — tab gạch chân giống app.sobanhang.com (ảnh screens/03-orders, 05-products):
+   chữ xám, mục đang chọn đổi xanh + gạch chân, có vạch ngăn mảnh giữa các tab.
+   Trước đây là viên thuốc nền xanh đặc — khác hẳn bản web mà chủ quán nhìn. */
+.tab-row {
+  display: flex; gap: 0; overflow-x: auto; margin: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.tab {
+  background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-2);
+  font-size: 14px; min-height: 40px; padding: 0 16px; white-space: nowrap; border-radius: 0;
+  font-weight: 500; position: relative;
+  /* .tab dùng cho cả <button> (lọc tại chỗ) lẫn <a> (chuyển màn) nên phải tự căn giữa. */
+  display: inline-flex; align-items: center; gap: 5px; text-decoration: none; cursor: pointer;
+}
+.tab + .tab::before {
+  content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 1px; height: 16px; background: var(--line);
+}
+.tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.tab-count { font-size: 14px; }
+
+.filter-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.filter-row input, .filter-row select { flex: 1 1 140px; min-height: 40px; }
+.filter-row .btn { flex: 0 0 auto; padding: 0 12px; font-size: 14px; background: #fff; border: 1px solid var(--line); }
+.filter-row .btn.btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+.stock-row {
+  display: flex; align-items: center; gap: 10px; background: #fff;
+  border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px; border: 1px solid var(--line);
+}
+.stock-row.inactive { opacity: .55; }
+.stock-row.low { border-left: 4px solid var(--warn); }
+.stock-pick { flex: 0 0 auto; }
+.stock-pick input { width: 20px; min-height: 20px; }
+.stock-main { flex: 1 1 auto; min-width: 0; }
+.stock-name { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.stock-meta { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+.stock-qty { flex: 0 0 auto; text-align: right; font-weight: 700; font-size: 15px; }
+.stock-sub { font-size: 11px; font-weight: 400; color: var(--text-2); }
+.stock-actions { flex: 0 0 auto; }
+.stock-actions button { min-height: 34px; font-size: 13px; padding: 0 10px; }
+
+.stock-line { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+.stock-line select { flex: 3 1 0; min-width: 0; }
+.stock-line input { flex: 1 1 0; min-width: 60px; }
+.stock-line button { flex: 0 0 auto; min-width: 40px; }
+
+.stock-table { background: #fff; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); }
+.stock-table-head, .stock-table-row {
+  display: grid; grid-template-columns: 2fr 1fr 1.2fr 1fr; gap: 6px;
+  padding: 8px 10px; align-items: center; font-size: 13px;
+}
+.stock-table-head { background: #EEF2F7; font-weight: 600; color: var(--text-2); }
+.stock-table-row { border-top: 1px solid var(--line); }
+.stock-table-row input { min-height: 34px; padding: 0 6px; font-size: 14px; }
+.diff-plus { color: var(--money-in); font-weight: 700; }
+.diff-minus { color: var(--money-out); font-weight: 700; }
+
+.badge-warn { background: #FEF3C7; color: #92400E; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; }
+.badge-in { background: #E6F6ED; color: var(--money-in); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; }
+.badge-out { background: #FEE2E2; color: #991B1B; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; }
+.warn-banner { background: #FEF3C7; color: #92400E; font-size: 12px; border-radius: 10px; padding: 10px; margin-top: 10px; }
+.warn-banner a { color: #92400E; font-weight: 700; }
+
+/* ═══ GĐ9 — DASHBOARD "TỔNG QUAN" sao chép /mission-control của app.sobanhang.com ═══
+   Xem output/sobanhang-survey/KHAO-SAT-TOAN-BO.md mục 2 + screens/01-mission-control.jpeg */
+.dash-h2 { font-size: 18px; font-weight: 700; margin: 18px 0 10px; letter-spacing: -.2px; }
+
+/* ── Task 2 mục 7 (2026-08-08): tiêu đề mục bấm được để thu gọn ────────────────────────────────
+   Mũi tên xoay 90° khi mục bị gập, để nhìn là biết còn nội dung ẩn bên dưới chứ không phải mất. */
+.sec-head { cursor: pointer; user-select: none; }
+.sec-head:hover { color: var(--primary-dark); }
+.sec-head:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+.sec-caret {
+  display: inline-block; width: 0; height: 0; margin-left: 8px; vertical-align: middle;
+  border-left: 5px solid currentColor; border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent; opacity: .5;
+  transform: rotate(90deg); transition: transform .15s ease;
+}
+.sec-head.collapsed .sec-caret { transform: rotate(0deg); }
+
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-md); padding: 14px; margin-bottom: 12px;
+}
+.card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.card-head h3 { margin: 0; font-size: 15px; }
+.card-head.warn { background: #FFF4E5; margin: -14px -14px 10px; padding: 12px 14px;
+  border-radius: var(--radius) var(--radius) 0 0; }
+.see-all { font-size: 13px; color: var(--primary); text-decoration: none; font-weight: 600; }
+
+/* ── 4 thẻ KPI (viền trên xanh lá giống app) ───────────────────────────── */
+.kpi-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media (min-width: 900px) { .kpi-row { grid-template-columns: repeat(4, 1fr); } }
+.kpi-loading { color: var(--text-3); font-size: 14px; grid-column: 1 / -1; }
+.kpi {
+  background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--primary);
+  border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 12px;
+}
+.kpi-label {
+  font-size: 11px; font-weight: 600; color: var(--text-2); letter-spacing: .3px;
+  display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 22px;
+}
+.kpi-edit { background: none; border: none; padding: 0; min-height: 22px; min-width: 22px; color: var(--text-3); }
+.kpi-edit svg { width: 14px; height: 14px; }
+.kpi-acc { width: auto; min-height: 26px; font-size: 12px; padding: 0 6px; border-radius: 6px; }
+.kpi-value { font-size: 22px; font-weight: 700; letter-spacing: -.5px; margin: 6px 0 4px; }
+.kpi-sub { font-size: 11.5px; color: var(--text-2); }
+.kpi-sub.two { display: flex; flex-direction: column; gap: 2px; }
+.kpi-sub .in { color: var(--money-in); }
+.kpi-sub .out { color: var(--money-out); }
+.kpi-delta { font-size: 11.5px; color: var(--text-2); }
+.kpi-delta.up { color: var(--money-in); }
+.kpi-delta.down { color: var(--money-out); }
+.kpi-delta span { color: var(--text-3); }
+.kpi-goalbar { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 4px 0 6px; }
+.kpi-goalbar i { display: block; height: 100%; background: var(--primary); }
+
+/* ── Thao tác nhanh ────────────────────────────────────────────────────── */
+.quick-card h3 { margin: 0 0 10px; font-size: 15px; }
+.quick-actions { display: grid; gap: 8px; }
+.qa {
+  display: flex; align-items: center; justify-content: center; min-height: 44px;
+  border: 1px solid var(--primary); border-radius: var(--radius);
+  color: var(--primary); text-decoration: none; font-weight: 600; font-size: 14.5px;
+}
+.qa.danger { border-color: var(--money-out); color: var(--money-out); }
+
+/* ── Biểu đồ cột đôi (CSS thuần, không nạp thư viện ngoài) ─────────────── */
+.wk-chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; height: 120px; align-items: end; }
+.wk-col { display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+.wk-bars { display: flex; align-items: flex-end; gap: 2px; height: 100%; width: 100%; justify-content: center; }
+.wk-bars i { width: 8px; border-radius: 2px 2px 0 0; min-height: 2px; }
+.wk-bars i.now { background: var(--primary); }
+.wk-bars i.prev { background: #C9CDD2; }
+.wk-day { font-size: 10.5px; color: var(--text-3); }
+.wk-legend { font-size: 11px; color: var(--text-2); display: flex; align-items: center; gap: 5px; }
+.wk-legend span { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.wk-legend .now { background: var(--primary); }
+.wk-legend .prev { background: #C9CDD2; }
+.wk-total {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line);
+  font-size: 13px; color: var(--text-2);
+}
+.wk-total b { font-size: 16px; color: var(--primary); }
+
+/* ── Danh sách nhỏ trong thẻ ───────────────────────────────────────────── */
+.mini-list { list-style: none; margin: 0; padding: 0; }
+.mini-list li {
+  display: flex; justify-content: space-between; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px;
+}
+.mini-list li:last-child { border-bottom: none; }
+.mini-list li a { color: var(--text); text-decoration: none; }
+.mini-list b.low { color: var(--money-out); }
+.mini-empty { color: var(--text-3); font-size: 13.5px; margin: 6px 0; }
+.mini-empty.ok { color: var(--text-2); }
+
+/* ── GĐ9 — Cài đặt > Quy trình bán hàng (sao chép /setting/sales-process) ── */
+.sp-group { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); margin-bottom: 12px; overflow: hidden; }
+.sp-group-title { font-size: 11.5px; font-weight: 700; color: var(--text-2); letter-spacing: .4px;
+  text-transform: uppercase; padding: 10px 14px; background: #FAFBFB; border-bottom: 1px solid var(--line); }
+.sp-row { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 11px 14px; border-bottom: 1px solid var(--line); }
+.sp-row:last-child { border-bottom: none; }
+.sp-text { display: flex; flex-direction: column; gap: 2px; }
+.sp-text b { font-weight: 500; font-size: 14.5px; }
+.sp-text small { color: var(--text-3); font-size: 12px; }
+.sp-row input[type=checkbox], .sp-row input[type=radio] { width: auto; min-height: auto; flex: none;
+  width: 20px; height: 20px; accent-color: var(--primary); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GĐ10 (05/08/2026) — BỐ CỤC MÀN HÌNH MÁY TÍNH + đầu trang có nút hành động.
+   Trước đây mọi màn đều là một cột dọc kiểu điện thoại; mở trên máy tính thì
+   giỏ hàng nằm tuốt dưới đáy, danh sách đơn kéo dài lê thê. Bố cục dưới đây chỉ
+   bật từ 1024px trở lên (điện thoại giữ nguyên như cũ, không đụng gì).
+   Móc bám: body[data-route="..."] do js/app.js gắn mỗi lần đổi màn.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Đầu trang: tiêu đề bên trái, nút hành động chính bên phải (giống app Sổ Bán Hàng) */
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+.page-head h2 { margin: 0; }
+.page-head .btn { flex: 0 0 auto; }
+
+/* Nút xoá trong hàng danh sách — đỏ nhạt, không hét vào mặt người dùng */
+.stock-actions button.danger,
+.staff-row-actions button.danger { color: var(--danger); border-color: #F3C9C9; }
+
+@media (min-width: 1024px) {
+  /* ── Bán hàng: cột danh mục dọc bên trái · lưới món giữa · giỏ hàng dính bên phải ──
+     GĐ12: bố cục sao chép app.sobanhang.com/pos (ảnh 20-pos-with-products.jpeg). */
+  /* Hàng "tools" nằm giữa thanh trên và lưới món, chiếm đúng cột giữa (cùng cột với lưới) để
+     không đẩy cột danh mục hay giỏ hàng. Thiếu grid-area thì thanh công cụ sẽ tự chiếm một ô
+     trong lưới và làm lệch toàn bộ bố cục 3 cột. */
+  body[data-route="ban-hang"] #view {
+    display: grid;
+    grid-template-columns: 216px minmax(0, 1fr) 400px;
+    grid-template-areas: "bar bar bar" "cats tools cart" "cats grid cart";
+    align-content: start;
+    column-gap: 0;
+  }
+  body[data-route="ban-hang"] #view > .pos-bar { grid-area: bar; }
+  body[data-route="ban-hang"] #view > .pos-cats { grid-area: cats; }
+  body[data-route="ban-hang"] #view > .sell-toolbar { grid-area: tools; margin: 12px 0 0; }
+  body[data-route="ban-hang"] #view > .sell-grid { grid-area: grid; }
+  body[data-route="ban-hang"] #view > .cart-panel {
+    grid-area: cart; margin-top: 0; position: sticky; top: var(--posbar-h);
+    max-height: calc(100vh - var(--posbar-h)); overflow-y: auto;
+    box-shadow: none; border-radius: 0; border: none; border-left: 1px solid var(--line);
+    display: flex; flex-direction: column;
+  }
+  body[data-route="ban-hang"] .sell-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+
+  /* ── Đơn hàng: thẻ đơn xếp 2–3 cột thay vì một cột dọc dài ── */
+  body[data-route="don-hang"] .orders-list {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px;
+  }
+  body[data-route="don-hang"] .order-card { margin-bottom: 0; height: 100%; }
+
+  /* ── Quản lý bàn: ô bàn to hơn cho dễ bấm trên máy tính quầy ── */
+  body[data-route="quan-ly-ban"] .tables-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;
+  }
+  body[data-route="quan-ly-ban"] .tables-top-actions .btn { flex: 0 0 auto; min-width: 160px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GĐ11 (05/08/2026) — bám sát ảnh khảo sát app.sobanhang.com trong
+   output/sobanhang-survey/screens/ (01-mission-control · 03-orders · 05-products).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Hàng tab lớn của trang (Sản phẩm · Nhóm tuỳ chọn món · Danh mục) — chữ to hơn tab lọc. */
+.page-tabs { margin: 6px 0 14px; }
+.page-tabs .tab { font-size: 15px; min-height: 44px; }
+
+/* Vòng tròn tiến độ mục tiêu doanh thu (thẻ KPI thứ 2). */
+.kpi-goal { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.kpi-goal .kpi-value { margin-bottom: 2px; }
+.kpi-ring {
+  flex: none; width: 48px; height: 48px; border-radius: 50%;
+  background: conic-gradient(var(--primary) calc(var(--pct, 0) * 1%), var(--line) 0);
+  -webkit-mask: radial-gradient(circle, transparent 58%, #000 59%);
+          mask: radial-gradient(circle, transparent 58%, #000 59%);
+}
+
+/* Biểu đồ tuần: trục dọc + lưới đứt nét như ApexCharts của bản web. */
+.wk-plot { display: flex; gap: 8px; }
+.wk-axis {
+  display: flex; flex-direction: column; justify-content: space-between;
+  font-size: 10.5px; color: var(--text-3); padding-bottom: 18px; text-align: right;
+  flex: none; max-width: 84px;
+}
+.wk-area { position: relative; flex: 1; min-width: 0; }
+.wk-grid {
+  position: absolute; inset: 0 0 18px 0; display: flex; flex-direction: column;
+  justify-content: space-between; pointer-events: none;
+}
+.wk-grid i { display: block; border-top: 1px dashed #E3E5E7; }
+.wk-area .wk-chart { position: relative; }
+/* Điện thoại dùng nhãn ngắn T2…CN, máy tính hiện đủ chữ "Thứ hai" như bản web. */
+.wk-day-full { display: none; font-weight: 400; }
+.wk-day-short { font-weight: 400; }
+
+@media (min-width: 1024px) {
+  .wk-day-full { display: inline; }
+  .wk-day-short { display: none; }
+
+  /* Trang chủ: 2 cột (trái Thao tác nhanh + Cần xử lý · phải 2 biểu đồ), rồi 3 thẻ ngang. */
+  .dash-grid {
+    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0 12px; align-items: start;
+    grid-template-areas:
+      "quick quick quick rev    rev  rev"
+      "todo  todo  todo  profit profit profit"
+      "top   top   low   low    recent recent";
+  }
+  /* #dash-blocks chỉ là hộp chứa do tải bất đồng bộ — cho con của nó thành ô lưới trực tiếp. */
+  .dash-grid > #dash-blocks { display: contents; }
+  .dash-quick   { grid-area: quick; }
+  .dash-rev     { grid-area: rev; }
+  .dash-todo    { grid-area: todo; }
+  .dash-profit  { grid-area: profit; }
+  .dash-top     { grid-area: top; }
+  .dash-low     { grid-area: low; }
+  .dash-recent  { grid-area: recent; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GĐ12 (07/08/2026) — MÀN BÁN HÀNG CHIẾM TRỌN MÀN HÌNH, THẺ ĐƠN SONG SONG,
+   DANH MỤC CỘT DỌC BÊN TRÁI. Sao chép app.sobanhang.com/pos, ảnh khảo sát:
+   output/sobanhang-survey/screens/20-pos-with-products.jpeg · 21-pos-cart.jpeg ·
+   22-pos-multitab.jpeg (chụp trên cửa hàng ĐÃ CÓ sản phẩm, 07/08/2026).
+   Số đo lấy bằng getComputedStyle trên trang sống: thanh trên cao 55px nền
+   #169939 (rgb(22,153,59)), cột danh mục rộng 227px nền trắng, thẻ đơn cao 46px
+   bo góc trên 4px — thẻ đang chọn nền trắng chữ đen, thẻ khác nền xanh chữ trắng.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root { --posbar-h: 56px; }
+
+/* Toàn màn hình: js/app.js gắn body.pos-full ở màn Bán hàng → ẩn hẳn khung app. */
+body.pos-full .app-header,
+body.pos-full .sidebar,
+body.pos-full .tabbar,
+body.pos-full .fab { display: none !important; }
+body.pos-full .view {
+  margin-left: 0 !important; padding: 0 !important;
+  padding-top: var(--posbar-h) !important; min-height: 100vh;
+}
+body.pos-full { overflow-x: hidden; }
+
+/* Thanh xanh trên cùng */
+.pos-bar {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--posbar-h); z-index: 30;
+  background: var(--primary); color: #fff;
+  display: flex; align-items: center; gap: 8px; padding: 0 10px;
+}
+/* Điện thoại: xếp 2 dòng bằng lưới — dòng trên ô tìm + nút, dòng dưới các thẻ đơn.
+   Nếu để một dòng như máy tính thì tên thẻ đơn bị cắt cụt, nhân viên không biết đang ở đơn nào. */
+@media (max-width: 1023px) {
+  body.pos-full { --posbar-h: 100px; }
+  .pos-bar {
+    display: grid; gap: 6px; padding: 5px 8px 0; align-items: center;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-rows: 44px 44px;
+    grid-template-areas: "search tablebtn right" "tabs tabs add";
+  }
+  .pos-search { grid-area: search; }
+  .pos-bar-btn { grid-area: tablebtn; padding: 0 10px; }
+  .pos-bar-btn span { display: none; }
+  .pos-bar-right { grid-area: right; margin-left: 0; }
+  .pos-tabs { grid-area: tabs; min-width: 0; height: 44px; padding-top: 0; align-items: stretch; }
+  .pos-tab { height: 44px; min-height: 44px; }
+  .pos-tab-add { grid-area: add; }
+}
+.pos-search { position: relative; flex: 0 1 320px; min-width: 130px; }
+.pos-search input {
+  min-height: 38px; padding-left: 34px; border-radius: 6px; border: none;
+  font-size: 14px; background: #fff;
+}
+.pos-search-ico {
+  position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+  color: var(--text-3); display: flex; pointer-events: none;
+}
+.pos-search-ico svg { width: 17px; height: 17px; }
+.pos-bar-btn {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px;
+  border-radius: 6px; background: rgba(255,255,255,.16); color: #fff; text-decoration: none;
+  font-size: 14px; font-weight: 600; white-space: nowrap; border: none;
+}
+.pos-bar-btn:hover { background: rgba(255,255,255,.26); }
+.pos-bar-btn svg { width: 19px; height: 19px; }
+
+/* Thẻ đơn song song */
+.pos-tabs { display: flex; align-items: flex-end; gap: 2px; overflow-x: auto; height: 100%; padding-top: 10px; }
+.pos-tab {
+  flex: none; height: 46px; min-height: 46px; padding: 0 12px; border-radius: 4px 4px 0 0;
+  background: transparent; color: rgba(255,255,255,.92); border: none; font-size: 14.5px;
+  font-weight: 600; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+}
+.pos-tab:hover { background: rgba(255,255,255,.14); }
+.pos-tab.active { background: #FEFEFE; color: var(--text); }
+.pos-tab-count {
+  min-width: 19px; height: 19px; line-height: 19px; text-align: center; border-radius: 99px;
+  background: rgba(255,255,255,.28); font-size: 11.5px; font-weight: 700; padding: 0 5px;
+}
+.pos-tab.active .pos-tab-count { background: var(--primary-soft); color: var(--primary); }
+.pos-tab-close { font-size: 17px; line-height: 1; opacity: .75; cursor: pointer; padding: 0 2px; }
+.pos-tab-close:hover { opacity: 1; }
+.pos-tab-add {
+  flex: none; width: 30px; height: 30px; min-width: 30px; min-height: 30px; border-radius: 50%;
+  background: rgba(255,255,255,.22); color: #fff; font-size: 20px; line-height: 1; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.pos-tab-add:hover { background: rgba(255,255,255,.34); }
+
+.pos-bar-right { margin-left: auto; display: flex; align-items: center; gap: 2px; }
+.pos-bar-ico {
+  width: 38px; height: 38px; min-width: 38px; min-height: 38px; padding: 0; border-radius: 6px;
+  background: none; border: none; color: #fff; text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.pos-bar-ico:hover { background: rgba(255,255,255,.18); }
+.pos-bar-ico svg { width: 21px; height: 21px; }
+.pos-bar-ico.pos-exit svg { width: 24px; height: 24px; }
+
+/* Cột danh mục dọc bên trái (máy tính) — trên điện thoại thành hàng ngang cuộn như cũ */
+.pos-cats {
+  display: flex; gap: 8px; overflow-x: auto; padding: 10px 12px; background: #FEFEFE;
+  border-bottom: 1px solid var(--line);
+}
+@media (min-width: 1024px) {
+  .pos-cats {
+    flex-direction: column; gap: 0; overflow-x: hidden; overflow-y: auto; padding: 0;
+    border-bottom: none; border-right: 1px solid var(--line);
+    position: sticky; top: var(--posbar-h); height: calc(100vh - var(--posbar-h));
+  }
+  .pos-cats .chip {
+    width: 100%; text-align: left; border: none; border-radius: 0; background: none;
+    padding: 14px 16px; min-height: 48px; font-size: 15px; font-weight: 500;
+    border-bottom: 1px solid var(--line);
+  }
+  .pos-cats .chip.active {
+    background: #F2F3F4; color: var(--text); font-weight: 700;
+    box-shadow: inset 3px 0 0 var(--primary);
+  }
+  /* Cả màn cao đúng 1 màn hình: chỉ LƯỚI MÓN và GIỎ HÀNG tự cuộn bên trong, thanh xanh và cột
+     danh mục đứng yên — giống app, thu ngân không bị mất thanh công cụ khi kéo tìm món. */
+  body[data-route="ban-hang"] #view { height: 100vh; overflow: hidden; }
+  body[data-route="ban-hang"] .sell-grid {
+    margin: 0; padding: 14px; gap: 12px; align-content: start; grid-auto-rows: 172px;
+    overflow-y: auto; max-height: calc(100vh - var(--posbar-h));
+  }
+  body[data-route="ban-hang"] .cart-panel { padding: 12px 14px; }
+  body[data-route="ban-hang"] .cart-lines { flex: 1; overflow-y: auto; }
+  body[data-route="ban-hang"] .cart-foot { border-top: 1px solid var(--line); padding-top: 8px; }
+}
+
+/* ── Nút Cài đặt riêng ở ĐÁY cột trái (giống app: tách hẳn khỏi các nhóm trên) ──
+   Cột trái dài hơn màn hình nên phải DÍNH đáy, không thì phải kéo hết menu mới thấy. */
+.sidebar-footer {
+  margin-top: auto; position: sticky; bottom: 0; z-index: 2;
+  border-top: 1px solid rgba(255,255,255,.14); padding: 4px 0 10px;
+  background: var(--rail-to);
+}
+.sidebar-footer a { font-size: 14px; font-weight: 600; }
+
+/* ── Màn Cài đặt kiểu danh sách của app (/setting: 4 nhóm, mỗi mục 1 dòng có mũi tên) ── */
+/* Task 2 mục 6 (2026-08-08): mục lục Cài đặt xếp nhiều cột trên màn rộng. Dùng CSS columns thay vì
+   grid để các nhóm cao thấp khác nhau tự chảy khín cột, không để lại khoảng trống như grid. */
+.set-cols { column-gap: 16px; }
+@media (min-width: 720px)  { .set-cols { column-count: 2; } }
+@media (min-width: 1100px) { .set-cols { column-count: 3; } }
+/* break-inside: nhóm KHÔNG được cắt đôi giữa 2 cột — nửa danh sách ở cột này nửa ở cột kia thì
+   chủ quán không đọc nổi. */
+.set-cols .set-group { break-inside: avoid; -webkit-column-break-inside: avoid; page-break-inside: avoid; }
+
+.set-group { margin-bottom: 18px; }
+.set-group-title {
+  font-size: 11.5px; font-weight: 700; color: var(--text-2); letter-spacing: .5px;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.set-list {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); overflow: hidden;
+}
+.set-item {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  padding: 13px 14px; background: none; border: none; border-bottom: 1px solid var(--line);
+  color: var(--text); text-decoration: none; font-size: 14.5px; font-weight: 500;
+  border-radius: 0; min-height: 52px;
+}
+.set-item:last-child { border-bottom: none; }
+.set-item:hover { background: #FAFBFB; }
+.set-item .set-ico { flex: none; display: flex; color: var(--primary); }
+.set-item .set-ico svg { width: 21px; height: 21px; }
+.set-item .set-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.set-item .set-text small { color: var(--text-3); font-size: 12px; font-weight: 400; }
+.set-item .set-arrow { flex: none; color: var(--text-3); font-size: 19px; line-height: 1; }
+.set-back {
+  display: inline-flex; align-items: center; gap: 6px; background: none; border: none;
+  color: var(--primary); font-weight: 600; font-size: 14px; padding: 4px 0; margin-bottom: 6px;
+  min-height: 36px;
+}
+.set-back svg { width: 18px; height: 18px; }
+
+
+/* ── Hộp thoại trong ứng dụng (thay prompt/confirm của trình duyệt) ───────────────── */
+.dlg-body { margin: 4px 0 0; }
+.dlg-msg { margin: 0; font-size: 15px; line-height: 1.55; color: var(--text, #1f2937); }
+.dlg-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted, #6b7280); }
+.dlg-input {
+  width: 100%; padding: 11px 12px; font-size: 15px; font-family: inherit;
+  border: 1px solid var(--border, #e5e7eb); border-radius: 10px; background: #fff; color: inherit;
+  transition: border-color .15s, box-shadow .15s;
+}
+.dlg-input:focus { outline: none; border-color: var(--brand, #169939); box-shadow: 0 0 0 3px rgba(22, 153, 57, .14); }
+textarea.dlg-input { resize: vertical; min-height: 76px; }
+.dlg-hint { margin: 8px 0 0; font-size: 12.5px; color: var(--text-muted, #6b7280); line-height: 1.5; }
+.dlg-error { margin: 8px 0 0; font-size: 13px; color: #dc2626; font-weight: 500; }
+.dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+.dlg-actions .btn { min-width: 92px; }
