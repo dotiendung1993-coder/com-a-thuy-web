@@ -1,0 +1,680 @@
+/* ============================================================================
+   THEME V2 — giao diện mới kiểu SoBanHang v2 (Đợt 1, 15/08/2026).
+   File này LUÔN được nạp (cả khi đang ở giao diện cũ) — mọi quy tắc ảnh hưởng hiển thị PHẢI
+   nằm trong phạm vi `body[data-theme="v2"]`, trừ các quy tắc "ẩn mặc định" của phần tử MỚI
+   thêm (để không vỡ giao diện cũ khi cờ tắt). KHÔNG sửa css/app.css gốc — xem spec mục 4.2:
+   docs/superpowers/specs/2026-08-15-pos-manager-giao-dien-v2-design.md
+   ============================================================================ */
+
+/* Nút "Dùng giao diện mới / Quay lại giao diện cũ" ở cuối sidebar — dùng được ở CẢ HAI giao
+   diện nên không đặt trong phạm vi [data-theme="v2"]. */
+.sidebar-theme-toggle {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 10px 14px; background: none; border: none; cursor: pointer;
+  color: rgba(255, 255, 255, .82); font-size: 14px; font-weight: 600; text-align: left;
+}
+.sidebar-theme-toggle:hover { background: rgba(255, 255, 255, .1); }
+.sidebar-theme-toggle svg { width: 20px; height: 20px; flex: none; }
+body.sidebar-slim .sidebar-theme-toggle span { display: none; }
+body.sidebar-slim .sidebar-theme-toggle { justify-content: center; padding: 10px 0; }
+
+body[data-theme="v2"] {
+  --sidebar-bg: #FFFFFF;
+  --sidebar-text: #4B5563;
+  --sidebar-text-dim: #8A94A6;
+  --sidebar-active-bg: var(--primary-soft);
+  --sidebar-hover-bg: #F3F5F4;
+  --bg: #F7F8FA;
+  --radius: 10px;
+  --radius-lg: 14px;
+}
+
+/* Nhãn nhóm cấp cao — ẩn mặc định (giao diện cũ không có khái niệm này) */
+.sidebar-super-label { display: none; }
+body[data-theme="v2"] .sidebar-super-label {
+  display: block; padding: 16px 14px 4px;
+  font-size: 11px; font-weight: 700; letter-spacing: .6px;
+  text-transform: uppercase; color: var(--sidebar-text-dim);
+}
+body[data-theme="v2"] .sidebar.collapsed .sidebar-super-label { display: none; }
+
+/* Cột trái: nền trắng thay vì dải xanh đậm, chữ tối thay vì chữ trắng mờ */
+body[data-theme="v2"] .sidebar {
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--line);
+}
+body[data-theme="v2"] .sidebar-brand { border-bottom-color: var(--line); }
+body[data-theme="v2"] .sidebar-brand-logo { background: var(--primary); color: #fff; }
+body[data-theme="v2"] .sidebar-brand-name { color: var(--text); }
+
+body[data-theme="v2"] .sidebar a { color: var(--sidebar-text); }
+body[data-theme="v2"] .sidebar a:hover { background: var(--sidebar-hover-bg); }
+body[data-theme="v2"] .sidebar a.active {
+  background: var(--sidebar-active-bg); color: var(--primary); font-weight: 700;
+  border-left-color: var(--primary);
+}
+
+body[data-theme="v2"] .sidebar-group-btn { color: var(--sidebar-text-dim); border-top-color: var(--line); }
+body[data-theme="v2"] .sidebar-group-btn:hover { background: var(--sidebar-hover-bg); color: var(--sidebar-text); }
+body[data-theme="v2"] .sidebar-group.has-active > .sidebar-group-btn { color: var(--primary); }
+
+body[data-theme="v2"] .sidebar-footer { background: var(--sidebar-bg); border-top-color: var(--line); }
+body[data-theme="v2"] .sidebar-footer a,
+body[data-theme="v2"] .sidebar-theme-toggle { color: var(--sidebar-text); }
+body[data-theme="v2"] .sidebar-footer a:hover,
+body[data-theme="v2"] .sidebar-theme-toggle:hover { background: var(--sidebar-hover-bg); }
+
+/* Submenu nổi khi thu gọn — nền trắng có viền thay vì nền xanh đậm */
+body[data-theme="v2"] .sidebar.collapsed .sidebar-group.flyout > .sidebar-group-items {
+  background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-md);
+}
+body[data-theme="v2"] .sidebar.collapsed .sidebar-group.flyout > .sidebar-group-btn { background: var(--sidebar-hover-bg); }
+
+/* Nút thu gọn: dời vào NGAY trong hàng thương hiệu (giống nút « cạnh chữ "SoBanHang" trong ảnh
+   mẫu) thay vì nổi ở mép phải cột trái. Chỉ đổi VỊ TRÍ — hành vi bấm/lưu localStorage giữ nguyên
+   (xem #sidebar-toggle trong app.js, không đụng tới ở đợt này). */
+body[data-theme="v2"] .sidebar-toggle {
+  position: static; box-shadow: none; border: none; background: transparent;
+  margin-left: auto; color: var(--sidebar-text-dim);
+}
+body[data-theme="v2"] .sidebar-toggle:hover { background: var(--sidebar-hover-bg); color: var(--primary); }
+body[data-theme="v2"] .sidebar-brand { justify-content: space-between; }
+body[data-theme="v2"].sidebar-slim .sidebar-brand,
+body[data-theme="v2"] body.sidebar-slim .sidebar-brand { justify-content: center; }
+
+/* Thanh trên: breadcrumb + tìm kiếm + avatar — CHỈ hiện ở giao diện v2 */
+.v2-header-only { display: none; }
+/* Đợt 1, sửa sau final review (15/08/2026) — giới hạn phần đổi bố cục thanh trên (ẩn #app-title,
+   hiện breadcrumb/tìm kiếm/avatar) trong đúng ngưỡng máy tính (min-width:1024px) mà applyLayout()
+   (app.js) đã dùng sẵn để ẩn/hiện sidebar/tabbar. Dưới ngưỡng này sidebar (nơi DUY NHẤT có nút
+   "Quay lại giao diện cũ") đã tự ẩn theo thiết kế sẵn có — nếu thanh trên vẫn đổi bố cục thì
+   người dùng máy tính bảng xoay dọc sẽ mắc kẹt không có lối thoát khỏi v2. Dưới 1024px, v2 im
+   lặng không đổi bố cục thanh trên (chỉ còn đổi màu, không đổi nội dung) — đây KHÔNG phải làm
+   responsive đầy đủ, chỉ đóng đúng rủi ro "cửa một chiều". Đừng mở rộng thêm @media này nếu
+   chưa làm responsive đầy đủ ở đợt sau (xem finding I3 trong final review). */
+@media (min-width: 1024px) {
+  body[data-theme="v2"] .v2-header-only { display: flex; }
+  body[data-theme="v2"] #app-title { display: none; }
+}
+
+body[data-theme="v2"] .app-header {
+  background: var(--surface); color: var(--text); border-bottom: 1px solid var(--line);
+}
+
+body[data-theme="v2"] .app-breadcrumb { align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+body[data-theme="v2"] .app-breadcrumb svg { width: 18px; height: 18px; color: var(--primary); }
+
+body[data-theme="v2"] .app-search {
+  flex: 1; max-width: 420px; margin: 0 16px; align-items: center;
+}
+body[data-theme="v2"] .app-search input {
+  width: 100%; min-height: 34px; border-radius: var(--radius); border: 1px solid var(--line);
+  background: var(--bg); color: var(--text); padding: 0 12px; font-size: 13.5px;
+}
+body[data-theme="v2"] .app-search input::placeholder { color: var(--text-3); }
+
+body[data-theme="v2"] .app-user-chip { align-items: center; gap: 8px; }
+body[data-theme="v2"] .app-user-avatar {
+  width: 28px; height: 28px; border-radius: 50%; background: var(--primary-soft); color: var(--primary);
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex: none;
+}
+body[data-theme="v2"] #app-user-v2 { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
+body[data-theme="v2"] #app-user { display: none; }
+body[data-theme="v2"] .app-notif { color: var(--text-2); }
+
+/* ── Tổng quan v2: 5 thẻ KPI tô màu riêng (giống màu trong ảnh mẫu "Bức tranh kinh doanh") ──
+   Đợt 1 (15/08) từng GIỮ NGUYÊN 4 chỉ số cũ, không thêm "Khách mới" vì backend chưa tính được
+   (nguyên tắc không hiện số liệu giả). Đợt 4 (16/08) — backend đã tính thật (overview-service.js,
+   bảng sales_customers), nên thêm hẳn thẻ "Khách mới" theo đúng ảnh mẫu. */
+body[data-theme="v2"] .kpi { border-top-width: 1px; box-shadow: var(--shadow-sm); }
+body[data-theme="v2"] .kpi-revenue { background: #EAF2FE; border-color: #CFE1FC; }
+body[data-theme="v2"] .kpi-goal { background: var(--primary-soft); border-color: #CFEAD8; }
+body[data-theme="v2"] .kpi-orders { background: #FEF6E7; border-color: #F5E3BE; }
+body[data-theme="v2"] .kpi-cash { background: #F2EEFC; border-color: #DCD3F5; }
+body[data-theme="v2"] .kpi-newcus { background: #FDF2F8; border-color: #F7D2E4; }
+
+body[data-theme="v2"] .card {
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+}
+body[data-theme="v2"] .quick-card .qa { border-radius: var(--radius); }
+
+/* ── Task 3 Đợt 2 — Customer tabs trong cart panel ─────────────────────── */
+.customer-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #E5E7EB;
+  margin-bottom: 6px;
+}
+.customer-tab {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6B7280;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.customer-tab.active {
+  color: var(--primary, #16a34a);
+  border-bottom-color: var(--primary, #16a34a);
+}
+.customer-groups-area {
+  padding: 4px 0;
+}
+.customer-groups-area .no-groups {
+  font-size: 12px;
+  color: #9CA3AF;
+  margin: 4px 0;
+}
+.customer-group-chip {
+  margin: 2px;
+  padding: 3px 10px;
+  font-size: 12px;
+}
+.customer-group-chip.active {
+  background: var(--primary, #16a34a);
+  color: #fff;
+}
+
+/* ── Task 5 Đợt 2 — Orders KPI row ───────────────────────────────────────── */
+.orders-kpi {
+  display: none;
+}
+body[data-theme="v2"] .orders-kpi {
+  display: flex;
+  gap: 12px;
+  padding: 0 0 16px 0;
+  flex-wrap: wrap;
+}
+body[data-theme="v2"] .orders-kpi .kpi {
+  flex: 1 1 180px;
+  min-width: 150px;
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+body[data-theme="v2"] .orders-kpi .kpi-orders  { background: #EAF2FE; }
+body[data-theme="v2"] .orders-kpi .kpi-revenue { background: #F0FDF4; }
+body[data-theme="v2"] .orders-kpi .kpi-pending { background: #FEF6E7; }
+body[data-theme="v2"] .orders-kpi .kpi-pending-rev { background: #F2EEFC; }
+body[data-theme="v2"] .orders-kpi .kpi-val {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+}
+body[data-theme="v2"] .orders-kpi .kpi-lbl {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+/* ── Task 6 Đợt 2 — Column visibility ───────────────────────────────────── */
+.ord-cols-wrap { position: relative; }
+.ord-cols-btn { display: none; }
+body[data-theme="v2"] .ord-cols-btn { display: inline-flex; align-items: center; gap: 4px; }
+.ord-cols-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  min-width: 200px;
+  z-index: 200;
+  padding: 8px 0;
+}
+.ord-col-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.ord-col-row:hover { background: #F9FAFB; }
+.ord-table [data-col].ord-col-hidden { display: none; }
+
+/* ── Task 7 Đợt 2 — Quản lý bàn visual polish ───────────────────────────── */
+body[data-theme="v2"] .tables-grid .table-card {
+  background: #fff;
+  border: 1.5px solid #DBEAFE;
+  border-radius: 10px;
+  transition: border-color .15s, box-shadow .15s;
+}
+body[data-theme="v2"] .tables-grid .table-card:hover {
+  border-color: #93C5FD;
+  box-shadow: 0 2px 8px rgba(59,130,246,.15);
+}
+body[data-theme="v2"] .tables-grid .table-card.dang-dung {
+  border-color: #16a34a;
+}
+body[data-theme="v2"] .tables-grid .table-card-add {
+  border: 1.5px dashed #93C5FD;
+  background: #F0F9FF;
+}
+body[data-theme="v2"] .tables-grid .table-card-service {
+  border: 1.5px solid #DBEAFE;
+  border-radius: 10px;
+  background: #F8FAFC;
+}
+
+/* ── Đợt 3 Task 4 — Thu chi: KPI màu, gộp cột Mã phiếu/Ngày, Xoá lọc ─────────────────────── */
+body[data-theme="v2"] .tc-td-code { font-weight: 700; font-size: 13.5px; }
+body[data-theme="v2"] .tc-td-sub { color: var(--text-3); font-size: 12px; margin-top: 2px; }
+
+.money-clear-filter { display: none; }
+.money-clear-filter.hidden { display: none !important; }
+body[data-theme="v2"] .money-clear-filter:not(.hidden) {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 34px; padding: 0 12px;
+  border-radius: var(--radius, 8px);
+  border: 1px solid #FBD5D5;
+  background: #FEF2F2;
+  color: #D92B2B;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
+body[data-theme="v2"] .money-clear-filter:not(.hidden):hover { background: #FEE2E2; }
+
+/* ── Đợt 3 Task 5 — Thu chi: Hiển thị cột + phân trang ───────────────────────────────────── */
+.tc-cols-wrap { position: relative; }
+.tc-cols-btn { display: none; }
+body[data-theme="v2"] .tc-cols-btn { display: inline-flex; align-items: center; gap: 4px; }
+.tc-cols-pop {
+  position: absolute; right: 0; top: calc(100% + 4px);
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); min-width: 200px; z-index: 200; padding: 8px 0;
+}
+.tc-col-row { display: flex; align-items: center; gap: 8px; padding: 6px 16px; cursor: pointer; font-size: 13px; }
+.tc-col-row:hover { background: #F9FAFB; }
+.hd-table [data-col].tc-col-hidden { display: none; }
+
+.tc-pagination { display: none; }
+body[data-theme="v2"] .tc-pagination {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  margin-top: 10px; font-size: 13px; color: var(--text-2);
+}
+body[data-theme="v2"] .tc-page-size { display: flex; align-items: center; gap: 6px; }
+body[data-theme="v2"] .tc-page-size select { min-height: 30px; border-radius: 6px; border: 1px solid var(--line); }
+body[data-theme="v2"] .tc-page-cur { font-weight: 600; }
+body[data-theme="v2"] .tc-page-btn { min-height: 28px; padding: 0 10px; }
+
+/* ── Đợt 3 Task 6 — Thu chi: toggle Thu/Chi trong modal, +Thêm phân loại, dropdown Loại GD ── */
+body[data-theme="v2"] .tx-dir-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+body[data-theme="v2"] .tx-dir-btn {
+  flex: 1; padding: 8px 0; border-radius: var(--radius, 8px);
+  border: 1.5px solid var(--line); background: #fff; color: var(--text-2);
+  font-weight: 600; font-size: 13.5px; cursor: pointer;
+}
+body[data-theme="v2"] .tx-dir-btn.thu.active { border-color: var(--money-in); background: #F0FDF4; color: var(--money-in); }
+body[data-theme="v2"] .tx-dir-btn.chi.active { border-color: var(--money-out); background: #FEF2F2; color: var(--money-out); }
+
+body[data-theme="v2"] .tx-add-category-link {
+  margin-top: 6px; background: none; border: none; padding: 0;
+  color: var(--primary); font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+body[data-theme="v2"] .tx-add-category-link:hover { text-decoration: underline; }
+
+.tc-direction-dd { position: relative; }
+.tc-dd-btn { display: none; }
+body[data-theme="v2"] .tc-dd-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 34px; padding: 0 12px;
+  border: 1px solid var(--line); border-radius: var(--radius, 8px); background: #fff;
+  font-size: 13.5px; color: var(--text);
+}
+.tc-dd-pop {
+  position: absolute; left: 0; top: calc(100% + 4px);
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); min-width: 160px; z-index: 200; padding: 8px 0;
+}
+.tc-dd-item { display: flex; align-items: center; gap: 8px; padding: 6px 14px; cursor: pointer; font-size: 13px; }
+.tc-dd-item:hover { background: #F9FAFB; }
+
+/* ── Đợt 3 Task 7 (16/08/2026) — Sổ nợ: 2 nút "Tôi đã đưa/nhận" + 4 thẻ KPI ─────────────── */
+body[data-theme="v2"] .sn-kpi-row { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+body[data-theme="v2"] .sn-kpi-thu-qh .hd-stat-value,
+body[data-theme="v2"] .sn-kpi-tra-qh .hd-stat-value { color: var(--danger); }
+body[data-theme="v2"] .sn-btn-thu {
+  background: #FEF6E7; border: 1px solid #F5E3BE; color: var(--warn);
+}
+body[data-theme="v2"] .sn-btn-thu:hover { border-color: var(--warn); }
+body[data-theme="v2"] .sn-btn-tra {
+  background: var(--primary); border: 1px solid var(--primary); color: #fff;
+}
+body[data-theme="v2"] .sn-btn-tra:hover { background: var(--primary-dark); }
+
+/* ── Đợt 3 Task 8 (16/08/2026) — Sổ nợ: filter Phân loại + sort + hiện/ẩn cột ──────────────── */
+body[data-theme="v2"] .sn-filter-wrap { position: relative; }
+body[data-theme="v2"] .sn-filter-pill { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.sn-filter-pop, .sn-sort-pop {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 200;
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); min-width: 190px; padding: 8px 0;
+}
+.sn-filter-row { display: flex; align-items: center; gap: 8px; padding: 6px 16px; cursor: pointer; font-size: 13px; }
+.sn-filter-row:hover { background: #F9FAFB; }
+.sn-sort-opt {
+  display: block; width: 100%; text-align: left; background: none; border: none;
+  padding: 8px 16px; font-size: 13px; color: var(--text); cursor: pointer; min-height: 0;
+}
+.sn-sort-opt:hover { background: #F9FAFB; }
+.sn-sort-opt.active { color: var(--primary); font-weight: 700; }
+#sn-list [data-col].sn-col-hidden { display: none; }
+
+/* ── Đợt 3 Task 9 (16/08/2026) — Sổ nợ: gợi ý đối tác theo SĐT trong modal ghi nợ ───────────── */
+.sn-suggest-wrap { position: relative; }
+.sn-suggest-pop {
+  position: absolute; left: 0; right: 0; top: calc(100% + 2px); z-index: 220;
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); max-height: 220px; overflow-y: auto;
+}
+.sn-suggest-item {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%;
+  padding: 8px 12px; background: none; border: none; border-bottom: 1px solid #F3F4F6;
+  cursor: pointer; text-align: left; min-height: 0;
+}
+.sn-suggest-item:last-child { border-bottom: none; }
+.sn-suggest-item:hover { background: #F9FAFB; }
+.sn-suggest-item b { font-size: 13.5px; color: var(--text); }
+.sn-suggest-item span { font-size: 12px; color: var(--text-3); }
+
+/* ── Đợt 3 Task 10 (16/08/2026) — Sổ quỹ: hàng Tổng cuối bảng ─────────────────────────────── */
+body[data-theme="v2"] .sq-total-row td {
+  font-weight: 700;
+  background: #F7F8FA;
+  border-top: 2px solid var(--line);
+}
+
+/* ── Đợt 3 Task 11 (16/08/2026) — Sổ quỹ: phân trang, ẩn cột theo popover ─────────────────── */
+.sq-pagination { display: none; }
+body[data-theme="v2"] .sq-pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+body[data-theme="v2"] .sq-pagination select {
+  min-height: 30px;
+  width: auto;
+  padding: 0 6px;
+}
+body[data-theme="v2"] .sq-pagination button {
+  min-height: 30px;
+  padding: 0 10px;
+}
+.hd-table [data-col].sq-col-hidden { display: none; }
+
+/* ── Đợt 3 Task 12 (16/08/2026) — Sổ quỹ: pill tab nguồn tiền, KPI nền xám, 3 ô lọc mới ──── */
+body[data-theme="v2"] .sq-multiselect .ord-dd-btn { min-width: 150px; }
+
+body[data-theme="v2"] #sq-acc-tabs {
+  border-bottom: none;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+body[data-theme="v2"] #sq-acc-tabs .tab {
+  border-radius: 999px;
+  border-bottom: none;
+  padding: 6px 16px;
+  min-height: 34px;
+  background: var(--primary-soft);
+  color: var(--text-2);
+}
+body[data-theme="v2"] #sq-acc-tabs .tab + .tab::before { content: none; }
+body[data-theme="v2"] #sq-acc-tabs .tab.active {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+body[data-theme="v2"] #sq-stats .hd-stat {
+  background: #F3F4F6;
+  border-color: #F3F4F6;
+  box-shadow: none;
+}
+
+/* ── Đợt 7 (18/08/2026) — bảng lịch 5-TAB (Mốc/Ngày/Tuần/Tháng/Năm), date-range-picker.js
+   createTabbedRangePicker()/tabbedRangePickerHtml(). Chỉ dùng ở màn Lãi lỗ — không đụng tới
+   .ord-date-pop/.odp-* gốc (Đơn hàng, Bếp vẫn 1-tab như cũ). Popup TÁI DÙNG class .ord-date-pop
+   để thừa hưởng nền/viền/bóng đổ có sẵn (xem app.css), chỉ nới thêm bề rộng vì tab "Ngày" cần chỗ
+   cho CẢ sidebar lối tắt LẪN 2 bảng lịch cạnh nhau. */
+.ll-pop { max-width: min(94vw, 760px); }
+.ll-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+.ll-tab {
+  padding: 7px 14px; border: none; background: none; border-radius: 6px 6px 0 0;
+  font-size: 13px; font-weight: 600; color: var(--text-2); cursor: pointer;
+}
+.ll-tab:hover { background: #F3F5F6; }
+.ll-tab.active { color: var(--primary); background: var(--primary-soft); }
+
+.ll-moc-list { display: flex; flex-direction: column; gap: 2px; min-width: 190px; }
+.ll-moc-item {
+  text-align: left; padding: 9px 10px; border: none; background: none; border-radius: 6px;
+  font-size: 13px; color: var(--text); cursor: pointer;
+}
+.ll-moc-item:hover { background: #F3F5F6; }
+.ll-moc-item.active { background: var(--primary-soft); color: var(--primary); font-weight: 700; }
+
+.ll-ngay-body { display: flex; gap: 16px; }
+.ll-ngay-side { border-right: 1px solid var(--line); padding-right: 12px; }
+.ll-ngay-cals .odp-cal-head b { flex: 1; text-align: center; font-size: 13.5px; }
+
+.ll-week-list { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
+.ll-week-item {
+  text-align: left; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
+  background: #fff; font-size: 13px; color: var(--text); cursor: pointer;
+}
+.ll-week-item:hover { border-color: var(--primary); }
+.ll-week-item.active { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); font-weight: 700; }
+
+@media (max-width: 720px) {
+  .ll-ngay-body { flex-direction: column; }
+  .ll-ngay-side { border-right: none; border-bottom: 1px solid var(--line); padding-right: 0; padding-bottom: 10px; }
+}
+
+/* ── Đợt 7 — màn Lãi lỗ v2: thẻ KPI + info popover + xu hướng (cột) + bảng chi tiết + Lợi nhuận theo */
+body[data-theme="v2"] .ll-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+body[data-theme="v2"] .ll-head h2 { display: flex; align-items: center; gap: 8px; margin: 0; }
+.ll-info-wrap { position: relative; display: inline-flex; }
+.ll-icon-btn {
+  width: 34px; height: 34px; min-height: 34px; padding: 0; border-radius: var(--radius, 8px);
+  border: 1px solid var(--line); background: #fff; color: var(--text-2); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.ll-icon-btn:hover { background: #F3F5F6; }
+.ll-info-pop {
+  position: absolute; z-index: 80; top: calc(100% + 6px); right: 0; width: min(94vw, 420px);
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(16, 24, 32, .18); padding: 14px; font-size: 13px; color: var(--text-2);
+}
+.ll-info-pop h4 { margin: 0 0 8px; font-size: 13px; color: var(--text-3); font-weight: 700; }
+.ll-info-formula {
+  background: #F7F8FA; border-radius: 8px; padding: 10px 12px; text-align: center;
+  font-weight: 700; color: var(--text); margin-bottom: 10px;
+}
+.ll-info-row { padding: 8px 0; border-top: 1px solid var(--line); }
+.ll-info-row:first-of-type { border-top: none; }
+.ll-info-row b { color: var(--text); }
+
+body[data-theme="v2"] .ll-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+body[data-theme="v2"] .ll-kpi-row .hd-stat { background: #F7F8FA; border-color: #F7F8FA; }
+.ll-kpi-row .hd-stat-value.rp-positive { color: var(--money-in, #16a34a); }
+.ll-kpi-row .hd-stat-value.rp-negative { color: var(--money-out, #dc2626); }
+
+body[data-theme="v2"] .ll-trend-card { padding: 16px 18px; margin-bottom: 16px; }
+.ll-trend-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.ll-trend-head h3 { margin: 0; font-size: 15px; }
+.ll-trend-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.ll-compare-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); cursor: pointer; }
+.ll-switch { position: relative; width: 38px; height: 22px; flex: none; }
+.ll-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.ll-switch-track { position: absolute; inset: 0; background: #D1D5DB; border-radius: 999px; transition: background .15s; }
+.ll-switch-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: transform .15s; }
+.ll-switch input:checked + .ll-switch-track { background: var(--primary); }
+.ll-switch input:checked + .ll-switch-track::after { transform: translateX(16px); }
+.ll-seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.ll-seg button { border: none; background: #fff; padding: 6px 14px; font-size: 13px; font-weight: 600; color: var(--text-2); cursor: pointer; }
+.ll-seg button.active { background: var(--primary); color: #fff; }
+
+.ll-chart-wrap { display: flex; gap: 10px; }
+.ll-chart-axis { display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; color: var(--text-3); padding: 2px 0 22px; text-align: right; }
+.ll-chart-svg { flex: 1; min-width: 0; }
+.ll-chart-legend { display: flex; align-items: center; gap: 16px; font-size: 12px; color: var(--text-2); margin-top: 8px; }
+.ll-chart-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.ll-chart-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.ll-chart-empty { text-align: center; color: var(--text-3); padding: 30px 0; font-size: 13px; }
+
+body[data-theme="v2"] .ll-detail-card { padding: 16px 18px; margin-bottom: 16px; }
+.ll-detail-formula { color: var(--text-3); font-size: 12.5px; margin: 2px 0 12px; }
+.ll-detail-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.ll-detail-table td { padding: 9px 4px; border-top: 1px solid var(--line); }
+.ll-detail-table tr:first-child td { border-top: none; }
+.ll-detail-table td:last-child { text-align: right; white-space: nowrap; }
+.ll-row-main td { font-weight: 700; }
+.ll-row-sub td:first-child { padding-left: 22px; color: var(--text-2); font-weight: 400; }
+.ll-row-total td { font-weight: 700; font-size: 14.5px; border-top: 2px solid var(--line); }
+.ll-row-code { display: inline-block; min-width: 18px; height: 18px; line-height: 18px; text-align: center; border-radius: 4px; background: #F3F4F6; color: var(--text-3); font-size: 11px; font-weight: 700; margin-left: 6px; }
+.ll-cat-link { background: none; border: none; padding: 0; margin-left: 8px; color: var(--primary); font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; }
+.ll-cat-link:hover { text-decoration: underline; }
+
+.ll-cat-dd { position: relative; }
+.ll-cat-pop {
+  position: absolute; z-index: 90; top: calc(100% + 4px); left: 0; width: 240px;
+  background: #fff; border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(16, 24, 32, .18); padding: 8px;
+}
+.ll-cat-pop input[type="search"] { margin-bottom: 6px; }
+.ll-cat-pop-list { max-height: 220px; overflow-y: auto; }
+.ll-cat-pop-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.ll-cat-pop-item:hover { background: #F3F5F6; }
+.ll-cat-pop-item input { width: auto; min-height: auto; }
+
+body[data-theme="v2"] .ll-dim-card { padding: 16px 18px; }
+.ll-dim-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.ll-dim-tabs { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.ll-dim-tab { border: none; background: none; padding: 6px 2px; font-size: 13.5px; font-weight: 600; color: var(--text-2); cursor: pointer; border-bottom: 2px solid transparent; }
+.ll-dim-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.ll-dim-list { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ll-dim-list th { text-align: left; font-size: 11px; color: var(--text-3); font-weight: 700; text-transform: uppercase; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+.ll-dim-list th:last-child, .ll-dim-list td:last-child { text-align: right; }
+.ll-dim-list td { padding: 8px 4px; border-bottom: 1px solid var(--line); }
+.ll-dim-empty { text-align: center; padding: 30px 0; color: var(--text-3); }
+.ll-dim-empty svg { width: 42px; height: 42px; color: var(--text-3); opacity: .5; margin-bottom: 8px; }
+
+.ll-modal-box { width: min(94vw, 900px); }
+.ll-modal-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+.ll-modal-tools input[type="search"] { flex: 1; min-width: 180px; }
+
+/* ── Đợt 7 (18/08/2026) — Báo cáo bán hàng v2: header info/xuất/khoảng ngày, "So sánh cùng kỳ"
+   (biểu đồ SVG tự vẽ), bảng chi tiết + PTTT, "Doanh thu theo" (dropdown+tabs+modal), 2 thẻ cuối. */
+.bh-head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bh-range { flex: 0 0 auto; }
+.bh-icon-btn {
+  width: 38px; height: 38px; padding: 0; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius); border: 1px solid var(--line); background: #fff; color: var(--text-2);
+}
+.bh-icon-btn:hover { background: #F7F8FA; color: var(--primary); }
+.bh-icon-btn svg { width: 18px; height: 18px; }
+
+.bh-info-wrap { position: relative; }
+.bh-info-pop {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 300;
+  width: 360px; max-width: 82vw; background: #fff; border: 1px solid var(--line);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 16px;
+}
+.bh-info-pop.hidden { display: none; }
+.bh-info-title { font-weight: 700; margin-bottom: 10px; font-size: 14px; }
+.bh-info-formula {
+  background: #F7F8FA; border-radius: var(--radius); padding: 12px;
+  text-align: center; font-size: 13.5px; line-height: 1.6; margin-bottom: 12px;
+}
+.bh-info-list { margin: 0; font-size: 12.5px; color: var(--text-2); }
+.bh-info-list dt { font-weight: 700; color: var(--text); margin-top: 8px; }
+.bh-info-list dt:first-child { margin-top: 0; }
+.bh-info-list dd { margin: 2px 0 0; }
+
+.bh-compare-card h3 { margin: 0 0 12px; font-size: 15px; }
+.bh-compare-tabs { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.bh-metric-tabs, .bh-cumu-toggle { display: flex; gap: 8px; flex-wrap: wrap; }
+.bh-chart-legend { display: flex; justify-content: flex-end; gap: 16px; font-size: 12.5px; color: var(--text-2); margin-bottom: 4px; }
+.bh-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.bh-legend-dash { width: 16px; height: 0; border-top: 2px dashed var(--text-3); display: inline-block; }
+.bh-legend-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--primary); display: inline-block; }
+.bh-chart-wrap { width: 100%; }
+.bh-chart-svg { width: 100%; height: 220px; display: block; overflow: visible; }
+.bh-chart-line { fill: none; stroke-width: 2.4; }
+.bh-chart-line-prev { stroke: var(--text-3); stroke-dasharray: 5 4; }
+.bh-chart-line-cur { stroke: var(--primary); }
+.bh-chart-baseline { stroke: var(--line); stroke-width: 1; }
+.bh-chart-axis { font-size: 10px; fill: var(--text-3); }
+
+.bh-detail-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; margin: 12px 0; }
+@media (max-width: 900px) { .bh-detail-grid { grid-template-columns: 1fr; } }
+.bh-breakdown-card h3, .bh-payment-card h3, .bh-by-card h3 { margin: 0 0 12px; font-size: 15px; }
+.bh-breakdown-scroll { overflow-x: auto; }
+.bh-breakdown-table { width: 100%; }
+.bh-breakdown-total td { font-weight: 700; background: #F7F8FA; border-top: 2px solid var(--line); }
+
+.bh-payment-rows { display: flex; flex-direction: column; }
+.bh-payment-row { display: flex; justify-content: space-between; gap: 8px; padding: 10px 2px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.bh-payment-row:last-child { border-bottom: none; }
+.bh-payment-row b { color: var(--money-in); }
+
+.bh-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 16px; text-align: center; }
+.bh-empty-ico svg { width: 44px; height: 44px; color: var(--line); }
+.bh-empty p { margin: 8px 0 0; font-size: 13.5px; color: var(--text-2); }
+.bh-empty p.hint { font-size: 12px; color: var(--text-3); }
+
+.bh-by-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.bh-by-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bh-by-tools select { min-height: 36px; border-radius: var(--radius); border: 1px solid var(--line); padding: 0 10px; font-size: 13px; }
+
+.bh-bottom-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px; }
+@media (max-width: 640px) { .bh-bottom-cards { grid-template-columns: 1fr; } }
+.bh-bottom-card { display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer; width: 100%; }
+.bh-bottom-ico { flex: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.bh-bottom-ico svg { width: 20px; height: 20px; }
+.bh-ico-warn { background: #FEF6E7; color: #B45309; }
+.bh-ico-danger { background: #FEE2E2; color: var(--money-out); }
+.bh-bottom-body { display: flex; flex-direction: column; }
+.bh-bottom-sub { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+
+.bh-modal-tools { display: flex; align-items: center; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+.bh-modal-tools input[type="search"] { flex: 1; min-width: 160px; }
+.bh-modal-scroll { max-height: 55vh; }
+
+/* ── Đợt 7 (18/08/2026) — Báo cáo kho hàng: KPI 2 cột trên di động (giống #tk-kpi/#sk-kpi/#sp-kpi) */
+@media (max-width: 720px) {
+  #bck-kpi { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* ── Việc "Thuế" (19/08/2026) — wizard "Thiết lập sổ kế toán" (ảnh Website v2\Thuế\Screenshot
+   2026-08-12 225118.png). Thẻ chọn nhóm doanh thu/phương pháp — dựa trên .card/.field đã có. */
+.wiz-steps { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
+.wiz-step { display: flex; align-items: center; gap: 8px; color: var(--text-3); font-size: 14px; white-space: nowrap; }
+.wiz-step.active { font-weight: 600; }
+.wiz-step-num {
+  width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--line); color: var(--text-3); font-size: 13px; flex-shrink: 0;
+}
+.wiz-step.active .wiz-step-num, .wiz-step.done .wiz-step-num { background: var(--primary); color: #fff; }
+.wiz-step-line { flex: 1; height: 1px; background: var(--line); min-width: 24px; }
+.wiz-option {
+  display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px; margin-bottom: 10px; cursor: pointer;
+}
+.wiz-option.selected { border: 2px solid var(--primary); padding: 11px; }
+.wiz-option input[type="radio"], .wiz-option input[type="checkbox"] { margin-top: 3px; width: auto; min-height: auto; }
+.wiz-option-body strong { display: block; font-size: 14px; }
+.wiz-option-body span { display: block; font-size: 13px; color: var(--text-2); margin-top: 2px; }
+.wiz-note { background: var(--line); border-radius: var(--radius); padding: 12px; font-size: 13px; color: var(--text-2); margin: 12px 0; }
+.wiz-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }

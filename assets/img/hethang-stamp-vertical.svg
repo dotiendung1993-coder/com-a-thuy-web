@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 170" width="40" height="170">
+  <rect x="3" y="3" width="34" height="164" rx="5" fill="none" stroke="#e11d2e" stroke-width="3"/>
+  <rect x="3" y="3" width="34" height="164" rx="5" fill="none" stroke="#e11d2e" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
+  <text x="20" y="85" text-anchor="middle" dominant-baseline="middle" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="14" letter-spacing="3" fill="#e11d2e" transform="rotate(90 20 85)">HẾT HÀNG</text>
+</svg>

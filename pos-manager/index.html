@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>POS Manager - Cơm A Thuý</title>
+  <meta name="theme-color" content="#169939" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./icons/192.png" />
+  <link rel="apple-touch-icon" href="./icons/192.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="stylesheet" href="./css/app.css" />
+  <link rel="stylesheet" href="./css/theme-v2.css" />
+</head>
+<body>
+  <div id="offline-screen" class="offline-screen hidden">
+    <div class="offline-box">
+      <div class="offline-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 8.5C7 4 17 4 22 8.5M5 12.5c3.5-3 10-3 13.5 0M8.5 16.5c2-1.7 5-1.7 7 0"/>
+          <path d="M12 20.2v.1"/>
+          <path d="M2.5 2.5l19 19" stroke="#e5484d"/>
+        </svg>
+      </div>
+      <h2>Không kết nối được máy chủ</h2>
+      <!-- Đợt 4 (16/08/2026) — chữ cũ "hoạt động từ 8:00 đến 22:30" là lời giải thích DỰNG SẴN,
+           KHÔNG PHẢI giờ hoạt động thật (app không giới hạn giờ). Màn này hiện ra bất cứ khi nào
+           app không gọi được API — mạng chập chờn, tunnel vừa đổi địa chỉ, hoặc máy chủ khởi động
+           lại — nên đổi thành chữ đúng sự thật + luôn thử lại tự động. Xem buglog bug-XXX. -->
+      <p>Mạng đang chập chờn hoặc máy chủ vừa khởi động lại. App không giới hạn giờ sử dụng — bấm
+        "Thử lại" để kết nối lại.</p>
+      <button id="offline-retry" class="btn btn-primary">Thử lại</button>
+    </div>
+  </div>
+
+  <header id="app-header" class="app-header hidden">
+    <span id="app-title">POS Manager</span>
+    <!-- Đợt 1 (15/08/2026) — breadcrumb chỉ hiện ở giao diện v2, app.js cập nhật trong router() -->
+    <span id="app-breadcrumb" class="app-breadcrumb v2-header-only"></span>
+    <span class="app-search v2-header-only">
+      <input id="app-search" type="search" placeholder="Tìm trang, chức năng...">
+    </span>
+    <span class="app-header-right">
+      <span id="app-user-chip" class="app-user-chip v2-header-only">
+        <span id="app-user-avatar" class="app-user-avatar"></span>
+        <span id="app-user-v2"></span>
+      </span>
+      <span id="app-user"></span>
+      <!-- GĐ8 mục K — chuông Trung tâm thông báo, chấm số do js/app.js cập nhật -->
+      <button id="app-notif" class="app-notif hidden" type="button" aria-label="Thong bao">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8.5a6 6 0 1 0-12 0c0 6-2 7.5-2 7.5h16s-2-1.5-2-7.5"/>
+          <path d="M13.7 20a2 2 0 0 1-3.4 0"/>
+        </svg>
+        <span id="app-notif-badge" class="app-notif-badge hidden">0</span>
+      </button>
+    </span>
+  </header>
+
+  <!-- Cột trái (máy tính) và thanh dưới (điện thoại) do js/app.js dựng từ js/nav.js,
+       vì chủ quán tự chọn được 3 ô giữa của thanh dưới (giống app Sổ Bán Hàng). -->
+  <nav id="sidebar" class="sidebar hidden"></nav>
+
+  <main id="view" class="view"></main>
+
+  <nav id="tabbar" class="tabbar hidden"></nav>
+
+  <a id="fab" href="#/ban-hang" class="fab hidden" aria-label="Bán hàng nhanh"></a>
+
+  <div id="toast-root" class="toast-root"></div>
+
+  <script type="module" src="./js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+    }
+  </script>
+</body>
+</html>

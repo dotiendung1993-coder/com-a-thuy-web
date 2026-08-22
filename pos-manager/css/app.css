@@ -1,0 +1,2384 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   POS MANAGER — Giao diện sao chép app Sổ Bán Hàng
+   GĐ9 (04/08/2026): bảng màu đo BẰNG getComputedStyle TRÊN TRANG SỐNG
+   app.sobanhang.com (tài khoản Cơm A Thúy) — xem output/sobanhang-survey/KHAO-SAT-TOAN-BO.md
+     Bản WEB dùng XANH LÁ #169939, KHÔNG phải xanh dương #005DF9 (màu đó là của file APK).
+   Mọi tên class cũ (GĐ1–GĐ8) được giữ nguyên để 36 màn hình cũ không phải sửa.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --primary: #169939;
+  --primary-dark: #05803A;
+  --primary-soft: #E7F5EC;
+  --brand-green: #169939;
+
+  /* Thanh điều hướng của bản web: dải màu từ trên xuống */
+  --rail-from: #1B7A4A;
+  --rail-to: #228B47;
+
+  /* Tên cũ giữ lại làm bí danh — các màn GĐ1–GĐ6 vẫn dùng var(--green) */
+  --green: var(--primary);
+  --green-dark: var(--primary-dark);
+  --green-light: var(--primary-soft);
+
+  /* Màu số tiền: vào = lá, ra = đỏ (giống app) */
+  --money-in: #169939;
+  --money-out: #D92B2B;
+
+  --text: #1E2226;
+  --text-2: #73787D;
+  --text-3: #A6A6A6;
+  --line: #EAEBEC;
+  --bg: #F2F3F4;
+  --surface: #FFFFFF;
+  --danger: #D92B2B;
+  --warn: #B45309;
+
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(60, 69, 79, .06), 0 1px 3px rgba(60, 69, 79, .04);
+  --shadow-md: 0 4px 12px rgba(60, 69, 79, .12);
+
+  --tabbar-h: 62px;
+  --header-h: 52px;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  /* GĐ8 mục L — cỡ chữ toàn app nhân với --font-scale (js/display.js đặt theo cài đặt).
+     Mặc định 1 để máy chưa chỉnh gì vẫn y như cũ. */
+  font-size: calc(15px * var(--font-scale, 1));
+  -webkit-font-smoothing: antialiased;
+}
+/* GĐ8 mục L — "Nút bấm to": nới chiều cao chạm tối thiểu cho người lớn tuổi đỡ bấm trượt. */
+body.big-touch button,
+body.big-touch .btn,
+body.big-touch input,
+body.big-touch select { min-height: 52px; }
+body.big-touch .chip { padding: 10px 16px; }
+.hidden { display: none !important; }
+h2 { font-size: 19px; font-weight: 700; margin: 0 0 12px; letter-spacing: -.2px; }
+h3 { font-size: 16px; font-weight: 700; }
+
+/* ── Nút & ô nhập ───────────────────────────────────────────────────────── */
+button, .btn {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  min-height: 44px;
+  min-width: 44px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  background: #EDF1F6;
+  color: var(--text);
+  transition: filter .12s ease;
+}
+button:active, .btn:active { filter: brightness(.94); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:active { background: var(--primary-dark); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:active { background: #B01B1B; }
+.btn-ghost { background: #fff; border: 1px solid var(--line); color: var(--text); }
+/* .btn dùng cho cả <a> (ví dụ "+ Tạo đơn hàng" nhảy sang màn Bán hàng). Thẻ <a> không tự căn
+   giữa chữ và mặc định bị gạch chân, nên phải khai riêng — chỉ chạm thẻ <a>, không đụng <button>. */
+a.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 14px; text-decoration: none;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: 16px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  width: 100%;
+  background: #fff;
+  color: var(--text);
+}
+textarea { padding: 10px 12px; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary-soft); border-color: var(--primary); }
+
+/* Icon nhỏ nằm chung dòng với chữ (trong nút, nhãn, bảng) */
+.inline-ico { display: inline-flex; align-items: center; vertical-align: -3px; }
+.inline-ico svg { width: 17px; height: 17px; }
+.ok-note { color: var(--money-in); display: flex; align-items: center; gap: 6px; }
+.thumb-ico { color: var(--primary); opacity: .55; }
+.thumb-ico svg { width: 30px; height: 30px; }
+button > svg { width: 20px; height: 20px; }
+
+/* ── Thanh tiêu đề ──────────────────────────────────────────────────────── */
+.app-header {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+  background: var(--primary); color: #fff;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; font-weight: 600; z-index: 20;
+}
+/* Task 1 (09/08/2026 đợt 5) — chủ quán xin chữ "POS Manager" TO và ĐẬM hơn cho ra dáng tên app,
+   trước đây nó chỉ ăn theo font-weight:600 của cả thanh tiêu đề nên nhìn ngang hàng với tên
+   nhân viên bên phải. */
+#app-title { font-size: 20px; font-weight: 800; letter-spacing: -.3px; }
+#app-user { font-size: 13px; opacity: .9; font-weight: 500; }
+/* GĐ8 mục K — chuông thông báo + chấm số chưa đọc trên thanh tiêu đề */
+.app-header-right { display: flex; align-items: center; gap: 10px; }
+.app-notif {
+  position: relative; background: none; border: none; color: #fff;
+  padding: 4px; min-height: auto; display: flex; align-items: center;
+}
+.app-notif > svg { width: 22px; height: 22px; }
+.app-notif-badge {
+  position: absolute; top: -2px; right: -4px; min-width: 17px; height: 17px;
+  padding: 0 4px; border-radius: 9px; background: #E11D48; color: #fff;
+  font-size: 10.5px; font-weight: 700; line-height: 17px; text-align: center;
+}
+
+/* ── Vùng nội dung ──────────────────────────────────────────────────────── */
+.view {
+  padding-top: calc(var(--header-h) + 14px);
+  padding-bottom: calc(var(--tabbar-h) + 20px);
+  padding-left: 16px;
+  padding-right: 16px;
+  min-height: 100vh;
+}
+body.no-nav .view { padding-top: 12px; padding-bottom: 12px; }
+/* Trang chủ có nền gradient xanh nhạt giống app */
+body.home-bg { background: var(--bg); }
+
+/* ── Thanh tab dưới (điện thoại) ────────────────────────────────────────── */
+.tabbar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  min-height: var(--tabbar-h);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  display: flex; background: #fff; border-top: 1px solid var(--line); z-index: 20;
+}
+.tabbar a {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 11px; text-decoration: none; color: var(--text-3); gap: 3px; padding: 8px 2px;
+  font-weight: 500;
+}
+.tabbar a svg { width: 24px; height: 24px; display: block; }
+.tabbar a.active { color: var(--primary); font-weight: 600; }
+
+/* ── Nút tròn nổi ───────────────────────────────────────────────────────── */
+.fab {
+  position: fixed; right: 18px; bottom: calc(var(--tabbar-h) + 18px);
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none; box-shadow: 0 6px 16px rgba(22, 153, 57, .38); z-index: 21;
+}
+.fab svg { width: 26px; height: 26px; }
+
+/* ── Cột trái theo phong cách Sổ Bán Hàng ──────────────────────────────── */
+:root {
+  --sidebar-full: 240px;
+  --sidebar-slim: 64px;
+}
+
+.sidebar {
+  position: fixed; top: var(--header-h); left: 0; bottom: 0;
+  width: var(--sidebar-full);
+  background: linear-gradient(180deg, var(--rail-from) 0%, var(--rail-to) 100%);
+  z-index: 15; overflow-y: auto; overflow-x: hidden;
+  display: flex; flex-direction: column;
+  transition: width 0.22s ease;
+}
+.sidebar.collapsed { width: var(--sidebar-slim); }
+
+/* Khối thương hiệu đầu cột trái (ô vuông trắng + tên quán) — giống app Sổ Bán Hàng */
+.sidebar-brand {
+  display: flex; align-items: center; gap: 10px; flex: none;
+  padding: 13px 14px; min-height: 64px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+.sidebar-brand-logo {
+  width: 38px; height: 38px; flex: none; border-radius: 9px;
+  background: #fff; color: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+}
+.sidebar-brand-logo svg { width: 24px; height: 24px; }
+.sidebar-brand-name {
+  color: #fff; font-size: 19px; font-weight: 800; letter-spacing: -.3px; white-space: nowrap;
+}
+.sidebar.collapsed .sidebar-brand { justify-content: center; padding: 13px 0; }
+.sidebar.collapsed .sidebar-brand-name { display: none; }
+
+/* Thanh cuộn của cột trái: MẢNH và trong suốt. Thanh cuộn mặc định của Chrome dày ~15px, chiếm
+   nguyên dải 225–240px — đúng chỗ nút thu gọn đứng, nên nút nằm đè lên nó (chủ quán khoanh đỏ
+   12/08/2026). Thu còn 6px + màu trắng mờ thì nó chìm vào nền xanh của cột trái. */
+.sidebar { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.35) transparent; }
+.sidebar::-webkit-scrollbar { width: 6px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.28); border-radius: 3px; }
+.sidebar:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,.45); }
+
+/* Nút thu nhỏ/mở rộng: nút TRÒN nằm trong khoảng trống BÊN PHẢI cột trái.
+   position:fixed — .sidebar có overflow-x:hidden nên nút absolute thò ra ngoài sẽ bị cắt cụt.
+   Bản 09/08 đặt nút ở `--sidebar-full - 13px` (227–253px): vừa đè lên thanh cuộn của cột trái,
+   vừa chỉ cách chữ tiêu đề trang 3px (nội dung bắt đầu ở 240 + 16 = 256px). Nay nút dịch hẳn ra
+   NGOÀI mép cột trái, và khoảng trống trái của khung nội dung nới ra để nút có chỗ đứng riêng
+   (xem .view padding-left ở khối @media min-width:1024px). */
+.sidebar-toggle {
+  position: fixed; z-index: 18;
+  top: calc(var(--header-h) + 20px); left: calc(var(--sidebar-full) + 7px);
+  width: 26px; height: 26px; min-width: 26px; min-height: 26px; padding: 0;
+  border-radius: 50%; background: #fff; border: 1px solid var(--line);
+  color: var(--text-2); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 2px 6px rgba(16, 24, 32, .22);
+  transition: left .22s ease, background .1s;
+}
+.sidebar-toggle:hover { background: #F3F5F6; border-color: var(--primary); color: var(--primary); }
+.sidebar-toggle svg { width: 14px; height: 14px; }
+body.sidebar-slim .sidebar-toggle { left: calc(var(--sidebar-slim) + 7px); }
+body.sidebar-slim .sidebar-toggle svg { transform: rotate(180deg); }
+
+/* Links chung (Trang chủ, các mục con) */
+.sidebar a {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; text-decoration: none; color: rgba(255,255,255,.82); font-size: 14px;
+  font-weight: 500; white-space: nowrap; border-radius: 0; transition: background .1s;
+}
+.sidebar a svg { width: 22px; height: 22px; flex: none; }
+.sidebar a:hover { background: rgba(255,255,255,.1); }
+.sidebar a.active {
+  background: rgba(145,158,171,.4); color: #fff; font-weight: 600;
+  border-left: 3px solid rgba(255,255,255,.7);
+}
+.sidebar-child { padding-left: 48px !important; font-size: 13.5px; }
+.sidebar-child.active { padding-left: 45px !important; }
+
+/* Nút tiêu đề nhóm */
+.sidebar-group-btn {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 10px 14px; background: none; border: none;
+  border-top: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.6); font-size: 11px; font-weight: 700; letter-spacing: .5px;
+  text-transform: uppercase; cursor: pointer; white-space: nowrap; min-height: 40px; text-align: left;
+  transition: background .1s, color .1s;
+}
+.sidebar-group-btn:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.9); }
+.sidebar-group.has-active > .sidebar-group-btn { color: rgba(255,255,255,.9); }
+.sbh-icon { width: 22px; height: 22px; flex: none; display: flex; }
+.sbh-icon svg { width: 22px; height: 22px; }
+.g-label { flex: 1; min-width: 0; overflow: hidden; }
+.chevron { width: 14px; height: 14px; flex: none; transition: transform .18s; }
+.sidebar-group.open > .sidebar-group-btn .chevron { transform: rotate(180deg); }
+
+/* Nhóm: mở/đóng bằng max-height animation */
+.sidebar-group-items { overflow: hidden; max-height: 0; transition: max-height .22s ease; }
+.sidebar-group.open > .sidebar-group-items { max-height: 800px; }
+
+/* Mode icon-only (sau khi thu nhỏ) */
+.sidebar.collapsed .g-label,
+.sidebar.collapsed .chevron,
+.sidebar.collapsed .sidebar-group-items,
+.sidebar.collapsed a span { display: none !important; }
+.sidebar.collapsed .sidebar-group-btn { justify-content: center; padding: 12px 0; }
+.sidebar.collapsed a { justify-content: center; padding: 12px 0; }
+.sidebar.collapsed a.active { border-left: none; border-bottom: 3px solid rgba(255,255,255,.7); }
+
+/* Task 8 (09/08/2026) — cột trái thu gọn: bấm icon nhóm mở SUBMENU NỔI bên phải để chọn màn.
+   position:fixed (toạ độ do app.js tính) vì .sidebar có overflow-x:hidden sẽ cắt cụt submenu. */
+.sidebar.collapsed .sidebar-group.flyout > .sidebar-group-items {
+  display: block !important; position: fixed; z-index: 80;
+  min-width: 208px; max-height: 70vh; overflow-y: auto; padding: 6px 0;
+  background: var(--rail-to, #14532d); border-radius: 0 10px 10px 0;
+  box-shadow: 0 12px 30px rgba(9, 20, 12, .38);
+}
+.sidebar.collapsed .sidebar-group.flyout > .sidebar-group-items a { justify-content: flex-start; padding: 10px 16px; }
+.sidebar.collapsed .sidebar-group.flyout > .sidebar-group-items a span { display: inline !important; }
+.sidebar.collapsed .sidebar-group.flyout > .sidebar-group-items .sidebar-child { padding-left: 16px !important; }
+.sidebar.collapsed .sidebar-group.flyout > .sidebar-group-btn { background: rgba(255,255,255,.14); }
+
+@media (min-width: 1024px) {
+  .tabbar, .fab { display: none !important; }
+  /* padding-left 44px (thay vì 16px) chừa chỗ cho nút thu gọn tròn đứng ở 247–273px — không thì
+     nút ép sát ngay chữ tiêu đề trang. Chỉ áp cho màn rộng: điện thoại không có cột trái cố định
+     nên vẫn giữ 16px cho khỏi phí bề ngang. */
+  .view {
+    margin-left: var(--sidebar-full); padding-bottom: 20px; padding-left: 44px;
+    transition: margin-left .22s ease;
+  }
+  body.sidebar-slim .view { margin-left: var(--sidebar-slim); }
+}
+
+/* ── Thông báo nổi ──────────────────────────────────────────────────────── */
+.toast-root {
+  position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + 16px); transform: translateX(-50%);
+  z-index: 50; display: flex; flex-direction: column; gap: 8px; align-items: center;
+}
+.toast {
+  background: #1F2937; color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 14px;
+  max-width: 90vw; box-shadow: var(--shadow-md);
+}
+.toast.error { background: var(--danger); }
+
+/* ── Hộp thoại ──────────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15, 23, 35, .45);
+  display: flex; align-items: flex-end; justify-content: center; z-index: 60;
+}
+@media (min-width: 640px) { .modal-overlay { align-items: center; } }
+.modal-box {
+  background: #fff; border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 20px;
+  width: 100%; max-width: 440px; max-height: 84vh; overflow-y: auto;
+}
+@media (min-width: 640px) { .modal-box { border-radius: var(--radius-lg); } }
+.modal-box h3 { margin-top: 0; }
+.modal-close-row { text-align: right; margin-top: 12px; }
+
+/* ═══ TRANG CHỦ (dashboard giống app Sổ Bán Hàng) ═══════════════════════ */
+.home-greet { margin-bottom: 14px; }
+.home-greet .hi { font-size: 13px; color: var(--text-2); }
+.home-greet .store { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+
+/* Thẻ "Hôm nay" — 3 ô số liệu có icon, giống ic_summary_* của app */
+.today-card {
+  background: #fff; border-radius: var(--radius-lg); padding: 14px;
+  box-shadow: var(--shadow-sm); border: 1px solid var(--line);
+}
+.today-card-title {
+  font-size: 12px; letter-spacing: .6px; color: var(--text-3); font-weight: 700; margin-bottom: 10px;
+}
+.today-card-loading { color: var(--text-3); font-size: 14px; }
+.today-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.today-stat {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 8px; border-radius: 10px; background: #F7F9FC;
+}
+.today-stat .stat-ico { width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.today-stat .stat-ico svg { width: 15px; height: 15px; }
+.today-stat .label { font-size: 11.5px; color: var(--text-2); }
+.today-stat .value { font-size: 16px; font-weight: 700; letter-spacing: -.3px; }
+.today-stat .value.money { color: var(--money-in); }
+.today-stat .value.profit-empty {
+  font-size: 13px; color: var(--primary); text-decoration: none; display: flex; flex-direction: column;
+}
+.today-stat .value.profit-empty small { font-size: 10.5px; font-weight: 500; color: var(--text-3); }
+
+/* Nhãn từng khu + nút "Chỉnh sửa" bên phải */
+.section-label {
+  margin-top: 22px; margin-bottom: 8px; font-size: 14px; color: var(--text); font-weight: 700;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.section-label .edit-link {
+  font-size: 13px; color: var(--primary); font-weight: 600; background: none;
+  min-height: auto; padding: 4px 2px; display: inline-flex; align-items: center; gap: 4px;
+}
+.section-label .edit-link svg { width: 15px; height: 15px; }
+
+/* Lưới tính năng — thẻ trắng, icon nhiều màu, chữ dưới (đúng như ảnh edit_home_feature.png) */
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.feature-grid.shortcuts { grid-template-columns: repeat(4, 1fr); }
+.feature-card {
+  background: #fff; border-radius: var(--radius); padding: 14px 6px 11px; text-align: center;
+  text-decoration: none; color: var(--text); box-shadow: var(--shadow-sm);
+  border: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  font-size: 12.5px; font-weight: 500; line-height: 1.25; position: relative;
+}
+.feature-card .icon { display: block; }
+.feature-card .icon svg { width: 26px; height: 26px; display: block; }
+.feature-grid.shortcuts .feature-card { padding: 12px 4px 9px; font-size: 11.5px; }
+.feature-grid.shortcuts .feature-card .icon svg { width: 24px; height: 24px; }
+
+/* Chế độ chỉnh sửa: hiện dấu + / − ở góc thẻ */
+.feature-card .pick-badge {
+  position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--primary); color: #fff; font-size: 15px; font-weight: 700; line-height: 22px;
+  min-height: 22px; min-width: 22px; padding: 0;
+}
+.feature-card .pick-badge.remove { background: var(--danger); }
+.picker-hint { font-size: 12.5px; color: var(--text-2); margin: 4px 0 10px; }
+
+/* Màn "Thêm" — chia nhóm giống app */
+.group-block { margin-bottom: 18px; }
+.group-title { font-size: 13px; font-weight: 700; color: var(--text-2); margin-bottom: 8px; }
+
+/* ═══ CÁC MÀN GĐ1–GĐ6 (giữ nguyên tên class, chỉnh lại cho hợp bảng màu) ══ */
+
+/* Bán hàng */
+.sell-search { margin-bottom: 10px; }
+/* Hàng nút lọc cuộn ngang — màn Quản lý bàn (khu vực) và Thông báo vẫn dùng. */
+.sell-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; }
+.chip {
+  flex: none; padding: 8px 14px; border-radius: 20px; background: #fff; border: 1px solid var(--line);
+  font-size: 14px; cursor: pointer; white-space: nowrap; min-height: 38px; font-weight: 500;
+}
+.chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+/* Chiều cao ô ĐẶT CỨNG (không dùng aspect-ratio hay đệm-%): mọi thứ trong thẻ món đều
+   position:absolute nên hai cách kia không góp chiều cao vào hàng lưới → các thẻ đè lên nhau,
+   chỉ còn thấy nhãn giá. Đặt cứng thì hàng nào cũng đúng, kể cả khi lưới tự cuộn. */
+.sell-grid { display: grid; grid-template-columns: repeat(2, 1fr); grid-auto-rows: 160px; gap: 12px; margin: 12px 0; }
+@media (min-width: 640px) { .sell-grid { grid-template-columns: repeat(4, 1fr); } }
+.sell-empty { color: var(--text-3); }
+/* GĐ12 — thẻ món giống ảnh khảo sát /pos: ảnh phủ kín ô vuông, giá ở góc trên phải trên nền tối,
+   tên món trên dải mờ dưới đáy, chấm xanh số lượng khi món đã có trong đơn đang mở. */
+.item-card {
+  position: relative; background: #fff; border-radius: var(--radius); overflow: hidden;
+  text-align: left; padding: 0; height: 100%;
+  box-shadow: var(--shadow-sm); border: 1.5px solid var(--line); cursor: pointer; min-height: 0;
+}
+.item-card.unavailable { opacity: .45; }
+.item-card.picked { border-color: var(--primary); }
+.item-card .thumb {
+  position: absolute; inset: 0; background: var(--primary-soft);
+  display: flex; align-items: center; justify-content: center;
+}
+.item-card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.item-card .item-price {
+  position: absolute; top: 0; right: 0; background: rgba(30, 34, 38, .72); color: #fff;
+  font-size: 12px; font-weight: 600; padding: 3px 7px; border-radius: 0 0 0 6px;
+}
+.item-card .item-qty {
+  position: absolute; left: 0; bottom: 34px; min-width: 22px; height: 22px; line-height: 22px;
+  text-align: center; background: var(--primary); color: #fff; font-size: 12px; font-weight: 700;
+  padding: 0 5px; border-radius: 0 6px 0 0;
+}
+/* Task 5 (09/08/2026) — số đã bán, chỉ hiện khi đang sắp xếp "Bán chạy nhất". Đặt góc TRÊN TRÁI để
+   không đè giá (trên phải) hay số lượng trong giỏ (dưới trái). */
+.item-card .item-sold {
+  position: absolute; top: 0; left: 0; background: rgba(22, 153, 57, .92); color: #fff;
+  font-size: 11.5px; font-weight: 700; padding: 3px 7px; border-radius: 0 0 6px 0;
+}
+.item-card .item-name {
+  position: absolute; left: 0; right: 0; bottom: 0; background: rgba(30, 34, 38, .72); color: #fff;
+  font-size: 12.5px; font-weight: 600; line-height: 1.25; padding: 6px 8px; text-align: center;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* ── Sắp xếp & Lọc trong pos-bar (dropdown) ────────────────────────────────── */
+.pos-sf-wrap { position: relative; }
+.pos-sf-btn.active { background: rgba(255,255,255,.26); }
+.pos-sf-drop {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 200;
+  background: #fff; border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.13); padding: 8px; min-width: 180px;
+}
+.pos-sf-drop.hidden { display: none; }
+.pos-sf-section { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--text-3); padding: 4px 8px 2px; margin: 0; }
+.pos-sf-hr { border: none; border-top: 1px solid var(--line); margin: 6px 0; }
+.pos-sf-opt {
+  display: block; width: 100%; text-align: left; padding: 7px 10px; font-size: 13.5px;
+  border: 0; background: transparent; border-radius: 8px; cursor: pointer; color: var(--text);
+  transition: background .1s;
+}
+.pos-sf-opt:hover { background: var(--primary-soft); }
+.pos-sf-opt.active { background: var(--primary); color: #fff; font-weight: 600; }
+/* Task 4 (09/08/2026) — 3 mức ngày tính "Bán chạy nhất" (7 / 30 / 90) trong bảng Sắp xếp & Lọc. */
+.pos-sf-days { display: flex; gap: 6px; padding: 4px 8px 2px; }
+.pos-sf-days .chip { flex: 1; justify-content: center; text-align: center; font-size: 12.5px; padding: 6px 4px; white-space: nowrap; }
+/* Đếm số món — Task 1 (09/08/2026): chuyển KHỎI thanh xanh trên cùng xuống đầu cột danh mục
+   bên trái, đúng chỗ người dùng đang nhìn khi chọn danh mục. Mỗi danh mục cũng có số riêng. */
+.pos-cats-count {
+  margin: 0; flex: none; white-space: nowrap; font-size: 12.5px; font-weight: 600;
+  color: var(--text-3); padding: 0 10px;
+}
+@media (min-width: 1024px) {
+  /* Máy tính: thành dòng tiêu đề của cột danh mục, có gạch chân tách khỏi danh sách bên dưới —
+     nếu để sát mép trên như điện thoại thì trông như chữ bị rơi ra ngoài. */
+  .pos-cats-count {
+    padding: 11px 16px 9px; border-bottom: 1px solid var(--line); background: #FAFBFB;
+    letter-spacing: .01em;
+  }
+}
+.pos-cats .chip { display: inline-flex; align-items: center; gap: 8px; }
+.pos-cats .chip .chip-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pos-cats .chip .chip-count {
+  flex: none; min-width: 22px; height: 20px; line-height: 20px; padding: 0 6px; border-radius: 99px;
+  background: #EEF0F1; color: var(--text-3); font-size: 11.5px; font-weight: 700; text-align: center;
+}
+/* Điện thoại: chip đang chọn nền XANH nên số phải là nền trắng mờ, không thì xanh chồng xanh.
+   Máy tính (khối @media 1024px bên dưới) chip đang chọn nền xám nhạt nên số mới tô xanh được. */
+.pos-cats .chip.active .chip-count { background: rgba(255,255,255,.32); color: #fff; }
+
+/* Kiểu DANH SÁCH: bỏ lưới, mỗi món một dòng cao cố định — đọc nhanh khi thực đơn dài.
+   Dùng chung #sell-grid nên phải huỷ grid-auto-rows của kiểu lưới, nếu không dòng sẽ bị ép 160px. */
+.sell-grid.as-list { display: flex; flex-direction: column; gap: 6px; grid-auto-rows: auto; }
+.item-row {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; min-height: 58px;
+  background: #fff; border: 1.5px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); cursor: pointer; text-align: left;
+}
+.item-row.unavailable { opacity: .45; }
+.item-row.picked { border-color: var(--primary); background: var(--primary-soft); }
+.item-row .row-thumb {
+  flex: none; width: 42px; height: 42px; border-radius: 8px; overflow: hidden;
+  background: var(--primary-soft); display: flex; align-items: center; justify-content: center;
+}
+.item-row .row-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.item-row .row-thumb .thumb-ico svg { width: 20px; height: 20px; }
+.item-row .row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.item-row .row-name {
+  font-size: 14.5px; font-weight: 600; color: var(--text-1);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.item-row .row-sub { font-size: 12px; color: var(--text-3); }
+.item-row .row-qty {
+  flex: none; min-width: 24px; height: 24px; line-height: 24px; text-align: center;
+  background: var(--primary); color: #fff; font-size: 12.5px; font-weight: 700;
+  padding: 0 6px; border-radius: 12px;
+}
+.item-row .row-price { flex: none; font-size: 14.5px; font-weight: 700; color: var(--text-1); }
+
+.size-options { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.size-options button {
+  display: flex; justify-content: space-between; align-items: center; padding: 0 14px;
+  background: var(--primary-soft); color: var(--primary-dark); font-weight: 600;
+}
+
+/* ── Task 1 (09/08/2026): KHUNG BÁN NHANH GẮN TRONG MÀN BÁN HÀNG ──────────────
+   Chủ quán: bấm "Bán nhanh" không rời màn nữa, khu vực món chia đôi — lưới món ở trên, khung bán
+   nhanh ở dưới. Khung xếp 3 cột (tên+số lượng · giá+mệnh giá · bàn phím số+nút thêm) để vừa một
+   dải ngang thấp, không ăn mất chỗ của lưới món. Máy hẹp thì tự xuống 1 cột và cuộn. */
+.qs-dock {
+  display: flex; flex-direction: column; background: #fff; border-top: 2px solid var(--primary);
+  box-shadow: 0 -4px 14px rgba(0,0,0,.06); overflow: hidden;
+}
+.qs-dock.hidden { display: none; }
+.qs-dock-head {
+  display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: var(--primary-soft);
+  border-bottom: 1px solid var(--line); flex: none;
+}
+.qs-dock-head b { font-size: 14.5px; color: var(--primary-dark); white-space: nowrap; }
+.qs-dock-hint {
+  flex: 1; min-width: 0; font-size: 12px; color: var(--text-3);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.qs-dock-close {
+  flex: none; width: 30px; height: 30px; min-width: 30px; min-height: 30px; padding: 0;
+  border: none; background: none; color: var(--text-3); font-size: 22px; line-height: 1;
+  border-radius: 6px; cursor: pointer;
+}
+.qs-dock-close:hover { background: rgba(0,0,0,.06); color: var(--text); }
+.qs-dock-body {
+  display: grid; grid-template-columns: 1fr; gap: 14px; padding: 12px 14px;
+  overflow-y: auto; flex: 1; min-height: 0; align-content: start;
+}
+@media (min-width: 900px) {
+  .qs-dock-body { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(230px, .8fr); }
+}
+.qs-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.qs-col-pad { gap: 8px; }
+.qs-lbl { font-size: 12.5px; font-weight: 600; color: var(--text-3); }
+.qs-dock .qs-chips { margin: 2px 0 0; }
+.qs-dock .qs-price-display { font-size: 26px; padding: 8px; margin: 0; }
+/* Số lượng nằm ngay dưới hàng tên gợi ý — để nó tự trôi xuống đáy cột thì giữa cột hở một khoảng
+   trống to, nhìn như thiếu nội dung. */
+.qs-dock .qs-qty-row { margin: 10px 0 0; }
+.qs-dock .qs-keypad { margin: 0; }
+.qs-dock .qs-key { min-height: 38px; font-size: 16px; }
+.qs-dock .qs-total-row { margin: 0; }
+.qs-dock .qs-confirm { margin: 0; }
+/* Nút Bán nhanh ở cột trái khi khung đang mở — sáng lên để biết đang bật */
+.pos-cat-quick.active { background: var(--primary); color: #fff; }
+
+/* Bán nhanh — Task 2 mục 2 (2026-08-08): dựng lại thành một thẻ gọn gàng có mệnh giá bấm nhanh,
+   ô số lượng và dòng thành tiền, thay vì 3 khối rời rạc trôi giữa nền trắng. */
+.quick-sell { max-width: 380px; margin: 0 auto; }
+.qs-card {
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); padding: 16px;
+}
+.qs-hint, .mgr-hint { font-size: 12.5px; color: var(--text-3); margin: 0 0 12px; line-height: 1.45; }
+
+/* Task 1 (09/08/2026) — hộp thoại "Quản lý bàn": danh sách bàn và danh sách khu vực dựng thành
+   BẢNG có tiêu đề cột. Cột "Chỉnh sửa" canh phải (.mgr-act) nên 2 nút Sửa/Xoá thẳng hàng nhau
+   qua mọi dòng, không so le theo độ dài tên bàn như bản danh sách cũ. */
+.mgr-tablewrap { max-height: 260px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 14px; }
+.mgr-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.mgr-table th {
+  position: sticky; top: 0; z-index: 1; background: #F5F7F8; text-align: left;
+  font-size: 12px; text-transform: uppercase; letter-spacing: .02em; color: var(--text-3);
+  padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+.mgr-table td { padding: 7px 10px; border-bottom: 1px solid #F0F2F3; vertical-align: middle; }
+.mgr-table tr:last-child td { border-bottom: none; }
+.mgr-table .mgr-act { text-align: right; white-space: nowrap; }
+.mgr-table .mgr-act .btn + .btn { margin-left: 6px; }
+.mgr-btn-sm { width: auto; font-size: 12px; min-height: 30px; padding: 0 10px; }
+.mgr-empty { color: #888; text-align: center; padding: 16px 10px; }
+.mgr-badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; }
+.mgr-badge.free { background: #EAF6ED; color: var(--primary); }
+.mgr-badge.busy { background: #FDECEC; color: var(--danger); }
+/* Hai nút thêm phải RỘNG BẰNG NHAU (yêu cầu của chủ quán) — cùng min-width, không co theo chữ. */
+.mgr-add-row { display: flex; justify-content: flex-end; margin: 4px 0 2px; }
+.btn.mgr-add-btn { width: auto; min-width: 148px; font-size: 13px; min-height: 36px; padding: 0 12px; }
+.qs-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.qs-chips .chip { font-size: 13px; padding: 6px 12px; min-height: 32px; }
+.qs-amount-block { margin-top: 14px; }
+.qs-amount-label { font-size: 13px; font-weight: 600; color: var(--text-3); }
+.qs-price-display {
+  text-align: center; font-size: 32px; font-weight: 700; color: var(--primary);
+  background: var(--primary-soft); border-radius: var(--radius); padding: 14px; margin: 6px 0 0;
+  border: 1px solid var(--line); letter-spacing: -.5px;
+}
+.qs-qty-row { display: flex; align-items: center; justify-content: space-between; margin: 14px 0 10px; }
+.qs-stepper { display: flex; align-items: center; gap: 2px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.qs-stepper button {
+  width: 40px; min-height: 38px; border: 0; background: #fff; cursor: pointer;
+  font-size: 20px; font-weight: 700; color: var(--primary-dark);
+}
+.qs-stepper button:active { background: var(--primary-soft); }
+.qs-stepper span { min-width: 44px; text-align: center; font-size: 16px; font-weight: 700; }
+.qs-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.qs-key {
+  background: #fff; font-size: 20px; font-weight: 600; min-height: 56px;
+  border: 1px solid var(--line); border-radius: 10px; cursor: pointer;
+}
+.qs-key:active { background: var(--primary-soft); }
+.qs-key.fn { background: var(--bg, #F5F6F7); font-size: 16px; color: var(--text-3); }
+.qs-total-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 14px 0 10px; padding-top: 12px; border-top: 1px dashed var(--line); font-size: 15px;
+}
+.qs-total-row b { font-size: 20px; color: var(--primary); }
+.qs-confirm { width: 100%; min-height: 48px; font-size: 15.5px; }
+.qs-confirm:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Task 2 (10/08/2026) — ẢNH ĐẠI DIỆN KHÁCH ở danh sách và hộp thoại sửa. Khách chưa có ảnh thì
+   hiện chữ cái đầu của tên trên nền xanh nhạt, đỡ trơ một ô xám trống. */
+.kh-ava {
+  width: 38px; height: 38px; flex: 0 0 38px; border-radius: 50%; object-fit: cover;
+  background: var(--primary-soft); border: 1px solid var(--line);
+}
+.kh-ava-txt {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 700; color: var(--primary); font-size: 15px;
+}
+.kh-edit-ava { display: flex; align-items: center; gap: 12px; margin: 4px 0 12px; }
+.kh-edit-ava .kh-ava { width: 64px; height: 64px; flex: 0 0 64px; font-size: 24px; }
+.kh-edit-ava .btn { width: auto; font-size: 13px; min-height: 34px; padding: 0 12px; margin-right: 6px; }
+.kh-hint { font-size: 12px; color: var(--text-3); margin: 6px 0 0; }
+
+/* Task 3 (10/08/2026) — ô "Hẹn giao" ở giỏ hàng màn Bán hàng và màn Bán nhanh. */
+.cart-sched { margin-bottom: 8px; }
+.cart-sched-opt { font-weight: 400; color: var(--text-3); font-size: 11.5px; }
+.cart-sched-row { display: flex; gap: 6px; }
+.cart-sched-row input { flex: 1; min-width: 0; }
+.cart-sched-clear { width: 44px; flex: 0 0 44px; padding: 0; color: var(--text-3); }
+.cart-sched-clear svg { width: 16px; height: 16px; }
+.cart-sched-clear:hover { color: var(--danger); border-color: var(--danger); }
+
+/* Quản lý bàn */
+.tables-top-actions { display: flex; gap: 10px; margin-bottom: 12px; }
+.tables-top-actions .btn { flex: 1; }
+/* GĐ11 — dùng chung tab gạch chân .tab-row; chỉ giữ khoảng cách dưới riêng của màn bàn. */
+.tables-status-tabs { margin-bottom: 8px; }
+/* Task 1 (10/08/2026) — ô bàn THU NHỎ lại. Bản trước (đợt 5) phóng ô bàn lên 158px × 116px cho
+   giống ảnh Sổ Bán Hàng, nhưng quán có 16 bàn + 2 ô dịch vụ + ô thêm bàn = 19 ô, màn hình chỉ
+   thấy được 10 ô là hết, phải cuộn xuống mới tìm ra bàn cần. Nay ô vừa đủ chứa 3 dòng chữ
+   (số bàn · khu vực · trạng thái) nên một màn hình chứa gần gấp đôi số ô.
+   2 ô dịch vụ Mang về / Giao hàng vẫn dùng CHUNG khuôn .table-card nên luôn to bằng ô bàn. */
+.tables-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); gap: 8px; margin-top: 10px; }
+.table-card {
+  background: #fff; border-radius: var(--radius); padding: 8px 9px; text-align: left; position: relative;
+  border: 1.5px solid var(--line); min-height: 84px;
+}
+/* Ô "Mang về" / "Giao hàng": viền + chữ xanh dương như app Sổ Bán Hàng, icon to giữa ô. */
+.table-card-service {
+  border-color: #2563EB; color: #2563EB;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+}
+.tc-service-ico svg { width: 26px; height: 26px; }
+.tc-service-label { font-size: 13.5px; font-weight: 700; }
+/* Ô cuối "+ Thêm bàn mới": viền đứt nét, chữ xanh lá (giống nút tạo bàn nhanh của Sổ Bán Hàng). */
+.table-card-add {
+  border: 1.5px dashed var(--line); background: #fff; color: var(--primary);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+}
+.table-card-add:hover { border-color: var(--primary); background: var(--primary-soft); }
+.tc-add-plus { font-size: 20px; font-weight: 700; line-height: 1; }
+.tc-add-label { font-size: 12.5px; font-weight: 600; }
+/* Hộp thoại xem mã QR của bàn / hình thức bán */
+.qr-img { width: 100%; max-width: 320px; display: block; margin: 4px auto 0; border-radius: 12px; }
+.qr-hint { font-size: 13px; color: var(--text-2); margin: 4px 0 10px; }
+.qr-err { color: var(--danger); font-size: 13.5px; text-align: center; }
+.table-card.dang-dung { border-color: #F5A524; background: #FFFBF2; }
+.table-card.trong { border-color: var(--line); }
+.table-no { font-weight: 700; font-size: 14px; }
+.table-zone { font-size: 10.5px; color: var(--text-3); }
+.table-status-badge { font-size: 10.5px; font-weight: 600; margin-top: 2px; color: var(--money-in); }
+.table-card.dang-dung .table-status-badge { color: #B4690E; }
+.table-total { font-weight: 700; font-size: 13px; margin-top: 2px; }
+.table-seated { font-size: 10.5px; color: var(--text-3); }
+/* Nút QR co lại còn đúng cái icon — chữ "QR" chiếm gần nửa bề ngang ô bàn sau khi thu nhỏ.
+   Vẫn giữ vùng bấm 26×26 để ngón tay bấm trúng trên máy tính bảng ở quầy. */
+.table-qr-btn {
+  position: absolute; top: 5px; right: 5px; font-size: 10.5px;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 6px; color: var(--text-3);
+}
+.table-qr-btn:hover { background: var(--primary-soft); color: var(--primary); }
+.table-qr-btn svg { width: 17px; height: 17px; }
+
+/* Task 1 (10/08/2026) — hộp thoại IN MÃ QR BÀN.
+   Chủ quán: "thêm nút in QR bàn để in nhanh tất cả QR khi cần hoặc chọn bàn cần in lại". */
+.qrp-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 8px 0 10px; }
+.qrp-tools .btn { width: auto; font-size: 13px; min-height: 34px; padding: 0 12px; }
+.qrp-count { margin-left: auto; font-size: 13px; color: var(--text-2); }
+.qrp-list {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px;
+  max-height: 46vh; overflow-y: auto; padding: 2px;
+}
+.qrp-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  border: 1px solid var(--line); border-radius: var(--radius); background: #fff; cursor: pointer;
+}
+.qrp-item:hover { border-color: var(--primary); }
+.qrp-item input { width: 17px; height: 17px; flex: none; accent-color: var(--primary); }
+.qrp-item-label { font-size: 13.5px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qrp-item-zone { font-size: 11px; color: var(--text-3); }
+
+/* Đơn hàng */
+/* GĐ11 — dùng chung tab gạch chân .tab-row (giống ảnh screens/03-orders.jpeg). */
+.orders-tabs { margin-bottom: 10px; }
+.orders-filters-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.orders-filters-row input, .orders-filters-row select { flex: 1; min-width: 110px; }
+.orders-filters-row .btn { flex: 0 0 auto; }
+/* Task 1 (09/08/2026) — khối lọc màn Đơn hàng: LƯỚI 5 cột nên 2 hàng luôn dài bằng nhau, khớp mép
+   phải (ảnh screens/03-orders.jpeg). KHÔNG sửa .orders-filters-row vì class đó còn dùng chung ở 8
+   màn báo cáo / sổ quỹ khác — sửa nó là đổi luôn giao diện những màn không ai yêu cầu.
+   `minmax(0,1fr)` bắt buộc: 1fr mặc định là minmax(auto,1fr), ô <input> có chiều rộng nội tại nên
+   cột sẽ phình ra không đều.
+   Task 2 (09/08/2026) — lên 6 cột: hàng 1 (tìm kiếm ×2 · khoảng ngày · hình thức · nhân viên ·
+   sắp xếp) và hàng 2 (trạng thái TT · nguồn tiền · chọn nhanh ×3) đều đúng 6 cột nên vẫn khớp
+   mép phải như chủ quán yêu cầu. */
+.ord-filter-grid {
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px; margin-top: 8px; align-items: center;
+}
+.ord-filter-grid > * { min-width: 0; }
+.ord-filter-grid input, .ord-filter-grid select, .ord-filter-grid .btn { width: 100%; }
+.ord-filter-grid .ord-span2 { grid-column: span 2; }
+.ord-filter-grid .ord-span3 { grid-column: span 3; }
+@media (max-width: 1200px) {
+  .ord-filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ord-filter-grid .ord-span3 { grid-column: span 3; }
+}
+@media (max-width: 900px) {
+  .ord-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ord-filter-grid .ord-span3 { grid-column: span 2; }
+}
+/* Task 2 mục 4 (2026-08-08): hàng chip chọn nhanh khoảng thời gian — cuộn ngang trên điện thoại
+   thay vì xuống dòng làm cao thêm phần lọc. */
+.ord-quick-range { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; padding-bottom: 2px; }
+.ord-filter-grid .ord-quick-range { margin-top: 0; }
+.ord-quick-range .chip { white-space: nowrap; }
+.ord-quick-range .chip-select { width: auto; padding-right: 26px; }
+
+/* Task 7 (09/08/2026) — "Xoá lọc" và "Xuất Excel" trước đây chiếm trọn 1 ô lưới nên to bằng cả ô
+   tìm kiếm, nhìn như 2 nút chính. Nay: thu về đúng cỡ chữ, canh SÁT PHẢI trong hàng 2, và tô màu
+   rõ ràng (xám đậm viền / xanh lá viền) thay vì cùng một màu trắng nhờ nhờ.
+   Đặt ở cột cuối cùng của lưới (grid-column: -2 / -1) nên hàng 2 vẫn kết thúc đúng mép phải. */
+/* Task 3 (09/08/2026 đợt 5): hàng 2 nay là 3 khối rộng 2 cột (trạng thái TT · nguồn tiền ·
+   2 nút), nên khối nút ghim vào 2 cột cuối chứ không phải 1. */
+.ord-actions {
+  grid-column: -3 / -1; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;
+}
+.ord-filter-grid .ord-actions .btn { width: auto; flex: 0 0 auto; font-size: 13px; min-height: 36px; padding: 0 12px; }
+.btn.btn-clear { background: #EEF1F3; color: var(--text-2); border-color: #D7DDE2; }
+.btn.btn-clear:hover { background: #E3E8EC; }
+.btn.btn-excel { background: #fff; color: var(--primary); border-color: var(--primary); font-weight: 600; }
+.btn.btn-excel:hover { background: rgba(22, 153, 57, .08); }
+
+/* Task 2 (09/08/2026) — nút "khoảng ngày" gộp + bảng lịch đôi.
+   Bảng lịch tự vẽ chứ không dùng <input type="date">: chủ quán muốn bấm MỘT nút là thấy NGAY hai
+   tháng cạnh nhau để quét khoảng, còn ô ngày của trình duyệt chỉ mở được từng lịch một. */
+.ord-date-wrap { position: relative; }
+.ord-date-btn { justify-content: flex-start; gap: 6px; white-space: nowrap; overflow: hidden; }
+.ord-date-btn.has-value { border-color: var(--primary); color: var(--primary); font-weight: 600; }
+/* BUG (chủ quán báo 10/08/2026): "các nút chọn nhanh nhiều quá, không xuống dòng dẫn đến ô bị
+   phóng to quá mức không xem hết được".
+   GỐC RỄ: `width: max-content` bảo trình duyệt "rộng đúng bằng đứa con rộng nhất khi KHÔNG xuống
+   dòng". Hàng lối tắt có 7 chip + nút Năm nên max-content của nó ≈ 1000px — bảng lịch bị kéo rộng
+   theo, tràn khỏi màn hình, và `flex-wrap: wrap` khai ở dưới KHÔNG BAO GIỜ có tác dụng vì đã đủ
+   chỗ cho một hàng. Chặn bề rộng lại đúng bằng 2 bảng lịch (2×244 + gap 16 + padding 24 = 528px)
+   thì hàng chip mới thật sự xuống dòng. */
+.ord-date-pop {
+  position: absolute; z-index: 60; top: calc(100% + 6px); left: 0;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(16, 24, 32, .18); padding: 12px;
+  width: max-content; max-width: min(92vw, 528px);
+}
+/* BUG (chủ quán báo 09/08/2026): số ngày của 2 tháng ĐÈ LÊN NHAU, đọc ra "78", "145"…
+   GỐC RỄ: quy tắc chung ở đầu file `button, .btn { min-width: 44px }` cũng ăn vào từng ô ngày
+   (.odp-day là thẻ <button>). Lưới `repeat(7, 1fr)` thực chất là minmax(AUTO, 1fr), mà auto
+   không bao giờ nhỏ hơn min-width → 7 × 44 + gap = ~320px, TRÀN ra ngoài khung .odp-cal rộng
+   210px và đè sang bảng lịch bên cạnh. Vì vậy 3 dòng min-width dưới đây là BẮT BUỘC, đừng xoá.
+   Bài học chung: mọi <button> đặt trong lưới/flex hẹp đều phải tự khai lại min-width. */
+.odp-cals { display: flex; gap: 16px; }
+.odp-cal { width: 244px; flex: 0 0 244px; }
+.odp-cal-head { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 6px; font-size: 13.5px; }
+.odp-nav {
+  border: 1px solid var(--line); background: #fff; border-radius: 6px;
+  width: 26px; height: 26px; min-width: 26px; min-height: 26px; padding: 0; flex: none;
+  font-size: 16px; line-height: 1; cursor: pointer; color: var(--text-2);
+}
+.odp-nav:hover { background: #F3F5F6; }
+.odp-nav-sp { width: 26px; }
+/* Tiêu đề "Tháng 8 2026" bấm được để nhảy nhanh sang tháng/năm bất kỳ (Task 3, 09/08 đợt 5) */
+.odp-title {
+  flex: 1; min-width: 0; height: 28px; min-height: 28px; padding: 0 6px;
+  background: none; border: none; border-radius: 6px;
+  font-size: 13.5px; font-weight: 700; color: var(--text); cursor: pointer;
+}
+.odp-title:hover, .odp-title.open { background: var(--primary-soft); color: var(--primary); }
+.odp-picker-head { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin: 8px 0; }
+.odp-pick-year {
+  flex: 1; min-width: 0; height: 28px; min-height: 28px; padding: 0;
+  background: none; border: none; font-size: 13.5px; font-weight: 700; color: var(--text); cursor: pointer;
+}
+.odp-picker-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.odp-pick {
+  min-width: 0; min-height: 36px; height: 36px; padding: 0 4px;
+  border: 1px solid var(--line); background: #fff; border-radius: 6px;
+  font-size: 12.5px; font-weight: 500; color: var(--text); cursor: pointer;
+}
+.odp-pick:hover { background: var(--primary-soft); border-color: var(--primary); }
+.odp-pick.sel { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
+.odp-dow, .odp-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.odp-dow span { text-align: center; font-size: 11px; color: var(--text-3); padding: 2px 0; }
+.odp-day {
+  border: none; background: none; border-radius: 6px; height: 30px; font-size: 12.5px;
+  cursor: pointer; color: var(--text);
+  min-width: 0; min-height: 30px; padding: 0;
+}
+.odp-day:hover { background: #EAF6ED; }
+.odp-day.empty { visibility: hidden; }
+.odp-day.today { font-weight: 700; text-decoration: underline; }
+.odp-day.in { background: #EAF6ED; }
+.odp-day.edge { background: var(--primary); color: #fff; font-weight: 700; }
+/* Hàng lối tắt (Hôm nay · Hôm qua · 30 ngày gần nhất…) nằm TRONG bảng lịch như Sổ Bán Hàng.
+   `overflow: visible` là bắt buộc — bảng chọn năm bung ra từ đây, để `auto` là nó bị cắt cụt. */
+.ord-date-pop .ord-quick-range { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; flex-wrap: wrap; overflow: visible; }
+
+/* ── Task 2 (10/08/2026) — nút "Năm…" mở bảng chọn NĂM BẤT KỲ ────────────────────────────────
+   Thay cho <select> chỉ nạp cứng 3 năm gần nhất. Dùng lại đúng lưới .odp-picker-grid của bảng
+   chọn tháng/năm trong lịch nên hai chỗ trông giống hệt nhau. */
+.ord-year-wrap { position: relative; }
+#ord-year-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.ord-year-pop {
+  position: absolute; z-index: 70; bottom: calc(100% + 6px); right: 0; width: 250px;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(16, 24, 32, .18); padding: 10px;
+}
+.ord-year-pop .odp-picker-head { margin-top: 0; }
+
+/* Task 3 — 2 ô ngày của "Hẹn giao: Tuỳ chọn…" (chỉ hiện khi chọn mục đó). */
+/* Task 1 (12/08/2026) — "Hẹn giao → Tuỳ chọn…" nay là MỘT nút mở bảng lịch đôi (giống nút
+   "Mọi thời gian" ở hàng trên), không còn 2 ô <input type="date"> rời. .ord-sched-range vẫn giữ
+   tên cũ vì là ô thứ 2-cột trong lưới lọc; nó cũng mang thêm class .ord-date-wrap để có
+   position:relative cho bảng lịch bung ra đúng chỗ.
+   Bảng lịch của nút này ghim mép PHẢI: ô nằm ở nửa dưới bên trái lưới, bung sang trái thì bảng
+   528px đủ chỗ, còn bung sang phải sẽ tràn khỏi khung lọc trên màn 1366px. */
+.ord-sched-range { display: flex; align-items: center; }
+.ord-sched-range > .ord-date-btn { width: 100%; }
+.ord-sched-range .ord-date-pop { left: 0; right: auto; }
+@media (min-width: 1200px) {
+  .ord-sched-range .ord-date-pop { left: auto; right: 0; }
+}
+.odp-foot { display: flex; align-items: center; gap: 8px; margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
+.odp-sel { flex: 1; font-size: 13px; color: var(--text-2); }
+.odp-foot .btn { width: auto; font-size: 13px; min-height: 34px; padding: 0 12px; }
+@media (max-width: 720px) {
+  .odp-cals { flex-direction: column; }
+  .ord-date-pop { left: auto; right: 0; }
+}
+/* ── Task 3 (09/08/2026 đợt 5) — ô lọc CHỌN NHIỀU kiểu Sổ Bán Hàng (ảnh 15/18/19) ────────────
+   Một nút + bảng thả xuống có ô tìm kiếm và danh sách ô-vuông-tích. Thay cho <select> cũ vì
+   <select> chỉ chọn được 1 mục và không tìm kiếm được khi danh sách nhân viên dài. */
+.ord-dd { position: relative; }
+.ord-dd-btn {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  background: #fff; border: 1px solid var(--line); color: var(--text-2);
+  font-size: 14px; font-weight: 500; min-height: 44px; padding: 0 10px; text-align: left;
+}
+.ord-dd-btn:hover { border-color: var(--primary); }
+.ord-dd.has-value .ord-dd-btn { border-color: var(--primary); color: var(--primary); font-weight: 600; }
+.ord-dd-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ord-dd-caret { width: 16px; height: 16px; flex: none; }
+.ord-dd-pop {
+  position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; min-width: 100%; width: max-content;
+  max-width: 90vw; background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(16, 24, 32, .18); padding: 8px;
+}
+.ord-dd-search input { min-height: 38px; font-size: 14px; }
+.ord-dd-list { margin-top: 8px; max-height: 260px; overflow-y: auto; }
+.ord-dd-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-radius: 6px;
+  font-size: 14px; cursor: pointer; white-space: nowrap;
+}
+.ord-dd-item:hover { background: var(--primary-soft); }
+.ord-dd-item input { width: 17px; height: 17px; min-height: 17px; flex: none; accent-color: var(--primary); margin: 0; padding: 0; }
+.ord-dd-empty { font-size: 13px; color: var(--text-3); margin: 8px 6px; }
+
+/* Nút "Tạo đơn hàng" có mũi tên mở thêm lựa chọn (ảnh 16) */
+.ord-create { position: relative; display: flex; }
+.ord-create-main { border-radius: var(--radius) 0 0 var(--radius); }
+.ord-create-caret {
+  border-radius: 0 var(--radius) var(--radius) 0; min-width: 34px; width: 34px; padding: 0;
+  border-left: 1px solid rgba(255,255,255,.35);
+  display: flex; align-items: center; justify-content: center;
+}
+.ord-create-caret svg { width: 18px; height: 18px; }
+.ord-create-menu {
+  position: absolute; z-index: 60; top: calc(100% + 6px); right: 0; min-width: 208px;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(16, 24, 32, .18); padding: 6px; overflow: hidden;
+}
+.ord-create-menu a {
+  display: flex; align-items: center; gap: 10px; padding: 10px 10px; border-radius: 6px;
+  text-decoration: none; color: var(--text); font-size: 14px; font-weight: 500;
+}
+.ord-create-menu a:hover { background: var(--primary-soft); color: var(--primary); }
+.ord-create-menu a svg { width: 19px; height: 19px; }
+
+/* Danh sách đơn kiểu BẢNG có tiêu đề cột (ảnh SoBanHang chủ quán gửi) */
+.ord-tablewrap { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); overflow-x: auto; }
+.ord-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ord-table th {
+  text-align: left; font-size: 11.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+  color: var(--text-2); background: #F7F8F9; padding: 11px 12px; border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.ord-table td { padding: 11px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.ord-table tbody tr:last-child td { border-bottom: none; }
+.ord-table tbody tr { cursor: pointer; }
+.ord-table tbody tr:hover { background: var(--primary-soft); }
+.ord-td-code { font-weight: 700; }
+.ord-td-cust { color: var(--text-2); font-size: 13px; margin-top: 2px; }
+.ord-td-money { color: var(--money-in); font-weight: 700; margin-top: 2px; }
+.ord-td-date { white-space: nowrap; font-size: 13.5px; }
+.ord-td-time { color: var(--text-3); font-size: 12.5px; }
+.ord-td-deliv { white-space: nowrap; font-size: 13.5px; color: var(--text-2); }
+
+/* ── Task 2/3/4 (10/08/2026) — bảng đơn thêm 4 cột + nút 3 chấm ──────────────────────────────
+   Chủ quán xin tách "Tổng đơn hàng" thành cột riêng (trước gộp chung vào ô Thông tin đơn hàng),
+   thêm cột "Thanh toán" để theo dõi đã thu tiền hay chưa, và nút 3 chấm để sửa/xoá nhanh. */
+.ord-table-wide { min-width: 1080px; }  /* 10 cột — hẹp hơn thì .ord-tablewrap tự cho cuộn ngang */
+.ord-td-sched { color: var(--text-2); }
+.ord-td-delivst { white-space: nowrap; font-size: 13.5px; color: var(--text-2); }
+.ord-th-total, .ord-td-total { text-align: right; white-space: nowrap; font-weight: 700; color: var(--money-in); }
+.ord-th-act, .ord-td-act { width: 44px; text-align: center; }
+
+/* Nhãn trạng thái thanh toán — chấm màu + chữ ngắn, đọc lướt cả cột là thấy đơn nào còn thiếu tiền. */
+.pay-dot { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.pay-dot::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: currentColor; flex: none; }
+.pay-yes { color: var(--money-in); }
+.pay-no { color: #B4690E; }
+.pay-debt { color: #7C3AED; }
+.pay-none { color: var(--text-3); }
+.pay-none::before { background: var(--text-3); }
+
+.ord-detail-sched { font-size: 13.5px; color: var(--text-2); margin: 4px 0 0; }
+.ord-kebab {
+  width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 0;
+  border: 1px solid transparent; background: none; border-radius: 8px; cursor: pointer; color: var(--text-2);
+}
+.ord-kebab:hover { background: #EEF1F3; border-color: var(--line); color: var(--text); }
+.ord-kebab svg { width: 18px; height: 18px; }
+
+/* Menu 3 chấm — gắn thẳng vào <body> (position: fixed) chứ không nằm trong ô <td>: .ord-tablewrap
+   có overflow-x:auto nên con position:absolute bên trong sẽ bị CẮT ở mép bảng và menu của cột
+   cuối cùng coi như biến mất. Dùng chung cho mọi màn có nút 3 chấm (đơn hàng, khách hàng, sản
+   phẩm) — thêm màn mới chỉ việc tạo .row-menu, không phải chép CSS lần nữa. */
+.row-menu {
+  position: absolute; z-index: 200; min-width: 168px; padding: 6px;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(16, 24, 32, .18);
+}
+.row-menu button {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 38px; padding: 0 10px;
+  background: none; border: none; border-radius: 8px; cursor: pointer;
+  font-size: 14px; font-weight: 500; color: var(--text); text-align: left;
+}
+.row-menu button:hover { background: var(--primary-soft); color: var(--primary); }
+.row-menu button.danger { color: var(--danger); }
+.row-menu button.danger:hover { background: #FDECEC; color: var(--danger); }
+.row-menu button svg { width: 18px; height: 18px; flex: none; }
+
+/* Thẻ đơn hàng — 2 hàng bằng nhau (Task 5 2026-08-09) */
+.order-card {
+  display: block; width: 100%; background: #fff; border-radius: var(--radius); padding: 12px 14px;
+  text-align: left; border: 1px solid var(--line); box-shadow: var(--shadow-sm);
+  transition: box-shadow .12s, border-color .12s;
+}
+.order-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.1); border-color: var(--primary); }
+/* Hàng 1: mã đơn | tên khách | badge trạng thái */
+.order-card-row1 {
+  display: flex; align-items: center; gap: 8px; min-height: 28px;
+}
+.order-code { font-weight: 700; font-size: 14px; flex-shrink: 0; }
+.order-customer { flex: 1; font-size: 13.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Hàng 2: hình thức | ngày giờ | tổng tiền */
+.order-card-row2 {
+  display: flex; align-items: center; gap: 8px; margin-top: 7px;
+  font-size: 12.5px; color: var(--text-3);
+}
+.order-delivery { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.order-date { flex-shrink: 0; white-space: nowrap; }
+.order-status-badge {
+  font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; flex-shrink: 0;
+  background: var(--primary-soft); color: var(--primary);
+}
+.order-status-badge.status-cancelled { background: #FEE2E2; color: var(--danger); }
+.order-status-badge.status-returned { background: #FFF3E0; color: #B4690E; }
+.order-total { font-weight: 700; color: var(--money-in); font-size: 14px; flex-shrink: 0; }
+.order-detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.order-detail-actions .btn { flex: 1; min-width: 120px; }
+
+/* Nhân viên */
+.table-scroll { overflow-x: auto; background: #fff; border-radius: var(--radius); padding: 10px; border: 1px solid var(--line); }
+.roles-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.roles-table th, .roles-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+
+/* Giỏ hàng */
+.cart-panel { margin-top: 20px; background: #fff; border-radius: var(--radius); padding: 14px; border: 1px solid var(--line); }
+.cart-empty { color: var(--text-3); text-align: center; padding: 30px 0; display: flex;
+  flex-direction: column; align-items: center; gap: 10px; font-size: 14px; }
+.cart-empty-ico { color: var(--line); }
+.cart-empty-ico svg { width: 56px; height: 56px; }
+.cart-item { border-bottom: 1px solid var(--line); padding: 10px 0; }
+.cart-item:last-child { border-bottom: none; }
+/* GĐ12 — một dòng giỏ hàng xếp ngang như ảnh 21-pos-cart: tên+đơn giá · − SL + · thành tiền · xoá */
+.cart-item-top { display: flex; align-items: center; gap: 8px; }
+.cart-item-info { flex: 1; min-width: 0; }
+.cart-item-name { font-weight: 600; font-size: 14px; }
+.cart-item-size { font-size: 12px; color: var(--text-2); }
+.cart-item-money { font-weight: 600; color: var(--text); white-space: nowrap; font-size: 14px; }
+.cart-item-remove { background: none; color: var(--text-3); min-height: auto; min-width: auto; padding: 4px; }
+.cart-item-remove svg { width: 16px; height: 16px; }
+.cart-item-remove:hover { color: var(--danger); }
+.qty-row { display: flex; align-items: center; gap: 6px; flex: none; }
+.qty-num { min-width: 22px; text-align: center; font-weight: 600; }
+.qty-btn { width: 30px; height: 30px; min-height: 30px; min-width: 30px; background: #fff;
+  border: 1px solid var(--line); color: var(--primary); font-size: 17px; border-radius: 6px; }
+.cart-item-note { margin-top: 6px; font-size: 13px; min-height: 36px; }
+.cart-total-row { display: flex; justify-content: space-between; font-weight: 700; padding-top: 10px; margin-top: 6px; border-top: 2px solid var(--line); }
+
+/* Đầu giỏ: ô tìm khách + nút hình thức nhận (viền xanh) — giống ảnh khảo sát. */
+.cart-head { display: flex; align-items: flex-start; gap: 8px; }
+.cart-head .field { flex: 1; margin-bottom: 8px; }
+.cart-type-btn {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px;
+  background: #fff; border: 1px solid var(--primary); color: var(--primary); font-weight: 600;
+  white-space: nowrap;
+}
+.cart-type-btn svg { width: 18px; height: 18px; }
+/* Nút thanh toán 2 dòng: chữ trên, số tiền dưới (như "Thanh toán (F1) / 555.555" của app). */
+.cart-pay-btn {
+  width: 100%; margin-top: 10px; min-height: 56px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+}
+.cart-pay-btn b { font-size: 15px; font-weight: 700; }
+.cart-pay-btn span { font-size: 15px; font-weight: 700; }
+
+.delivery-tabs { display: flex; gap: 8px; margin: 12px 0 8px; }
+.delivery-tabs button { flex: 1; background: #fff; border: 1px solid var(--line); }
+.delivery-tabs button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.customer-suggestions { position: relative; }
+.suggestion-list {
+  position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--line);
+  border-radius: 8px; z-index: 5; max-height: 160px; overflow-y: auto; box-shadow: var(--shadow-md);
+}
+.suggestion-list div { padding: 8px 12px; cursor: pointer; font-size: 14px; }
+.suggestion-list div:hover { background: var(--primary-soft); }
+
+/* Màn hình nghỉ */
+.offline-screen {
+  position: fixed; inset: 0; background: var(--primary); color: #fff;
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+.offline-box { text-align: center; padding: 24px; }
+.offline-icon { font-size: 48px; margin-bottom: 12px; }
+.offline-box .btn { margin-top: 16px; background: #fff; color: var(--primary); padding: 0 24px; }
+
+/* Đăng nhập — GĐ12: căn GIỮA màn hình cả chiều ngang lẫn chiều dọc, khung thẻ trắng như app. */
+/* Chưa đăng nhập thì KHÔNG có cột trái, phải bỏ luôn phần chừa chỗ cho nó — nếu không khung
+   đăng nhập bị đẩy lệch sang phải đúng 240px (bề rộng cột trái) chứ không nằm giữa màn hình. */
+body.no-nav .view { display: flex; align-items: center; justify-content: center; margin-left: 0 !important; }
+.login-wrap {
+  width: 100%; max-width: 380px; margin: 0 auto; text-align: center;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md); padding: 28px 24px 26px;
+}
+.login-logo {
+  width: 64px; height: 64px; margin: 0 auto 14px; border-radius: 18px;
+  background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 20px rgba(22, 153, 57, .3);
+}
+.login-logo svg { width: 34px; height: 34px; }
+.login-wrap h1 { color: var(--text); font-size: 22px; margin: 0 0 6px; letter-spacing: -.4px; }
+.login-sub { color: var(--text-2); font-size: 13.5px; margin: 0 0 22px; }
+.login-wrap .field { margin-bottom: 12px; text-align: left; }
+.login-wrap label { display: block; font-size: 13px; margin-bottom: 4px; color: var(--text-2); }
+
+/* Thanh toán */
+.pay-summary { margin: 12px 0; font-size: 14px; }
+.pay-summary > div { display: flex; justify-content: space-between; padding: 4px 0; }
+.pay-summary .pay-total {
+  border-top: 1px solid var(--line); margin-top: 6px; padding-top: 8px;
+  font-size: 18px; font-weight: 700; color: var(--money-in);
+}
+.pay-warn { color: var(--warn); font-size: 13px; }
+.pay-methods { display: flex; gap: 8px; margin-bottom: 12px; }
+.pay-methods button { flex: 1; }
+#pay-detail label { display: block; font-size: 13px; color: var(--text-2); margin-bottom: 4px; }
+#pay-detail input { width: 100%; font-size: 20px; padding: 10px; }
+.pay-change { margin: 10px 0; font-size: 15px; }
+.pay-qr { display: block; width: 100%; max-width: 280px; margin: 0 auto 8px; }
+.pay-qr-note { text-align: center; font-size: 13px; margin-bottom: 12px; }
+
+/* Tiền */
+.cash-account-row {
+  display: flex; justify-content: space-between; align-items: flex-start; background: #fff;
+  border-radius: var(--radius); padding: 12px; margin-bottom: 8px; gap: 8px; flex-wrap: wrap;
+  border: 1px solid var(--line);
+}
+.cash-account-row.inactive { opacity: .55; }
+.cash-account-name { font-weight: 700; }
+.cash-account-meta { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.cash-account-balance { font-weight: 700; color: var(--money-in); white-space: nowrap; }
+.cash-account-actions { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
+.cash-account-actions button { font-size: 12px; min-height: 34px; padding: 0 10px; }
+.badge-default {
+  display: inline-block; font-size: 10px; font-weight: 700; background: var(--primary-soft);
+  color: var(--primary); border-radius: 999px; padding: 2px 8px; margin-left: 6px;
+}
+
+.tc-actions { display: flex; gap: 10px; margin-bottom: 12px; }
+.tc-actions .btn { flex: 1; }
+.tc-totals { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.tc-total-box { flex: 1; min-width: 100px; background: #fff; border-radius: var(--radius); padding: 10px 12px; border: 1px solid var(--line); }
+.tc-total-box .label { display: block; font-size: 11px; color: var(--text-3); }
+.tc-total-box .value { display: block; font-size: 16px; font-weight: 700; margin-top: 2px; }
+.tc-total-box .value.thu { color: var(--money-in); }
+.tc-total-box .value.chi { color: var(--money-out); }
+.tc-filters { margin-bottom: 10px; }
+.tc-filters .orders-filters-row { margin-top: 8px; }
+.tc-row {
+  display: flex; justify-content: space-between; align-items: center; background: #fff;
+  border-radius: var(--radius); padding: 12px; margin-bottom: 8px; gap: 8px; flex-wrap: wrap;
+  border: 1px solid var(--line);
+}
+.tc-row.voided { opacity: .55; text-decoration: line-through; }
+.tc-row-main { flex: 1; min-width: 180px; }
+.tc-row-top { display: flex; justify-content: space-between; gap: 8px; }
+.tc-code { font-weight: 700; }
+.tc-amount { font-weight: 700; }
+.tc-amount.thu { color: var(--money-in); }
+.tc-amount.chi { color: var(--money-out); }
+.tc-row-meta { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.tc-voided-label { font-size: 11px; font-weight: 700; color: var(--danger); margin-top: 4px; }
+.sq-quick-range { display: flex; gap: 8px; overflow-x: auto; }
+.sq-quick-range .chip { white-space: nowrap; }
+.debt-row {
+  display: block; width: 100%; background: #fff; border-radius: var(--radius); padding: 12px;
+  margin-bottom: 8px; text-align: left; border: 1.5px solid var(--line);
+}
+.debt-row.overdue { border-color: var(--danger); background: #FFF5F5; }
+.debt-row-top { display: flex; justify-content: space-between; align-items: center; }
+.debt-partner { font-weight: 700; }
+.debt-remaining { font-weight: 700; color: var(--money-in); }
+.debt-row.overdue .debt-remaining { color: var(--danger); }
+.debt-row-meta { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+
+/* Báo cáo */
+.rp-note { font-size: 12px; color: var(--text-3); margin: 6px 0 12px; }
+.rp-warning-banner { background: #FFF8E1; border: 1px solid #FFCA28; color: #7A5C00; border-radius: var(--radius); padding: 12px; margin-bottom: 12px; font-size: 13px; }
+.rp-warning-banner a { color: var(--primary); font-weight: 600; }
+.pay-total.rp-positive { color: var(--money-in); }
+.pay-total.rp-negative { color: var(--money-out); }
+.rp-exempt-box { background: var(--primary-soft); color: var(--primary-dark); border-radius: var(--radius); padding: 14px; margin: 12px 0; }
+.rp-exempt-box .rp-what-if { font-size: 12px; margin-top: 8px; opacity: .9; }
+.rp-disclaimer { font-size: 11px; color: var(--text-3); background: #EEF2F7; border-radius: 10px; padding: 10px; margin-top: 16px; }
+.rp-stats-line { font-size: 13px; color: var(--text-2); margin: 8px 0 12px; }
+.rp-readonly-note { font-size: 12px; color: var(--warn); margin-top: 8px; }
+.rp-cost-input { max-width: 110px; min-height: 36px; padding: 0 8px; }
+.rp-savebar { position: sticky; bottom: 0; background: var(--bg); padding: 10px 0; margin-top: 12px; }
+.rp-margin-pos { color: var(--money-in); font-weight: 600; }
+.rp-margin-neg { color: var(--money-out); font-weight: 600; }
+
+/* Hàng hoá & kho */
+.field { margin-bottom: 12px; text-align: left; }
+.field label { display: block; font-size: 13px; color: var(--text-2); margin-bottom: 4px; }
+.hint { font-size: 12px; color: var(--text-3); margin: 8px 0; }
+
+/* GĐ11 — tab gạch chân giống app.sobanhang.com (ảnh screens/03-orders, 05-products):
+   chữ xám, mục đang chọn đổi xanh + gạch chân, có vạch ngăn mảnh giữa các tab.
+   Trước đây là viên thuốc nền xanh đặc — khác hẳn bản web mà chủ quán nhìn. */
+.tab-row {
+  display: flex; gap: 0; overflow-x: auto; margin: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.tab {
+  background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-2);
+  font-size: 14px; min-height: 40px; padding: 0 16px; white-space: nowrap; border-radius: 0;
+  font-weight: 500; position: relative;
+  /* .tab dùng cho cả <button> (lọc tại chỗ) lẫn <a> (chuyển màn) nên phải tự căn giữa. */
+  display: inline-flex; align-items: center; gap: 5px; text-decoration: none; cursor: pointer;
+}
+.tab + .tab::before {
+  content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 1px; height: 16px; background: var(--line);
+}
+.tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.tab-count { font-size: 14px; }
+
+.filter-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.filter-row input, .filter-row select { flex: 1 1 140px; min-height: 40px; }
+.filter-row .btn { flex: 0 0 auto; padding: 0 12px; font-size: 14px; background: #fff; border: 1px solid var(--line); }
+.filter-row .btn.btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+.stock-row {
+  display: flex; align-items: center; gap: 10px; background: #fff;
+  border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px; border: 1px solid var(--line);
+}
+.stock-row.inactive { opacity: .55; }
+.stock-row.low { border-left: 4px solid var(--warn); }
+.stock-pick { flex: 0 0 auto; }
+.stock-pick input { width: 20px; min-height: 20px; }
+.stock-main { flex: 1 1 auto; min-width: 0; }
+.stock-name { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.stock-meta { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+.stock-qty { flex: 0 0 auto; text-align: right; font-weight: 700; font-size: 15px; }
+.stock-sub { font-size: 11px; font-weight: 400; color: var(--text-2); }
+.stock-actions { flex: 0 0 auto; }
+.stock-actions button { min-height: 34px; font-size: 13px; padding: 0 10px; }
+
+.stock-line { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+.stock-line select { flex: 3 1 0; min-width: 0; }
+.stock-line input { flex: 1 1 0; min-width: 60px; }
+.stock-line button { flex: 0 0 auto; min-width: 40px; }
+
+.stock-table { background: #fff; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); }
+.stock-table-head, .stock-table-row {
+  display: grid; grid-template-columns: 2fr 1fr 1.2fr 1fr; gap: 6px;
+  padding: 8px 10px; align-items: center; font-size: 13px;
+}
+.stock-table-head { background: #EEF2F7; font-weight: 600; color: var(--text-2); }
+.stock-table-row { border-top: 1px solid var(--line); }
+.stock-table-row input { min-height: 34px; padding: 0 6px; font-size: 14px; }
+.diff-plus { color: var(--money-in); font-weight: 700; }
+.diff-minus { color: var(--money-out); font-weight: 700; }
+
+.badge-warn { background: #FEF3C7; color: #92400E; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; }
+.badge-in { background: #E6F6ED; color: var(--money-in); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; }
+.badge-out { background: #FEE2E2; color: #991B1B; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; }
+.warn-banner { background: #FEF3C7; color: #92400E; font-size: 12px; border-radius: 10px; padding: 10px; margin-top: 10px; }
+.warn-banner a { color: #92400E; font-weight: 700; }
+
+/* ═══ GĐ9 — DASHBOARD "TỔNG QUAN" sao chép /mission-control của app.sobanhang.com ═══
+   Xem output/sobanhang-survey/KHAO-SAT-TOAN-BO.md mục 2 + screens/01-mission-control.jpeg */
+.dash-h2 { font-size: 18px; font-weight: 700; margin: 18px 0 10px; letter-spacing: -.2px; }
+
+/* ── Task 2 mục 7 (2026-08-08): tiêu đề mục bấm được để thu gọn ────────────────────────────────
+   Mũi tên xoay 90° khi mục bị gập, để nhìn là biết còn nội dung ẩn bên dưới chứ không phải mất. */
+.sec-head { cursor: pointer; user-select: none; }
+.sec-head:hover { color: var(--primary-dark); }
+.sec-head:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+.sec-caret {
+  display: inline-block; width: 0; height: 0; margin-left: 8px; vertical-align: middle;
+  border-left: 5px solid currentColor; border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent; opacity: .5;
+  transform: rotate(90deg); transition: transform .15s ease;
+}
+.sec-head.collapsed .sec-caret { transform: rotate(0deg); }
+
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-md); padding: 14px; margin-bottom: 12px;
+}
+.card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.card-head h3 { margin: 0; font-size: 15px; }
+.card-head.warn { background: #FFF4E5; margin: -14px -14px 10px; padding: 12px 14px;
+  border-radius: var(--radius) var(--radius) 0 0; }
+.see-all { font-size: 13px; color: var(--primary); text-decoration: none; font-weight: 600; }
+
+/* ── 4 thẻ KPI (viền trên xanh lá giống app) ───────────────────────────── */
+.kpi-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media (min-width: 900px) { .kpi-row { grid-template-columns: repeat(4, 1fr); } }
+/* Đợt 4 — 5 thẻ (thêm "Khách mới"): 4 cột vẫn wrap 4+1 ở tablet, đủ rộng thì lên 5 cột đều nhau. */
+@media (min-width: 1400px) { .kpi-row-5 { grid-template-columns: repeat(5, 1fr); } }
+.kpi-loading { color: var(--text-3); font-size: 14px; grid-column: 1 / -1; }
+.kpi {
+  background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--primary);
+  border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 12px;
+}
+.kpi-label {
+  font-size: 11px; font-weight: 600; color: var(--text-2); letter-spacing: .3px;
+  display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 22px;
+}
+/* Đợt 4 — hộp icon màu góc phải mỗi thẻ KPI, giống ảnh mẫu "Bức tranh kinh doanh". */
+.kpi-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.kpi-head .kpi-label { flex: 1; min-height: 0; }
+.kpi-icon {
+  flex: none; width: 28px; height: 28px; border-radius: 8px; display: flex;
+  align-items: center; justify-content: center; background: currentColor;
+}
+.kpi-icon svg { width: 16px; height: 16px; color: #fff; }
+.kpi-unit { font-size: 12px; font-weight: 500; color: var(--text-3); }
+.kpi-edit { background: none; border: none; padding: 0; min-height: 22px; min-width: 22px; color: var(--text-3); }
+.kpi-edit svg { width: 14px; height: 14px; }
+.kpi-acc { width: auto; min-height: 26px; font-size: 12px; padding: 0 6px; border-radius: 6px; }
+.kpi-value { font-size: 22px; font-weight: 700; letter-spacing: -.5px; margin: 6px 0 4px; }
+.kpi-sub { font-size: 11.5px; color: var(--text-2); }
+.kpi-sub.two { display: flex; flex-direction: column; gap: 2px; }
+.kpi-sub .in { color: var(--money-in); }
+.kpi-sub .out { color: var(--money-out); }
+.kpi-delta { font-size: 11.5px; color: var(--text-2); }
+.kpi-delta.up { color: var(--money-in); }
+.kpi-delta.down { color: var(--money-out); }
+.kpi-delta span { color: var(--text-3); }
+.kpi-goalbar { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 4px 0 6px; }
+.kpi-goalbar i { display: block; height: 100%; background: var(--primary); }
+/* Đợt 4 — 2 dòng số phụ dưới thẻ KPI (vd "Giảm giá hoá đơn / Trả hàng (n)"). */
+.kpi-subrows { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+.kpi-subrow { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px;
+  color: var(--text-2); padding: 2px 0; }
+.kpi-subrow b { font-weight: 600; color: var(--text); }
+
+/* ── Thao tác nhanh ────────────────────────────────────────────────────── */
+.quick-card h3 { margin: 0 0 10px; font-size: 15px; display: flex; align-items: center; gap: 7px; }
+.quick-card h3 svg { width: 17px; height: 17px; color: var(--primary); }
+.quick-actions { display: grid; gap: 8px; }
+.qa {
+  display: flex; align-items: center; justify-content: center; min-height: 44px;
+  border: 1px solid var(--primary); border-radius: var(--radius);
+  color: var(--primary); text-decoration: none; font-weight: 600; font-size: 14.5px;
+}
+.qa.danger { border-color: var(--money-out); color: var(--money-out); }
+
+/* Đợt 4 — banner POS + lưới 9 nút icon (thay 3 nút chữ cũ), theo ảnh mẫu "Thao tác nhanh" mới. */
+.qa-pos {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  background: var(--primary-soft); border-radius: var(--radius); padding: 12px 14px;
+  margin-bottom: 12px; text-decoration: none; color: var(--text); font-size: 13.5px; font-weight: 600;
+}
+.qa-pos-btn { display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; min-height: 38px; }
+.qa-pos-btn svg { width: 16px; height: 16px; }
+.qa-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.qa-tile {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  min-height: 74px; padding: 8px 4px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); color: var(--text); text-decoration: none; font-size: 12px;
+  font-weight: 600; text-align: center; cursor: pointer;
+}
+.qa-tile:hover { border-color: var(--primary); }
+.qa-tile svg { width: 20px; height: 20px; color: var(--primary); }
+
+/* ── "Cần xem xét" (Đợt 4) ─────────────────────────────────────────────── */
+.review-card .card-head h3 { display: flex; align-items: center; gap: 7px; }
+.review-card .card-head h3 svg { width: 16px; height: 16px; color: #B4690E; }
+.review-list { display: flex; flex-direction: column; }
+.review-row {
+  display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line);
+  text-decoration: none; color: var(--text); font-size: 13.5px;
+}
+.review-row:last-child { border-bottom: none; }
+.review-ico { flex: none; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+  border-radius: 7px; background: var(--primary-soft); color: var(--primary); }
+.review-ico svg { width: 15px; height: 15px; }
+.review-label { flex: 1; }
+.review-count { font-weight: 700; color: var(--text-3); min-width: 18px; text-align: right; }
+.review-count.has { color: var(--primary); }
+.review-chev { flex: none; color: var(--text-3); display: flex; }
+.review-chev svg { width: 14px; height: 14px; transform: rotate(180deg); }
+/* Đợt 4 — "Cần xem xét" + "Thao tác nhanh" nằm cạnh nhau (đúng vị trí ảnh mẫu, trên biểu đồ tuần). */
+.review-quick-row { display: grid; gap: 12px; }
+@media (min-width: 1024px) { .review-quick-row { grid-template-columns: 1fr 1fr; align-items: start; } }
+
+/* ── "Hoạt động gần đây" (Đợt 4) ───────────────────────────────────────── */
+.activity-card .card-head h3 { display: flex; align-items: center; gap: 7px; }
+.activity-card .card-head h3 svg { width: 16px; height: 16px; color: var(--primary); }
+.activity-tabs { display: flex; gap: 6px; }
+.seg-btn {
+  min-height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--text-2); font-size: 12.5px; font-weight: 600;
+}
+.seg-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.act-table-scroll { overflow-x: auto; }
+.act-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.act-table th { text-align: left; font-size: 11px; color: var(--text-3); font-weight: 600;
+  padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.act-table td { padding: 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.act-info { display: flex; flex-direction: column; gap: 1px; }
+.act-info span { font-size: 11.5px; color: var(--text-3); }
+.act-total { font-weight: 700; color: var(--money-in); text-align: right; }
+.act-txn-list { list-style: none; margin: 0; padding: 0; }
+.act-txn { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.act-txn:last-child { border-bottom: none; }
+.act-txn-ico { flex: none; width: 30px; height: 30px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; background: var(--primary-soft); color: var(--money-in); }
+.act-txn.chi .act-txn-ico { background: #FEE2E2; color: var(--money-out); }
+.act-txn-ico svg { width: 15px; height: 15px; }
+.act-txn-info { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.act-txn-info b { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.act-txn-info span { font-size: 11.5px; color: var(--text-3); }
+.act-txn-amount { flex: none; font-weight: 700; }
+.act-txn.thu .act-txn-amount { color: var(--money-in); }
+.act-txn.chi .act-txn-amount { color: var(--money-out); }
+
+/* ── Biểu đồ cột đôi (CSS thuần, không nạp thư viện ngoài) ─────────────── */
+.wk-chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; height: 120px; align-items: end; }
+.wk-col { display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+.wk-bars { display: flex; align-items: flex-end; gap: 2px; height: 100%; width: 100%; justify-content: center; }
+.wk-bars i { width: 8px; border-radius: 2px 2px 0 0; min-height: 2px; }
+.wk-bars i.now { background: var(--primary); }
+.wk-bars i.prev { background: #C9CDD2; }
+.wk-day { font-size: 10.5px; color: var(--text-3); }
+.wk-legend { font-size: 11px; color: var(--text-2); display: flex; align-items: center; gap: 5px; }
+.wk-legend span { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.wk-legend .now { background: var(--primary); }
+.wk-legend .prev { background: #C9CDD2; }
+.wk-total {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line);
+  font-size: 13px; color: var(--text-2);
+}
+.wk-total b { font-size: 16px; color: var(--primary); }
+
+/* ── Danh sách nhỏ trong thẻ ───────────────────────────────────────────── */
+.mini-list { list-style: none; margin: 0; padding: 0; }
+.mini-list li {
+  display: flex; justify-content: space-between; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px;
+}
+.mini-list li:last-child { border-bottom: none; }
+.mini-list li a { color: var(--text); text-decoration: none; }
+.mini-list b.low { color: var(--money-out); }
+.mini-empty { color: var(--text-3); font-size: 13.5px; margin: 6px 0; }
+.mini-empty.ok { color: var(--text-2); }
+
+/* ── GĐ9 — Cài đặt > Quy trình bán hàng (sao chép /setting/sales-process) ── */
+.sp-group { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); margin-bottom: 12px; overflow: hidden; }
+.sp-group-title { font-size: 11.5px; font-weight: 700; color: var(--text-2); letter-spacing: .4px;
+  text-transform: uppercase; padding: 10px 14px; background: #FAFBFB; border-bottom: 1px solid var(--line); }
+.sp-row { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 11px 14px; border-bottom: 1px solid var(--line); }
+.sp-row:last-child { border-bottom: none; }
+.sp-text { display: flex; flex-direction: column; gap: 2px; }
+.sp-text b { font-weight: 500; font-size: 14.5px; }
+.sp-text small { color: var(--text-3); font-size: 12px; }
+.sp-row input[type=checkbox], .sp-row input[type=radio] { width: auto; min-height: auto; flex: none;
+  width: 20px; height: 20px; accent-color: var(--primary); }
+
+/* Task 2 (19/08/2026) — tab dùng chung cho các màn Cài đặt nhiều tab (Website cửa hàng…), cùng
+   công thức với .ll-dim-tab của Lãi lỗ để cả app chỉ có một kiểu tab gạch chân. */
+.tabs { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 14px;
+  border-bottom: 1px solid var(--line); }
+.tab-btn { border: none; background: none; padding: 8px 2px; font-size: 14px; font-weight: 600;
+  color: var(--text-2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GĐ10 (05/08/2026) — BỐ CỤC MÀN HÌNH MÁY TÍNH + đầu trang có nút hành động.
+   Trước đây mọi màn đều là một cột dọc kiểu điện thoại; mở trên máy tính thì
+   giỏ hàng nằm tuốt dưới đáy, danh sách đơn kéo dài lê thê. Bố cục dưới đây chỉ
+   bật từ 1024px trở lên (điện thoại giữ nguyên như cũ, không đụng gì).
+   Móc bám: body[data-route="..."] do js/app.js gắn mỗi lần đổi màn.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Đầu trang: tiêu đề bên trái, nút hành động chính bên phải (giống app Sổ Bán Hàng) */
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+.page-head h2 { margin: 0; }
+.page-head .btn { flex: 0 0 auto; }
+
+/* Nút xoá trong hàng danh sách — đỏ nhạt, không hét vào mặt người dùng */
+.stock-actions button.danger { color: var(--danger); border-color: #F3C9C9; }
+
+@media (min-width: 1024px) {
+  /* ── Bán hàng: cột danh mục dọc bên trái · lưới món giữa · giỏ hàng dính bên phải ──
+     GĐ12: bố cục sao chép app.sobanhang.com/pos (ảnh 20-pos-with-products.jpeg). */
+  body[data-route="ban-hang"] #view {
+    display: grid;
+    grid-template-columns: 216px minmax(0, 1fr) 400px;
+    grid-template-areas: "bar bar bar" "cats grid cart";
+    align-content: start;
+    column-gap: 0;
+  }
+  body[data-route="ban-hang"] #view > .pos-bar { grid-area: bar; }
+  body[data-route="ban-hang"] #view > .pos-cats { grid-area: cats; }
+  /* Task 1 — cột giữa giờ là .sell-main (lưới món TRÊN + khung Bán nhanh DƯỚI), không còn là
+     .sell-grid trần. Đổi ô lưới sang thẻ bọc, nếu không cả cột giữa rơi xuống hàng mới. */
+  body[data-route="ban-hang"] #view > .sell-main { grid-area: grid; }
+  body[data-route="ban-hang"] #view > .cart-panel {
+    grid-area: cart; margin-top: 0; position: sticky; top: var(--posbar-h);
+    max-height: calc(100vh - var(--posbar-h)); overflow-y: auto;
+    box-shadow: none; border-radius: 0; border: none; border-left: 1px solid var(--line);
+    display: flex; flex-direction: column;
+  }
+  body[data-route="ban-hang"] .sell-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+
+  /* ── Đơn hàng ──
+     Task 3 (09/08/2026 đợt 5): danh sách đổi sang BẢNG có tiêu đề cột, nên KHÔNG còn xếp thẻ
+     thành lưới nữa (lưới đó dành cho .order-card của bản cũ, giờ không còn dùng ở màn này). */
+  body[data-route="don-hang"] .ord-table td { padding: 13px 14px; }
+
+  /* ── Quản lý bàn: trên máy tính quầy ô rộng hơn chút cho dễ bấm, nhưng KHÔNG quay lại cỡ cũ
+     (210 × 140) — đó chính là thứ chủ quán kêu "ô bàn to quá, phải kéo xuống nhiều để tìm". ── */
+  body[data-route="quan-ly-ban"] .tables-grid {
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 10px;
+  }
+  body[data-route="quan-ly-ban"] .table-card { min-height: 96px; }
+  body[data-route="quan-ly-ban"] .tables-top-actions .btn { flex: 0 0 auto; min-width: 160px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GĐ11 (05/08/2026) — bám sát ảnh khảo sát app.sobanhang.com trong
+   output/sobanhang-survey/screens/ (01-mission-control · 03-orders · 05-products).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Hàng tab lớn của trang (Sản phẩm · Nhóm tuỳ chọn món · Danh mục) — chữ to hơn tab lọc. */
+.page-tabs { margin: 6px 0 14px; }
+.page-tabs .tab { font-size: 15px; min-height: 44px; }
+
+/* Vòng tròn tiến độ mục tiêu doanh thu (thẻ KPI thứ 2). */
+.kpi-goal { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.kpi-goal .kpi-value { margin-bottom: 2px; }
+.kpi-ring {
+  flex: none; width: 48px; height: 48px; border-radius: 50%;
+  background: conic-gradient(var(--primary) calc(var(--pct, 0) * 1%), var(--line) 0);
+  -webkit-mask: radial-gradient(circle, transparent 58%, #000 59%);
+          mask: radial-gradient(circle, transparent 58%, #000 59%);
+}
+
+/* Biểu đồ tuần: trục dọc + lưới đứt nét như ApexCharts của bản web. */
+.wk-plot { display: flex; gap: 8px; }
+.wk-axis {
+  display: flex; flex-direction: column; justify-content: space-between;
+  font-size: 10.5px; color: var(--text-3); padding-bottom: 18px; text-align: right;
+  flex: none; max-width: 84px;
+}
+.wk-area { position: relative; flex: 1; min-width: 0; }
+.wk-grid {
+  position: absolute; inset: 0 0 18px 0; display: flex; flex-direction: column;
+  justify-content: space-between; pointer-events: none;
+}
+.wk-grid i { display: block; border-top: 1px dashed #E3E5E7; }
+.wk-area .wk-chart { position: relative; }
+/* Điện thoại dùng nhãn ngắn T2…CN, máy tính hiện đủ chữ "Thứ hai" như bản web. */
+.wk-day-full { display: none; font-weight: 400; }
+.wk-day-short { font-weight: 400; }
+
+@media (min-width: 1024px) {
+  .wk-day-full { display: inline; }
+  .wk-day-short { display: none; }
+
+  /* Đợt 4 — "Thao tác nhanh"/"Cần xem xét" chuyển ra khỏi khối này (xem .review-quick-row), nên
+     .dash-grid giờ chỉ còn 2 biểu đồ tuần + 3 thẻ danh sách ngang. */
+  .dash-grid-charts {
+    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0 12px; align-items: start;
+    grid-template-areas:
+      "rev  rev  rev  profit profit profit"
+      "top  top  low  low    recent recent";
+  }
+  /* #dash-blocks chỉ là hộp chứa do tải bất đồng bộ — cho con của nó thành ô lưới trực tiếp. */
+  .dash-grid-charts > #dash-blocks { display: contents; }
+  .dash-rev     { grid-area: rev; }
+  .dash-profit  { grid-area: profit; }
+  .dash-top     { grid-area: top; }
+  .dash-low     { grid-area: low; }
+  .dash-recent  { grid-area: recent; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GĐ12 (07/08/2026) — MÀN BÁN HÀNG CHIẾM TRỌN MÀN HÌNH, THẺ ĐƠN SONG SONG,
+   DANH MỤC CỘT DỌC BÊN TRÁI. Sao chép app.sobanhang.com/pos, ảnh khảo sát:
+   output/sobanhang-survey/screens/20-pos-with-products.jpeg · 21-pos-cart.jpeg ·
+   22-pos-multitab.jpeg (chụp trên cửa hàng ĐÃ CÓ sản phẩm, 07/08/2026).
+   Số đo lấy bằng getComputedStyle trên trang sống: thanh trên cao 55px nền
+   #169939 (rgb(22,153,59)), cột danh mục rộng 227px nền trắng, thẻ đơn cao 46px
+   bo góc trên 4px — thẻ đang chọn nền trắng chữ đen, thẻ khác nền xanh chữ trắng.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root { --posbar-h: 56px; }
+
+/* Toàn màn hình: js/app.js gắn body.pos-full ở màn Bán hàng → ẩn hẳn khung app. */
+body.pos-full .app-header,
+body.pos-full .sidebar,
+body.pos-full .tabbar,
+body.pos-full .fab { display: none !important; }
+body.pos-full .view {
+  margin-left: 0 !important; padding: 0 !important;
+  padding-top: var(--posbar-h) !important; min-height: 100vh;
+}
+body.pos-full { overflow-x: hidden; }
+
+/* Thanh xanh trên cùng */
+.pos-bar {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--posbar-h); z-index: 30;
+  background: var(--primary); color: #fff;
+  display: flex; align-items: center; gap: 8px; padding: 0 10px;
+}
+/* Điện thoại: xếp 2 dòng bằng lưới — dòng trên ô tìm + nút, dòng dưới các thẻ đơn.
+   Nếu để một dòng như máy tính thì tên thẻ đơn bị cắt cụt, nhân viên không biết đang ở đơn nào. */
+@media (max-width: 1023px) {
+  body.pos-full { --posbar-h: 100px; }
+  .pos-bar {
+    display: grid; gap: 6px; padding: 5px 8px 0; align-items: center;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-rows: 44px 44px;
+    grid-template-areas: "search tablebtn right" "tabs tabs add";
+  }
+  .pos-search { grid-area: search; }
+  .pos-bar-btn { grid-area: tablebtn; padding: 0 10px; }
+  .pos-bar-btn span { display: none; }
+  .pos-bar-right { grid-area: right; margin-left: 0; }
+  .pos-tabs { grid-area: tabs; min-width: 0; height: 44px; padding-top: 0; align-items: stretch; }
+  .pos-tab { height: 44px; min-height: 44px; }
+  .pos-tab-add { grid-area: add; }
+}
+.pos-search { position: relative; flex: 0 1 320px; min-width: 130px; }
+.pos-search input {
+  min-height: 38px; padding-left: 34px; border-radius: 6px; border: none;
+  font-size: 14px; background: #fff;
+}
+.pos-search-ico {
+  position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+  color: var(--text-3); display: flex; pointer-events: none;
+}
+.pos-search-ico svg { width: 17px; height: 17px; }
+.pos-bar-btn {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px;
+  border-radius: 6px; background: rgba(255,255,255,.16); color: #fff; text-decoration: none;
+  font-size: 14px; font-weight: 600; white-space: nowrap; border: none;
+}
+.pos-bar-btn:hover { background: rgba(255,255,255,.26); }
+.pos-bar-btn svg { width: 19px; height: 19px; }
+
+/* Thẻ đơn song song */
+.pos-tabs { display: flex; align-items: flex-end; gap: 2px; overflow-x: auto; height: 100%; padding-top: 10px; }
+.pos-tab {
+  flex: none; height: 46px; min-height: 46px; padding: 0 12px; border-radius: 4px 4px 0 0;
+  background: transparent; color: rgba(255,255,255,.92); border: none; font-size: 14.5px;
+  font-weight: 600; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+}
+.pos-tab:hover { background: rgba(255,255,255,.14); }
+.pos-tab.active { background: #FEFEFE; color: var(--text); }
+.pos-tab-count {
+  min-width: 19px; height: 19px; line-height: 19px; text-align: center; border-radius: 99px;
+  background: rgba(255,255,255,.28); font-size: 11.5px; font-weight: 700; padding: 0 5px;
+}
+.pos-tab.active .pos-tab-count { background: var(--primary-soft); color: var(--primary); }
+.pos-tab-close { font-size: 17px; line-height: 1; opacity: .75; cursor: pointer; padding: 0 2px; }
+.pos-tab-close:hover { opacity: 1; }
+.pos-tab-add {
+  flex: none; width: 30px; height: 30px; min-width: 30px; min-height: 30px; border-radius: 50%;
+  background: rgba(255,255,255,.22); color: #fff; font-size: 20px; line-height: 1; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.pos-tab-add:hover { background: rgba(255,255,255,.34); }
+
+.pos-bar-right { margin-left: auto; display: flex; align-items: center; gap: 2px; }
+.pos-bar-ico {
+  width: 38px; height: 38px; min-width: 38px; min-height: 38px; padding: 0; border-radius: 6px;
+  background: none; border: none; color: #fff; text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.pos-bar-ico:hover { background: rgba(255,255,255,.18); }
+.pos-bar-ico svg { width: 21px; height: 21px; }
+.pos-bar-ico.pos-exit svg { width: 24px; height: 24px; }
+
+/* Cột danh mục dọc bên trái (máy tính) — trên điện thoại thành hàng ngang cuộn như cũ */
+/* Nút Bán nhanh — hiện trên điện thoại như chip, máy tính dính dưới cùng cột */
+.pos-cat-quick {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  padding: 8px 14px; border-radius: 20px; font-size: 14px; font-weight: 600;
+  background: var(--primary); color: #fff; text-decoration: none; flex-shrink: 0;
+}
+.pos-cat-quick svg { width: 18px; height: 18px; }
+.pos-cats {
+  display: flex; gap: 8px; overflow-x: auto; padding: 10px 12px; background: #FEFEFE;
+  border-bottom: 1px solid var(--line); align-items: center;
+}
+@media (min-width: 1024px) {
+  .pos-cats {
+    flex-direction: column; gap: 0; overflow-x: hidden; overflow-y: auto; padding: 0;
+    border-bottom: none; border-right: 1px solid var(--line);
+    position: sticky; top: var(--posbar-h); height: calc(100vh - var(--posbar-h));
+    align-items: stretch;
+  }
+  /* Chips chiếm không gian còn lại, cuộn được nếu quá nhiều danh mục */
+  .pos-cats #sell-chips { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+  .pos-cats .chip {
+    width: 100%; text-align: left; border: none; border-radius: 0; background: none;
+    padding: 14px 16px; min-height: 48px; font-size: 15px; font-weight: 500;
+    border-bottom: 1px solid var(--line);
+  }
+  .pos-cats .chip.active {
+    background: #F2F3F4; color: var(--text); font-weight: 700;
+    box-shadow: inset 3px 0 0 var(--primary);
+  }
+  /* Task 1 (09/08/2026) — LỖI: quy tắc chung ở trên tô số đếm TRẮNG trên nền trắng mờ (đúng cho
+     điện thoại vì chip đang chọn nền XANH), nhưng trên máy tính chip đang chọn lại nền XÁM NHẠT
+     #F2F3F4 nên số đếm trắng-trên-xám = coi như tàng hình: chọn danh mục xong là mất số món.
+     Máy tính phải tô ngược lại: nền xanh đậm, chữ trắng — nổi rõ trên nền xám.
+     Dùng --primary-dark (#05803A) chứ không phải --primary (#169939): chữ trắng trên #169939 chỉ
+     đạt tỉ lệ tương phản 3.7:1, dưới chuẩn WCAG AA 4.5:1 cho cỡ chữ nhỏ; #05803A đạt 5.0:1. */
+  .pos-cats .chip.active .chip-count { background: var(--primary-dark); color: #fff; }
+  /* Chip KHÔNG chọn: nền badge #EEF0F1 gần trùng nền cột — đậm thêm một nấc cho dễ đọc. */
+  .pos-cats .chip .chip-count { background: #E6E9EA; color: var(--text); }
+  /* Nút Bán nhanh: dính cứng dưới cùng, không bị chip đẩy ra ngoài */
+  .pos-cat-quick {
+    border-radius: 0; padding: 14px 16px; min-height: 52px; border-top: 1px solid var(--line);
+    background: var(--primary-soft); color: var(--primary-dark); font-size: 15px;
+    flex-shrink: 0; width: 100%;
+  }
+  .pos-cat-quick:hover { background: var(--primary); color: #fff; }
+  /* Cả màn cao đúng 1 màn hình: chỉ LƯỚI MÓN và GIỎ HÀNG tự cuộn bên trong, thanh xanh và cột
+     danh mục đứng yên — giống app, thu ngân không bị mất thanh công cụ khi kéo tìm món. */
+  body[data-route="ban-hang"] #view { height: 100vh; overflow: hidden; }
+  /* Cột giữa cao đúng 1 màn hình: lưới món co giãn phần còn lại, khung Bán nhanh giữ chiều cao
+     riêng ở dưới. Chỉ hai khối này tự cuộn bên trong, thanh xanh và cột danh mục đứng yên. */
+  body[data-route="ban-hang"] .sell-main {
+    display: flex; flex-direction: column; min-height: 0;
+    height: calc(100vh - var(--posbar-h)); overflow: hidden;
+  }
+  body[data-route="ban-hang"] .sell-grid {
+    margin: 0; padding: 14px; gap: 12px; align-content: start; grid-auto-rows: 172px;
+    overflow-y: auto; flex: 1; min-height: 0; max-height: none;
+  }
+  /* Mở Bán nhanh: lưới món thu lại còn tối đa 55% chiều cao để khung dưới luôn đủ chỗ hiện đầy
+     đủ bàn phím số + nút Thêm vào đơn, không phải cuộn trong khung. */
+  body[data-route="ban-hang"] .sell-main.qs-open .sell-grid { flex: 0 1 55%; }
+  body[data-route="ban-hang"] .qs-dock { flex: 1 1 auto; min-height: 0; }
+  body[data-route="ban-hang"] .cart-panel { padding: 12px 14px; }
+  body[data-route="ban-hang"] .cart-lines { flex: 1; overflow-y: auto; }
+  body[data-route="ban-hang"] .cart-foot { border-top: 1px solid var(--line); padding-top: 8px; }
+}
+
+/* ── Nút Cài đặt riêng ở ĐÁY cột trái (giống app: tách hẳn khỏi các nhóm trên) ──
+   Cột trái dài hơn màn hình nên phải DÍNH đáy, không thì phải kéo hết menu mới thấy. */
+.sidebar-footer {
+  margin-top: auto; position: sticky; bottom: 0; z-index: 2;
+  border-top: 1px solid rgba(255,255,255,.14); padding: 4px 0 10px;
+  background: var(--rail-to);
+}
+.sidebar-footer a { font-size: 14px; font-weight: 600; }
+
+/* ── Màn Cài đặt kiểu danh sách của app (/setting: 4 nhóm, mỗi mục 1 dòng có mũi tên) ── */
+/* Task 4 (09/08/2026): Cài đặt chia 2 khung — MỤC LỤC MỘT CỘT bên trái (dính khi cuộn) và khung
+   nội dung bên phải. Bản trước xếp mục lục 3 cột (.set-cols) rồi mở màn con là thay cả trang, nên
+   sửa xong một mục phải bấm quay lại mới chọn được mục kế tiếp. */
+.set-layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 16px; align-items: start; }
+.set-nav { max-height: calc(100vh - var(--header-h) - 40px); overflow-y: auto; padding-right: 2px; }
+.set-detail {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); padding: 16px; min-height: 320px;
+}
+.set-detail-title { margin: 4px 0 14px; font-size: 18px; }
+.set-detail-empty { color: var(--text-3); font-size: 14px; padding: 40px 8px; text-align: center; }
+.set-item.active { background: #EAF6ED; box-shadow: inset 3px 0 0 var(--primary); font-weight: 700; }
+
+/* ══ Task 3 (13/08/2026) — QUẢN LÝ HOÁ ĐƠN (đầu vào · đầu ra) ═══════════════════════════════
+   Bố cục theo ảnh HD-01 → HD-06: hàng tiêu đề + nút bên phải · hàng công cụ · dải ô thống kê ·
+   2 tab · bảng cuộn ngang. */
+.hd-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 14px 0 10px; }
+.hd-title { flex: 1; min-width: 160px; margin: 0; font-size: 18px; }
+.hd-head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Nút đôi "Đồng bộ hoá đơn ▾": thân trái bấm chạy luôn, mũi tên phải mở menu (ảnh HD-04). */
+.hd-split { position: relative; display: flex; }
+.hd-split-main { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.hd-split-caret {
+  border-top-left-radius: 0; border-bottom-left-radius: 0;
+  min-width: 36px; width: 36px; padding: 0; border-left: 1px solid rgba(255,255,255,.35);
+}
+.hd-cog { min-width: 56px; }
+/* Bug (13/08/2026, phát hiện qua chrome-devtools MCP thật): nút bánh răng▾ và "Xoá lọc" hiện icon+chữ
+   LỆCH THÀNH 2 DÒNG vì `button, .btn` ở đầu file không đặt display:flex cho NỘI DUNG bên trong
+   nút (chỉ .tab/.sidebar a/.pos-bar-btn... mới có riêng) — SVG 20px trôi theo baseline của dòng
+   chữ thay vì nằm ngang hàng giữa. Ép flex NGAY TRÊN 2 hàng công cụ này (không đụng rule `button`
+   gốc — sẽ vỡ layout menu 3 chấm/màn khác vốn đang canh trái). Đổi nền sang trắng+viền (btn-ghost,
+   đã thêm class ở JS) cho rõ hơn nền xám nhạt cũ — giống nút "Xuất file"/"Tôi đã đưa" trong ảnh
+   mẫu Sổ Bán Hàng. */
+.hd-head-actions .btn, .hd-tools .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+}
+.hd-menu {
+  position: absolute; z-index: 60; top: calc(100% + 6px); right: 0; min-width: 190px;
+  background: #fff; border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(16,24,32,.18); padding: 6px; display: flex; flex-direction: column;
+}
+.hd-menu button {
+  display: flex; align-items: center; gap: 10px; border: none; background: none; text-align: left;
+  padding: 9px 12px; border-radius: 7px; font-size: 14px; color: var(--text); cursor: pointer;
+  min-height: 0; white-space: nowrap;
+}
+.hd-menu button:hover { background: var(--primary-soft); }
+.hd-menu svg { width: 17px; height: 17px; flex: none; }
+
+/* Bảng "Ẩn / Hiện cột": 21 dòng nên phải tự cuộn, còn nút Xác nhận ghim đáy như trong ảnh. */
+.hd-colpop {
+  position: absolute; z-index: 60; top: calc(100% + 6px); right: 0;
+  width: 288px; max-width: calc(100vw - 24px);
+  background: #fff; border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(16,24,32,.18); padding: 12px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.hd-colpop-head b { display: block; font-size: 15px; }
+.hd-colpop-head small { color: var(--text-3); font-size: 12px; }
+.hd-colpop-list { max-height: 320px; overflow-y: auto; }
+.hd-colrow {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 2px; border-bottom: 1px solid var(--line); font-size: 14px;
+}
+.hd-colrow:last-child { border-bottom: none; }
+.hd-colrow input[type="checkbox"] {
+  width: 18px; min-width: 18px; height: 18px; min-height: 18px; accent-color: var(--primary);
+}
+
+/* Đợt 2 (18/08/2026) — 2 ô lọc nhiều-chọn mới "Trạng thái hoá đơn" / "Kết quả kiểm tra" /
+   "Trạng thái xử lý" (ảnh Website v2). Dùng chung khung .hd-colpop nhưng neo TRÁI (nằm giữa hàng
+   công cụ, không phải góc phải màn như Ẩn/Hiện cột) và không có nút "Xác nhận" — tích là lọc luôn. */
+.hd-filterpop { left: 0; right: auto; width: 260px; }
+.hd-filter-toggle.active { background: var(--primary-soft); border-color: var(--primary); }
+.hd-filter-toggle.hd-filter-on { color: var(--primary); border-color: var(--primary); font-weight: 700; }
+
+.hd-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.hd-search {
+  flex: 1; min-width: 200px; display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 0 12px; background: #fff;
+}
+.hd-search .inline-ico { color: var(--text-3); }
+.hd-search input { flex: 1; min-width: 0; border: none; background: none; padding: 10px 0; font: inherit; }
+.hd-search input:focus { outline: none; }
+.hd-range { flex: none; }
+.hd-filter-btn { width: auto; white-space: nowrap; }
+
+/* 4 ô thống kê (2 ô ở màn đầu ra). auto-fit + minmax để máy hẹp tự rớt xuống 2 hàng. */
+.hd-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.hd-stats-2 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.hd-stat {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); padding: 14px 16px;
+}
+.hd-stat-value { font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.2; }
+.hd-stat-label { margin-top: 4px; font-size: 12.5px; color: var(--text-3); }
+.hd-subtabs { margin-bottom: 12px; }
+
+/* Bảng 21 cột: khung tự cuộn ngang, KHÔNG để trang cuộn ngang theo (quy tắc chung của app). */
+.hd-table-wrap {
+  overflow-x: auto; background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm);
+}
+.hd-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.hd-table th, .hd-table td {
+  padding: 10px 12px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line);
+}
+.hd-table th { background: #F7F8F8; font-size: 12px; color: var(--text-2); font-weight: 700; }
+.hd-table tbody tr:last-child td { border-bottom: none; }
+.hd-table tbody tr:hover { background: #FAFBFB; }
+.hd-table .hd-num { text-align: right; }
+/* Việc 2 (13/08/2026) — hàng bấm được (Sổ nợ mở chi tiết) + nhãn quá hạn, dùng chung mọi bảng .hd-table. */
+.hd-table tr.hd-row-click { cursor: pointer; }
+.hd-overdue { color: var(--danger); font-size: 11.5px; }
+.hd-table tr.hd-row-voided { opacity: .55; text-decoration: line-through; }
+.hd-act-col { position: sticky; right: 0; background: var(--surface); box-shadow: -6px 0 8px -6px rgba(0,0,0,.15); }
+.hd-table th.hd-act-col { background: #F7F8F8; }
+.hd-row-btn {
+  min-width: 0; min-height: 30px; padding: 4px 10px; margin-right: 4px;
+  border: 1px solid var(--line); background: #fff; border-radius: 6px;
+  font-size: 12.5px; color: var(--text-2); cursor: pointer;
+}
+.hd-row-btn:hover { border-color: var(--primary); color: var(--primary); }
+.hd-row-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+.hd-empty {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 48px 16px; text-align: center; color: var(--text-3);
+}
+.hd-empty svg { width: 64px; height: 64px; color: var(--line); }
+.hd-empty p { margin: 12px 0 16px; font-size: 14.5px; }
+@media (max-width: 720px) {
+  .hd-head-actions { width: 100%; }
+  .hd-split { flex: 1; }
+}
+
+/* ── Task 2 (13/08/2026) — 9 màn Cài đặt mới ───────────────────────────────────────────────── */
+/* Ô nhập danh sách (banner, nhãn hội thoại…) — <textarea> phải theo đúng khuôn của <input>
+   trong .field, không thì nó hiện font mặc định của trình duyệt, lệch hẳn các ô còn lại. */
+.set-detail .field textarea {
+  width: 100%; padding: 10px 12px; font: inherit; color: var(--text);
+  border: 1px solid var(--line); border-radius: var(--radius); background: #fff; resize: vertical;
+}
+.set-detail .field small.hint { display: block; margin-top: 4px; }
+
+/* Bản xem trước tem món (ảnh CD-14): tem thật khổ 50×30mm nên khung vẽ đúng tỉ lệ 5:3. */
+.cd-tem-preview { background: #F2F3F4; border-radius: var(--radius); padding: 14px; }
+.cd-tem {
+  width: 260px; max-width: 100%; background: #fff; border: 1px solid var(--line); border-radius: 4px;
+  padding: 8px 10px; font-size: 11px; line-height: 1.45; color: #111;
+}
+.cd-tem.big { font-size: 13px; }
+.cd-tem-head { display: flex; justify-content: space-between; gap: 8px; }
+.cd-tem-sub { color: #555; font-size: .92em; }
+.cd-tem-name { font-weight: 700; margin-top: 4px; font-size: 1.1em; }
+.cd-tem-note { color: #444; font-size: .92em; }
+.cd-tem-foot {
+  display: flex; justify-content: space-between; gap: 8px;
+  border-top: 1px dashed #bbb; margin-top: 6px; padding-top: 4px;
+}
+
+/* Hàng của màn "Sắp xếp vị trí menu" — ô tích · icon · tên · 2 nút mũi tên. */
+.cd-sort-row { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--line); }
+.cd-sort-row:last-child { border-bottom: none; }
+.cd-sort-row input[type="checkbox"] { width: 17px; min-width: 17px; height: 17px; min-height: 17px; accent-color: var(--primary); }
+.cd-sort-name { flex: 1; min-width: 0; font-size: 14px; }
+.cd-sort-btn {
+  width: 30px; min-width: 30px; height: 30px; min-height: 30px; padding: 0; flex: none;
+  border: 1px solid var(--line); background: #fff; border-radius: 6px; cursor: pointer;
+  color: var(--text-2); font-size: 15px; line-height: 1;
+}
+.cd-sort-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.cd-sort-btn:disabled { opacity: .3; cursor: default; }
+/* Điện thoại / màn hẹp: quay lại kiểu 1 khung — đang xem mục con thì chỉ hiện khung nội dung,
+   chưa chọn gì thì chỉ hiện mục lục. Nút "‹ Cài đặt" là đường quay về. */
+@media (max-width: 900px) {
+  .set-layout { grid-template-columns: minmax(0, 1fr); }
+  .set-nav { max-height: none; }
+  .set-layout.has-sub .set-nav { display: none; }
+  .set-layout:not(.has-sub) .set-detail { display: none; }
+  .set-detail { border: none; box-shadow: none; padding: 0; background: none; }
+}
+@media (min-width: 901px) { .set-back { display: none; } }
+
+.set-group { margin-bottom: 18px; }
+.set-group-title {
+  font-size: 11.5px; font-weight: 700; color: var(--text-2); letter-spacing: .5px;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.set-list {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); overflow: hidden;
+}
+.set-item {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  padding: 13px 14px; background: none; border: none; border-bottom: 1px solid var(--line);
+  color: var(--text); text-decoration: none; font-size: 14.5px; font-weight: 500;
+  border-radius: 0; min-height: 52px;
+}
+.set-item:last-child { border-bottom: none; }
+.set-item:hover { background: #FAFBFB; }
+.set-item .set-ico { flex: none; display: flex; color: var(--primary); }
+.set-item .set-ico svg { width: 21px; height: 21px; }
+.set-item .set-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.set-item .set-text small { color: var(--text-3); font-size: 12px; font-weight: 400; }
+.set-item .set-arrow { flex: none; color: var(--text-3); font-size: 19px; line-height: 1; }
+.set-back {
+  display: inline-flex; align-items: center; gap: 6px; background: none; border: none;
+  color: var(--primary); font-weight: 600; font-size: 14px; padding: 4px 0; margin-bottom: 6px;
+  min-height: 36px;
+}
+.set-back svg { width: 18px; height: 18px; }
+
+/* ── Store avatar (Cài đặt > Thông tin cửa hàng) ── */
+.store-avatar-wrap { display: flex; align-items: flex-start; gap: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 20px; }
+.store-avatar-preview { flex: none; width: 80px; height: 80px; border-radius: 12px; border: 1px solid var(--line); background: #f3f4f6; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.store-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+.store-avatar-placeholder { color: var(--text-3); }
+.store-avatar-placeholder svg { width: 36px; height: 36px; }
+.store-avatar-fields { flex: 1; min-width: 0; }
+
+/* ── Hộp thoại trong ứng dụng (thay prompt/confirm của trình duyệt) ───────────────── */
+.dlg-body { margin: 4px 0 0; }
+.dlg-msg { margin: 0; font-size: 15px; line-height: 1.55; color: var(--text, #1f2937); }
+.dlg-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted, #6b7280); }
+.dlg-input {
+  width: 100%; padding: 11px 12px; font-size: 15px; font-family: inherit;
+  border: 1px solid var(--border, #e5e7eb); border-radius: 10px; background: #fff; color: inherit;
+  transition: border-color .15s, box-shadow .15s;
+}
+.dlg-input:focus { outline: none; border-color: var(--brand, #169939); box-shadow: 0 0 0 3px rgba(22, 153, 57, .14); }
+textarea.dlg-input { resize: vertical; min-height: 76px; }
+.dlg-hint { margin: 8px 0 0; font-size: 12.5px; color: var(--text-muted, #6b7280); line-height: 1.5; }
+.dlg-error { margin: 8px 0 0; font-size: 13px; color: #dc2626; font-weight: 500; }
+.dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+.dlg-actions .btn { min-width: 92px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Task 2 (09/08/2026) — biểu mẫu TẠO / SỬA SẢN PHẨM dựng theo ảnh khảo sát
+   output/sobanhang-survey/screens/19-create-product.jpeg:
+   thanh tiêu đề xanh · thân 2 cột (thẻ trắng trên nền xám) · chân 2 nút.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.modal-box.pform-box {
+  max-width: 1040px; padding: 0; background: var(--bg); max-height: 92vh;
+  display: flex; flex-direction: column;
+}
+.pform-head {
+  flex: none; display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 14px 18px; background: var(--primary); color: #fff;
+}
+.pform-head b { font-size: 17px; font-weight: 600; }
+.pform-x {
+  background: none; border: none; color: #fff; font-size: 24px; line-height: 1;
+  padding: 0 4px; cursor: pointer; min-height: auto;
+}
+.pform-body {
+  flex: 1; min-height: 0; overflow-y: auto; display: grid; gap: 14px; padding: 16px;
+  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr); align-items: start;
+}
+.pform-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.pform-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg);
+  padding: 16px 18px;
+}
+.pform-card h4 { margin: 0 0 14px; font-size: 15.5px; font-weight: 600; }
+.pform-card .hint { margin: 6px 0 0; }
+.pform-card .field { margin-bottom: 0; }
+/* 3 cột như ảnh gốc; ô Tên sản phẩm / Danh mục rộng 2 cột. */
+.pform-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 12px; }
+.pform-grid .pform-span2 { grid-column: span 2; }
+.pform-grid input { width: 100%; }
+.pform-grid input[readonly] { background: #F7F8F9; color: var(--text-2); }
+.field .req { color: var(--danger); font-style: normal; }
+.pform-link {
+  display: inline-flex; align-items: center; gap: 6px; background: none; border: none;
+  color: var(--primary); font-weight: 600; font-size: 14px; padding: 8px 0 0; cursor: pointer;
+}
+/* Khối ảnh: khung nét đứt như vùng kéo-thả của app (bản này nhận đường dẫn/URL, chưa tải tệp lên). */
+.pform-img {
+  display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
+  border: 1.5px dashed var(--line); border-radius: var(--radius); background: #FAFBFB;
+  min-height: 150px; overflow: hidden;
+}
+.pform-img img { max-width: 100%; max-height: 220px; object-fit: contain; }
+.pform-img-empty { color: var(--text-3); font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 12px; }
+.pform-img-empty b { color: var(--text-2); font-size: 14px; }
+.pform-img-empty small { font-size: 12px; }
+/* Task 5 (09/08/2026) — ô kéo-thả ảnh sản phẩm. */
+.pform-drop { cursor: pointer; transition: border-color .12s, background .12s; }
+.pform-drop:hover, .pform-drop:focus-visible { border-color: var(--primary); background: #F4FAF6; }
+.pform-drop.dragover { border-color: var(--primary); background: #EAF6ED; border-style: solid; }
+.pform-img-note { font-size: 12.5px; color: var(--text-3); margin: -6px 0 10px; }
+.pform-img-note.err { color: var(--danger); }
+.pform-img-url summary { font-size: 12.5px; color: var(--text-3); cursor: pointer; margin-bottom: 6px; }
+.pform-img-url input { width: 100%; }
+/* Hàng công tắc bên cột phải, có vạch ngăn giữa các hàng — giống ảnh gốc. */
+.pform-switches .pform-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 0; border-bottom: 1px solid var(--line); font-weight: 600; font-size: 14.5px;
+}
+.pform-switches .pform-row:first-child { padding-top: 0; }
+.pform-switches .pform-row:last-of-type { border-bottom: none; }
+.pform-min { padding: 12px 0 4px; }
+/* Nút gạt 2 nhánh (Còn hàng / Hết hàng). */
+.seg { display: inline-flex; background: #F2F3F4; border-radius: 8px; padding: 3px; flex: none; }
+.seg-btn {
+  background: none; border: none; padding: 7px 14px; border-radius: 6px; cursor: pointer;
+  font-size: 13.5px; font-weight: 600; color: var(--text-2); min-height: auto;
+}
+.seg-btn.active { background: var(--primary-soft); color: var(--primary); }
+/* Công tắc bật/tắt. Ô tích thật vẫn nằm trong DOM (ẩn) nên bàn phím và test đều dùng được. */
+.sw { position: relative; display: inline-block; width: 44px; height: 24px; flex: none; }
+.sw input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; min-height: auto; }
+.sw i {
+  position: absolute; inset: 0; background: #D6D9DB; border-radius: 999px; transition: background .15s;
+  pointer-events: none;
+}
+.sw i::after {
+  content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+  background: #fff; border-radius: 50%; transition: transform .15s;
+}
+.sw input:checked + i { background: var(--primary); }
+.sw input:checked + i::after { transform: translateX(20px); }
+.pform-foot {
+  flex: none; display: flex; justify-content: flex-end; gap: 10px;
+  padding: 12px 18px; background: var(--surface); border-top: 1px solid var(--line);
+}
+.pform-foot .btn { min-width: 104px; }
+@media (max-width: 860px) {
+  .pform-body { grid-template-columns: minmax(0, 1fr); }
+  .pform-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pform-grid .pform-span2 { grid-column: 1 / -1; }
+}
+
+/* ═══ 10/08/2026 đợt 6 — 5 việc đối chiếu ảnh app.sobanhang.com ═══════════════════════════════ */
+
+/* ── Chi tiết đơn hàng: bảng thanh toán + lịch sử thao tác (ảnh "Chi tiết đơn hàng") ────────── */
+.ord-block-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.ord-pay-block, .ord-time-block {
+  margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+}
+.ord-pay-table { width: 100%; border-collapse: collapse; font-size: 0.92em; }
+.ord-pay-table th { text-align: left; color: var(--text-2); font-weight: 600; padding: 4px 0; }
+.ord-pay-table td { padding: 5px 0; border-top: 1px solid var(--line); }
+.ord-pay-table .num, .ord-pay-table th.num { text-align: right; }
+.ord-pay-out { color: var(--danger); }
+.ord-pay-sum { display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+.ord-refunded { color: var(--danger); }
+.ord-timeline { list-style: none; margin: 0; padding: 0 0 0 18px; position: relative; }
+.ord-timeline::before { content: ''; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: var(--line); }
+.ord-timeline li { position: relative; padding: 4px 0; }
+.ord-timeline li::before {
+  content: ''; position: absolute; left: -17px; top: 10px; width: 10px; height: 10px;
+  border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 2px var(--surface);
+}
+.ord-timeline li.ord-tl-cancelled::before, .ord-timeline li.ord-tl-return::before { background: var(--danger); }
+.ord-tl-label { display: block; font-weight: 600; }
+.ord-tl-meta { display: block; color: var(--text-2); font-size: 0.86em; }
+
+/* ── Hộp thoại "Xác nhận trả hàng" ─────────────────────────────────────────────────────────── */
+.ret-table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+.ret-table th { text-align: left; color: var(--text-2); font-weight: 600; padding: 6px 4px; font-size: 0.9em; }
+.ret-table td { padding: 8px 4px; border-top: 1px solid var(--line); vertical-align: middle; }
+.ret-table .num, .ret-table th.num { text-align: right; }
+.ret-unit { color: var(--text-2); font-size: 0.86em; }
+.ret-qty-cell { white-space: nowrap; display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
+.ret-qty-cell button {
+  width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--surface); cursor: pointer; line-height: 1;
+}
+.ret-qty { width: 56px; text-align: center; min-height: auto; }
+.ret-max { color: var(--text-2); font-size: 0.86em; }
+.ret-sum-row { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--line); }
+.ret-sum-row.ret-total b { color: var(--danger); font-size: 1.1em; }
+
+/* ── POS Bán hàng: chiết khấu tay + ghi chú đơn + nút Lưu đơn (ảnh POS Sổ Bán Hàng) ─────────── */
+.cart-disc-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.cart-disc-label { flex: none; color: var(--text-2); font-size: 0.92em; }
+.cart-disc-label small { opacity: 0.75; }
+.cart-disc-ctl { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; }
+.disc-unit {
+  border: 1px solid var(--line); background: var(--surface); color: var(--text-2);
+  border-radius: 6px; padding: 3px 8px; cursor: pointer; font-size: 0.85em; line-height: 1.4;
+}
+.disc-unit.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+#disc-value { flex: 1; min-width: 0; min-height: auto; padding: 4px 8px; text-align: right; }
+.cart-disc-amount { flex: none; color: var(--danger); font-size: 0.92em; min-width: 68px; text-align: right; }
+.cart-note-field { margin: 4px 0 8px; }
+.cart-note-field input { min-height: auto; padding: 6px 8px; }
+.cart-pay-row { display: flex; gap: 8px; }
+.cart-save-btn { flex: 0 0 40%; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.cart-pay-row .cart-pay-btn { flex: 1; }
+
+/* ── Bảng "Chú thích phím tắt" ─────────────────────────────────────────────────────────────── */
+.shortcut-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin-top: 10px; }
+.shortcut-row { display: flex; align-items: center; gap: 10px; }
+.shortcut-key {
+  flex: none; min-width: 44px; text-align: center; padding: 5px 8px;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--bg);
+  font-family: inherit; font-weight: 600; font-size: 0.88em;
+}
+.shortcut-label { color: var(--text-2); font-size: 0.92em; }
+@media (max-width: 560px) { .shortcut-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* ── Khách hàng: 4 thẻ chỉ số + hộp chọn chỉ số ────────────────────────────────────────────── */
+.kh-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+.kh-stat { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface); }
+.kh-stat-value { font-size: 1.25em; font-weight: 700; }
+.kh-stat-value small { font-size: 0.6em; font-weight: 500; color: var(--text-2); }
+.kh-stat-label { color: var(--text-2); font-size: 0.88em; margin-top: 2px; }
+.kh-stat-picker { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; margin: 10px 0; }
+.kh-stat-opt { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.kh-stat-opt input { width: auto; min-height: auto; }
+.kh-stat-opt input:disabled + span { color: var(--text-2); opacity: 0.55; }
+@media (max-width: 900px) { .kh-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .kh-stat-picker { grid-template-columns: minmax(0, 1fr); } }
+
+/* ── Vai trò: đếm quyền đã chọn (dùng chung với modal mới .role-modal-grid, xem cuối file) ──── */
+.role-perm-count { color: var(--text-2); font-weight: 500; font-size: 0.86em; margin-left: 6px; }
+
+/* ── Task 4 (13/08/2026) — Panel "Yêu cầu" (chuông), dùng chung Bán hàng + Quản lý bàn ──────── */
+/* Tấm trượt bên phải đúng bố cục ảnh app.sobanhang.com_mission-control (8).png: nền mờ bên trái,
+   khối trắng bên phải rộng vừa đủ đọc bảng bếp, đóng bằng bấm ra ngoài / nút X / phím Esc. */
+.yc-overlay {
+  position: fixed; inset: 0; background: rgba(15, 23, 35, .45); z-index: 90;
+  display: flex; justify-content: flex-end;
+}
+.yc-drawer {
+  width: 100%; max-width: 900px; height: 100%; background: var(--surface);
+  display: flex; flex-direction: column; box-shadow: -8px 0 24px rgba(16, 24, 32, .18);
+}
+.yc-head {
+  flex: none; display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px; border-bottom: 1px solid var(--line);
+}
+.yc-head h3 { margin: 0; font-size: 19px; }
+.yc-close {
+  width: 36px; height: 36px; min-width: 36px; min-height: 36px; padding: 0;
+  background: none; border: none; font-size: 16px; color: var(--text-2);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.yc-close:hover { color: var(--text); }
+.yc-tabs { flex: none; margin: 0 18px; }
+.yc-pane { flex: 1; min-height: 0; overflow-y: auto; }
+.yc-pane-hotro { padding: 18px; }
+.yc-pane-kds { display: flex; }
+.yc-pane-kds.hidden { display: none; }
+.yc-kds-mount { flex: 1; min-width: 0; min-height: 0; }
+.yc-kds-mount .kds-wrap { height: 100%; }
+@media (max-width: 640px) { .yc-drawer { max-width: 100%; } }
+
+/* Đợt 6 (17/08/2026) — CSS dùng chung cho các màn bảng kiểu SoBanHang v2 (KPI card, bảng .sp-table,
+   dropdown đơn giản .row-menu-item). san-pham.js (Đợt 5) và các màn Quản lý kho mới đều dùng —
+   trước đây CHƯA có định nghĩa nên các thẻ KPI/bảng hiện không kiểu (fix ngược cho cả Đợt 5). */
+.kpi-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg);
+  padding: 14px 16px; box-shadow: var(--shadow-sm);
+}
+.kpi-val { font-size: 22px; font-weight: 700; letter-spacing: -.3px; color: var(--text); }
+.kpi-label { font-size: 12px; color: var(--text-2); margin-top: 4px; }
+@media (max-width: 720px) {
+  #tk-kpi, #sk-kpi, #sp-kpi { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+.sp-table { border-collapse: collapse; background: var(--surface); border-radius: var(--radius-lg); overflow: hidden; }
+.sp-table thead th {
+  text-align: left; font-size: 11px; font-weight: 700; color: var(--text-2); letter-spacing: .3px;
+  background: #EEF2F7; padding: 10px 12px; white-space: nowrap;
+}
+.sp-table tbody td { padding: 10px 12px; border-top: 1px solid var(--line); font-size: 13px; vertical-align: middle; }
+.sp-table tbody tr:hover { background: #FAFBFC; }
+.sp-table tbody tr.row-inactive { opacity: .5; }
+
+.row-menu-item { padding: 6px 8px; cursor: pointer; border-radius: 6px; font-size: 13px; }
+.row-menu-item:hover { background: var(--primary-soft); color: var(--primary); }
+
+.badge-ok {
+  display: inline-block; font-size: 11px; font-weight: 700; background: var(--primary-soft);
+  color: var(--primary); border-radius: 999px; padding: 2px 8px;
+}
+.badge {
+  display: inline-block; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 8px;
+}
+.badge-danger { background: #FDECEC; color: var(--danger); }
+
+/* ── Nhân viên/Vai trò v2 (17-18/08/2026) — modal "Tạo/Sửa vai trò": sidebar 23 nhóm quyền +
+   panel quyền lẻ bên phải, đúng bố cục ảnh app.sobanhang.com/staff/role. ─────────────────────── */
+.role-tpl-chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.role-tpl-chip {
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 12.5px;
+  cursor: pointer; background: #fff; color: var(--text);
+}
+.role-tpl-chip:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+
+.role-modal-grid {
+  display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+  height: min(420px, 55vh);
+}
+.role-cat-sidebar { width: 240px; flex: none; overflow-y: auto; border-right: 1px solid var(--line); background: var(--bg); }
+.role-cat-item {
+  display: flex; align-items: center; gap: 8px; padding: 9px 10px; cursor: pointer; font-size: 13px;
+  border-bottom: 1px solid var(--line);
+}
+.role-cat-item:hover { background: var(--primary-soft); }
+.role-cat-item.active { background: var(--primary); color: #fff; }
+.role-cat-item .inline-ico svg { width: 16px; height: 16px; }
+.role-cat-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.role-cat-count { flex: none; font-size: 11px; opacity: .75; }
+.role-leaf-panel { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.role-leaf-panel input[type="search"] { min-height: 38px; }
+.role-leaf-list { flex: 1 1 auto; overflow-y: auto; padding: 0 10px 10px; }
+.role-leaf-row {
+  display: flex; align-items: center; gap: 8px; padding: 6px 4px; font-size: 13.5px; cursor: pointer;
+}
+.role-leaf-row input[type="checkbox"] { width: auto; min-height: auto; flex: none; }
+.role-leaf-all { font-weight: 600; border-bottom: 1px solid var(--line); margin-bottom: 4px; padding-bottom: 8px; }
+/* Đợt 7 (18/08/2026) — nhóm "Đối tác" > Hội thoại (ảnh mẫu Website v2\Đối tác\Hội thoại\*).
+   Layout 2 cột: danh sách hội thoại bên trái (2 mục hệ thống Thông báo/Đơn hàng nối API thật),
+   panel chi tiết hoặc màn chào mừng bên phải — xem js/views/hoi-thoai.js. */
+.hoithoai-wrap { display: flex; gap: 16px; align-items: flex-start; margin-top: 12px; }
+.hoithoai-list {
+  flex: 0 0 340px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  overflow: hidden;
+}
+.hoithoai-list-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 14px 4px; }
+.hoithoai-list-title { font-weight: 700; font-size: 16px; }
+.hoithoai-list-tools { display: flex; gap: 6px; align-items: center; }
+.hoithoai-icon-btn {
+  width: 34px; height: 34px; min-height: 34px; border-radius: 8px; border: 1px solid var(--line);
+  background: #fff; color: var(--text-2); display: inline-flex; align-items: center; justify-content: center;
+  padding: 0;
+}
+.hoithoai-icon-btn svg { width: 18px; height: 18px; }
+.hoithoai-add-btn { background: var(--primary); border-color: var(--primary); color: #fff; font-size: 18px; font-weight: 700; }
+.hoithoai-search-row { padding: 0 14px 8px; }
+.hoithoai-search-row input { width: 100%; }
+.hoithoai-subtabs { margin: 0 14px 4px; }
+.hoithoai-empty { padding: 20px 14px; color: var(--text-3); font-size: 13px; }
+.hoithoai-item {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer;
+  border-top: 1px solid var(--line);
+}
+.hoithoai-item:hover { background: var(--bg); }
+.hoithoai-item.active { background: var(--primary-soft); }
+.hoithoai-avatar {
+  flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; color: #fff;
+}
+.hoithoai-avatar svg { width: 20px; height: 20px; }
+.hoithoai-avatar.notif { background: #7C3AED; }
+.hoithoai-avatar.orders { background: #F59E0B; }
+.hoithoai-item-main { flex: 1 1 auto; min-width: 0; }
+.hoithoai-item-title { font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.badge-count {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px;
+  padding: 0 5px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 11px; font-weight: 700;
+}
+.hoithoai-item-time { flex: 0 0 auto; font-size: 12px; color: var(--text-3); }
+.hoithoai-panel {
+  flex: 1 1 auto; min-width: 0; background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 28px; min-height: 420px;
+}
+.hoithoai-welcome { text-align: center; max-width: 460px; margin: 24px auto 0; }
+.hoithoai-welcome h3 { margin: 0 0 8px; font-size: 20px; }
+.hoithoai-welcome p { color: var(--text-2); font-size: 13.5px; line-height: 1.5; margin-bottom: 20px; }
+.hoithoai-upsell { display: flex; justify-content: center; gap: 14px; margin-bottom: 20px; }
+.hoithoai-upsell-chan {
+  width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 700; font-size: 18px;
+}
+.hoithoai-chan-fb { background: #1877F2; }
+.hoithoai-chan-zalo { background: #0068FF; }
+.hoithoai-chan-tiktok { background: #111; }
+.hoithoai-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.hoithoai-panel-head h3 { margin: 0; }
+.hoithoai-panel-actions { display: flex; gap: 8px; }
+.hoithoai-thread-list .stock-row:last-child { margin-bottom: 0; }
+@media (max-width: 900px) {
+  .hoithoai-wrap { flex-direction: column; }
+  .hoithoai-list { flex: 1 1 auto; width: 100%; }
+  .hoithoai-panel { width: 100%; min-height: 200px; }
+}
+
+@media (max-width: 640px) {
+  .role-modal-grid { flex-direction: column; height: min(520px, 70vh); }
+  .role-cat-sidebar { width: 100%; max-height: 160px; border-right: none; border-bottom: 1px solid var(--line); }
+}
+
+/* ── Việc 1 (18/08/2026) — Kênh bán hàng: Sàn TMĐT + 2 màn khoá (Đơn hàng/Sản phẩm TMĐT) ──── */
+.stm-card { background: var(--surface, #fff); border: 1px solid var(--line); border-radius: 12px; padding: 24px; max-width: 620px; }
+.stm-title { margin: 0 0 14px; font-size: 18px; }
+.stm-benefits { list-style: none; margin: 0 0 20px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.stm-benefits li { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; color: var(--text-2); }
+.stm-benefits svg { width: 18px; height: 18px; flex: none; color: var(--primary, #16a34a); margin-top: 1px; }
+.stm-channels { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.stm-channel-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: none; border-radius: 8px; padding: 12px 16px; color: #fff; font-weight: 600; font-size: 14.5px;
+  cursor: pointer; opacity: .95;
+}
+.stm-channel-btn:hover { opacity: 1; }
+.stm-channel-btn svg { width: 18px; height: 18px; }
+.stm-note { margin: 0; }
+.stm-locked {
+  background: var(--surface, #fff); border: 1px solid var(--line); border-radius: 12px;
+  padding: 48px 24px; text-align: center; max-width: 480px; margin: 0 auto;
+}
+.stm-locked svg { width: 48px; height: 48px; color: var(--text-3); margin-bottom: 12px; }
+.stm-locked h3 { margin: 0 0 8px; }
+.stm-help-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--surface, #fff); color: var(--text-2); font-size: 13px; font-weight: 700;
+  vertical-align: middle; margin-left: 6px; cursor: pointer; padding: 0;
+}
