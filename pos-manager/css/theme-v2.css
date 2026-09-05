@@ -1,0 +1,1062 @@
+/* ============================================================================
+   THEME V2 — giao diện mới kiểu SoBanHang v2 (Đợt 1, 15/08/2026).
+   File này LUÔN được nạp (cả khi đang ở giao diện cũ) — mọi quy tắc ảnh hưởng hiển thị PHẢI
+   nằm trong phạm vi `body[data-theme="v2"]`, trừ các quy tắc "ẩn mặc định" của phần tử MỚI
+   thêm (để không vỡ giao diện cũ khi cờ tắt). KHÔNG sửa css/app.css gốc — xem spec mục 4.2:
+   docs/superpowers/specs/2026-08-15-pos-manager-giao-dien-v2-design.md
+   ============================================================================ */
+
+/* Việc header (23/08/2026) — nút "Đổi giao diện" giờ chỉ còn 1 icon nhỏ, nằm CÙNG DÒNG với
+   Cài đặt (trước đây là hàng riêng có chữ "giao diện cũ"/"giao diện thử nghiệm" — coi 2 kiểu
+   giao diện là ngang hàng, không phân biệt cũ/mới). Dùng được ở CẢ HAI giao diện nên không đặt
+   trong phạm vi [data-theme="v2"]. */
+.sidebar-footer-row { display: flex; align-items: center; gap: 4px; }
+.sidebar-footer-row .sidebar-footer-link { flex: 1; min-width: 0; }
+.sidebar-theme-toggle {
+  display: flex; align-items: center; justify-content: center; flex: none;
+  width: 36px; height: 36px; margin-right: 6px; border-radius: var(--radius, 8px);
+  background: none; border: none; cursor: pointer; color: rgba(255, 255, 255, .82);
+}
+.sidebar-theme-toggle:hover { background: rgba(255, 255, 255, .1); }
+.sidebar-theme-toggle svg { width: 20px; height: 20px; flex: none; }
+body.sidebar-slim .sidebar-footer-row { flex-direction: column-reverse; gap: 2px; }
+body.sidebar-slim .sidebar-theme-toggle { margin-right: 0; }
+
+body[data-theme="v2"] {
+  --sidebar-bg: #FFFFFF;
+  --sidebar-text: #4B5563;
+  --sidebar-text-dim: #8A94A6;
+  --sidebar-active-bg: var(--primary-soft);
+  --sidebar-hover-bg: #F3F5F4;
+  --bg: #F7F8FA;
+  --radius: 10px;
+  --radius-lg: 14px;
+}
+
+/* Nhãn nhóm cấp cao — ẩn mặc định (giao diện cũ không có khái niệm này) */
+.sidebar-super-label { display: none; }
+body[data-theme="v2"] .sidebar-super-label {
+  display: block; padding: 16px 14px 4px;
+  font-size: 11px; font-weight: 700; letter-spacing: .6px;
+  text-transform: uppercase; color: var(--sidebar-text-dim);
+}
+body[data-theme="v2"] .sidebar.collapsed .sidebar-super-label { display: none; }
+
+/* Cột trái: nền trắng thay vì dải xanh đậm, chữ tối thay vì chữ trắng mờ */
+body[data-theme="v2"] .sidebar {
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--line);
+}
+body[data-theme="v2"] .sidebar-brand { border-bottom-color: var(--line); }
+body[data-theme="v2"] .sidebar-brand-logo { background: var(--primary); color: #fff; }
+body[data-theme="v2"] .sidebar-brand-name { color: var(--text); }
+
+body[data-theme="v2"] .sidebar a { color: var(--sidebar-text); }
+body[data-theme="v2"] .sidebar a:hover { background: var(--sidebar-hover-bg); }
+body[data-theme="v2"] .sidebar a.active {
+  background: var(--sidebar-active-bg); color: var(--primary); font-weight: 700;
+  border-left-color: var(--primary);
+}
+
+body[data-theme="v2"] .sidebar-group-btn { color: var(--sidebar-text-dim); border-top-color: var(--line); }
+body[data-theme="v2"] .sidebar-group-btn:hover { background: var(--sidebar-hover-bg); color: var(--sidebar-text); }
+body[data-theme="v2"] .sidebar-group.has-active > .sidebar-group-btn { color: var(--primary); }
+
+body[data-theme="v2"] .sidebar-footer { background: var(--sidebar-bg); border-top-color: var(--line); }
+body[data-theme="v2"] .sidebar-footer a,
+body[data-theme="v2"] .sidebar-theme-toggle { color: var(--sidebar-text); }
+body[data-theme="v2"] .sidebar-footer a:hover,
+body[data-theme="v2"] .sidebar-theme-toggle:hover { background: var(--sidebar-hover-bg); }
+
+/* Submenu nổi khi thu gọn — nền trắng có viền thay vì nền xanh đậm */
+body[data-theme="v2"] .sidebar.collapsed .sidebar-group.flyout > .sidebar-group-items {
+  background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-md);
+}
+body[data-theme="v2"] .sidebar.collapsed .sidebar-group.flyout > .sidebar-group-btn { background: var(--sidebar-hover-bg); }
+
+/* Nút thu gọn: cột trái v2 nền TRẮNG nên nút phải là chữ xám trên nền trong suốt (bản chung
+   trong app.css vẽ cho cột trái xanh đậm: chữ trắng trên nền trắng mờ).
+   Vị trí (cùng dòng với chữ "POS Manager") do app.css + app.js lo — xem ghi chú .sidebar-toggle. */
+body[data-theme="v2"] .sidebar-toggle {
+  background: transparent; color: var(--sidebar-text-dim);
+}
+body[data-theme="v2"] .sidebar-toggle:hover { background: var(--sidebar-hover-bg); color: var(--primary); }
+
+/* Thanh trên: breadcrumb + tìm kiếm + avatar — CHỈ hiện ở giao diện v2 */
+.v2-header-only { display: none; }
+/* Đợt 1, sửa sau final review (15/08/2026) — giới hạn phần đổi bố cục thanh trên (ẩn #app-title,
+   hiện breadcrumb/tìm kiếm/avatar) trong đúng ngưỡng máy tính (min-width:1024px) mà applyLayout()
+   (app.js) đã dùng sẵn để ẩn/hiện sidebar/tabbar. Dưới ngưỡng này sidebar (nơi DUY NHẤT có nút
+   "Quay lại giao diện cũ") đã tự ẩn theo thiết kế sẵn có — nếu thanh trên vẫn đổi bố cục thì
+   người dùng máy tính bảng xoay dọc sẽ mắc kẹt không có lối thoát khỏi v2. Dưới 1024px, v2 im
+   lặng không đổi bố cục thanh trên (chỉ còn đổi màu, không đổi nội dung) — đây KHÔNG phải làm
+   responsive đầy đủ, chỉ đóng đúng rủi ro "cửa một chiều". Đừng mở rộng thêm @media này nếu
+   chưa làm responsive đầy đủ ở đợt sau (xem finding I3 trong final review). */
+@media (min-width: 1024px) {
+  body[data-theme="v2"] .v2-header-only { display: flex; }
+  body[data-theme="v2"] #app-title { display: none; }
+}
+
+body[data-theme="v2"] .app-header {
+  background: var(--surface); color: var(--text); border-bottom: 1px solid var(--line);
+}
+
+body[data-theme="v2"] .app-breadcrumb { align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+body[data-theme="v2"] .app-breadcrumb svg { width: 18px; height: 18px; color: var(--primary); }
+
+body[data-theme="v2"] .app-search {
+  flex: 1; max-width: 420px; margin: 0 16px; align-items: center; position: relative;
+}
+body[data-theme="v2"] .app-search input {
+  width: 100%; min-height: 34px; border-radius: var(--radius); border: 1px solid var(--line);
+  background: var(--bg); color: var(--text); padding: 0 54px 0 34px; font-size: 13.5px;
+}
+body[data-theme="v2"] .app-search input::placeholder { color: var(--text-3); }
+/* Việc header (23/08/2026) — icon kính lúp + gợi ý phím tắt "Ctrl K" bên trong ô tìm kiếm, khung
+   kết quả thả xuống ngay dưới (đúng bố cục ảnh mẫu SoBanHang, thay vì ô trắng trơn phải gõ đủ
+   tên rồi bấm Enter mới nhảy trang như trước). */
+body[data-theme="v2"] .app-search-ico {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 16px; color: var(--text-3); pointer-events: none;
+}
+body[data-theme="v2"] .app-search-kbd {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  font: 600 11px/1 inherit; color: var(--text-3); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 5px; padding: 4px 6px; pointer-events: none;
+}
+body[data-theme="v2"] .app-search-results {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+  padding: 6px; max-height: 60vh; overflow-y: auto; z-index: 30;
+}
+body[data-theme="v2"] .app-search-results.hidden { display: none; }
+body[data-theme="v2"] .app-search-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px;
+  border-radius: var(--radius); cursor: pointer; color: var(--text); font-size: 13.5px;
+  background: none; border: none; text-align: left;
+}
+body[data-theme="v2"] .app-search-item svg { width: 18px; height: 18px; color: var(--text-2); flex: none; }
+body[data-theme="v2"] .app-search-item:hover,
+body[data-theme="v2"] .app-search-item.active { background: var(--bg); }
+body[data-theme="v2"] .app-search-item-group { margin-left: auto; font-size: 11.5px; color: var(--text-3); flex: none; }
+body[data-theme="v2"] .app-search-empty { padding: 14px 10px; text-align: center; color: var(--text-3); font-size: 13px; }
+/* Đợt 2 (23/08/2026) — nhãn nhóm khi ô tìm kiếm hiện TOÀN BỘ danh mục lúc chưa gõ gì. */
+body[data-theme="v2"] .app-search-group-label {
+  padding: 8px 10px 4px; font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase;
+}
+body[data-theme="v2"] .app-search-group-label:first-child { padding-top: 4px; }
+
+/* Nút Trợ giúp ("?") + bảng nhỏ Hướng dẫn sử dụng/Câu hỏi thường gặp (đợt 2, 23/08/2026). */
+body[data-theme="v2"] .app-help-wrap { position: relative; }
+body[data-theme="v2"] .app-help {
+  background: none; border: none; color: var(--text-2); cursor: pointer;
+  padding: 4px; min-height: auto; display: flex; align-items: center;
+}
+body[data-theme="v2"] .app-help > svg { width: 22px; height: 22px; }
+body[data-theme="v2"] .app-help-panel {
+  position: absolute; top: calc(100% + 8px); right: -6px; min-width: 220px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 6px; z-index: 30;
+}
+body[data-theme="v2"] .app-help-panel.hidden { display: none; }
+body[data-theme="v2"] .app-help-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border-radius: var(--radius);
+  border: none; background: none; cursor: pointer; font-size: 13.5px; color: var(--text); text-align: left;
+}
+body[data-theme="v2"] .app-help-item svg { width: 18px; height: 18px; color: var(--text-2); flex: none; }
+body[data-theme="v2"] .app-help-item:hover { background: var(--bg); }
+
+body[data-theme="v2"] .app-user-wrap { position: relative; }
+body[data-theme="v2"] .app-user-chip {
+  display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer;
+  padding: 4px 6px; border-radius: var(--radius); color: var(--text);
+}
+body[data-theme="v2"] .app-user-chip:hover { background: var(--bg); }
+body[data-theme="v2"] .app-user-avatar {
+  width: 28px; height: 28px; border-radius: 50%; background: var(--primary-soft); color: var(--primary);
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex: none;
+}
+/* Task 3 (29/08/2026) — có ảnh đại diện thì ảnh lấp đầy vòng tròn thay cho chữ cái đầu. */
+body[data-theme="v2"] .app-user-avatar { overflow: hidden; }
+body[data-theme="v2"] .app-user-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+body[data-theme="v2"] .app-user-info { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.25; }
+body[data-theme="v2"] .app-user-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
+body[data-theme="v2"] .app-user-role { font-size: 11.5px; color: var(--text-3); white-space: nowrap; }
+body[data-theme="v2"] .app-user-caret { width: 16px; height: 16px; color: var(--text-3); flex: none; }
+body[data-theme="v2"] .app-user-menu {
+  position: absolute; top: calc(100% + 8px); right: 0; min-width: 200px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 6px; z-index: 30;
+}
+body[data-theme="v2"] .app-user-menu.hidden { display: none; }
+body[data-theme="v2"] .app-user-menu a,
+body[data-theme="v2"] .app-user-menu button {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border-radius: var(--radius);
+  border: none; background: none; cursor: pointer; font-size: 13.5px; color: var(--text); text-align: left;
+}
+body[data-theme="v2"] .app-user-menu a svg,
+body[data-theme="v2"] .app-user-menu button svg { width: 18px; height: 18px; color: var(--text-2); flex: none; }
+body[data-theme="v2"] .app-user-menu a:hover,
+body[data-theme="v2"] .app-user-menu button:hover { background: var(--bg); }
+body[data-theme="v2"] .app-user-menu hr { border: none; border-top: 1px solid var(--line); margin: 4px 2px; }
+body[data-theme="v2"] #app-user { display: none; }
+body[data-theme="v2"] .app-notif { color: var(--text-2); }
+
+/* ── Tổng quan v2: 5 thẻ KPI tô màu riêng (giống màu trong ảnh mẫu "Bức tranh kinh doanh") ──
+   Đợt 1 (15/08) từng GIỮ NGUYÊN 4 chỉ số cũ, không thêm "Khách mới" vì backend chưa tính được
+   (nguyên tắc không hiện số liệu giả). Đợt 4 (16/08) — backend đã tính thật (overview-service.js,
+   bảng sales_customers), nên thêm hẳn thẻ "Khách mới" theo đúng ảnh mẫu. */
+body[data-theme="v2"] .kpi { border-top-width: 1px; box-shadow: var(--shadow-sm); }
+body[data-theme="v2"] .kpi-revenue { background: #EAF2FE; border-color: #CFE1FC; }
+/* Việc "Website v2" (03/09/2026) — SỬA màu 2 thẻ giữa cho khớp ảnh mẫu: "Đơn hàng hôm nay" nền
+   XANH LÁ nhạt và "Khách mới" nền VÀNG nhạt (bản cũ đảo thành vàng/hồng). "Mục tiêu doanh thu" là
+   thẻ RIÊNG của app này (ảnh mẫu không có) nên nhận màu hồng vừa được nhả ra. */
+body[data-theme="v2"] .kpi-goal { background: #FDF2F8; border-color: #F7D2E4; }
+body[data-theme="v2"] .kpi-orders { background: #F0F9F1; border-color: #D3EBDA; }
+body[data-theme="v2"] .kpi-cash { background: #F2EEFC; border-color: #DCD3F5; }
+body[data-theme="v2"] .kpi-newcus { background: #FEFAE9; border-color: #F5E3BE; }
+
+body[data-theme="v2"] .card {
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+}
+body[data-theme="v2"] .quick-card .qa { border-radius: var(--radius); }
+
+/* ── Task 3 Đợt 2 — Customer tabs trong cart panel ─────────────────────── */
+/* bug-630 (05/09/2026) — cả khối này THIẾU body[data-theme="v2"] (khác quy ước bắt buộc ghi ở đầu
+   file), nên .customer-tab.active áp dụng cho CẢ giao diện cũ, đè color:#fff của app.css thành
+   color:var(--primary) trong khi background:var(--primary) của app.css vẫn còn nguyên nếu tabs
+   dùng lại markup .chip cũ -> chữ xanh trên nền xanh, không đọc được. Thêm scope cho đúng khối. */
+body[data-theme="v2"] .customer-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #E5E7EB;
+  margin-bottom: 6px;
+}
+body[data-theme="v2"] .customer-tab {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6B7280;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+body[data-theme="v2"] .customer-tab.active {
+  color: var(--primary, #16a34a);
+  border-bottom-color: var(--primary, #16a34a);
+}
+body[data-theme="v2"] .customer-groups-area {
+  padding: 4px 0;
+}
+body[data-theme="v2"] .customer-groups-area .no-groups {
+  font-size: 12px;
+  color: #9CA3AF;
+  margin: 4px 0;
+}
+body[data-theme="v2"] .customer-group-chip {
+  margin: 2px;
+  padding: 3px 10px;
+  font-size: 12px;
+}
+body[data-theme="v2"] .customer-group-chip.active {
+  background: var(--primary, #16a34a);
+  color: #fff;
+}
+
+/* ── Task 5 Đợt 2 — Orders KPI row ───────────────────────────────────────── */
+.orders-kpi {
+  display: none;
+}
+/* Đợt 4 (04/09/2026) — ảnh mẫu gom 4 số vào MỘT thẻ trắng ngăn nhau bằng vạch dọc; mỗi ô là
+   nhãn xám nhỏ đứng trên, số to tô màu riêng đứng dưới. Bản cũ là 4 thẻ nền màu rời nhau, số
+   đứng trên nhãn — nhìn như 4 nút bấm chứ không phải một dải tóm tắt. */
+/* Dải KPI dùng CHUNG cho mọi màn theo ảnh mẫu v2: thêm class .sbh-kpi vào khung bọc là xong
+   (màn Đơn hàng dùng tên cũ .orders-kpi, giữ nguyên để không phải sửa lại markup đã chạy). */
+body[data-theme="v2"] .orders-kpi,
+body[data-theme="v2"] .sbh-kpi {
+  display: flex;
+  gap: 0;
+  padding: 0;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+body[data-theme="v2"] .orders-kpi .kpi,
+body[data-theme="v2"] .sbh-kpi .kpi-card {
+  flex: 1 1 180px;
+  min-width: 150px;
+  border-radius: 0;
+  /* .kpi gốc (app.css) có viền 4 cạnh + vạch xanh dày ở trên + bóng đổ — phải tắt hết, nếu không
+     mỗi ô lại tự vẽ một khung riêng bên trong thẻ chung. */
+  border: none;
+  box-shadow: none;
+  border-left: 1px solid var(--line);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #fff;
+}
+body[data-theme="v2"] .orders-kpi .kpi:first-child,
+body[data-theme="v2"] .sbh-kpi .kpi-card:first-child { border-left: none; }
+body[data-theme="v2"] .orders-kpi .kpi-val,
+body[data-theme="v2"] .sbh-kpi .kpi-val {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+}
+body[data-theme="v2"] .orders-kpi .kpi-orders .kpi-val      { color: #2563EB; }
+body[data-theme="v2"] .orders-kpi .kpi-revenue .kpi-val     { color: #16A34A; }
+body[data-theme="v2"] .orders-kpi .kpi-pending .kpi-val     { color: #111827; }
+body[data-theme="v2"] .orders-kpi .kpi-pending-rev .kpi-val { color: #DC2626; }
+body[data-theme="v2"] .orders-kpi .kpi-lbl,
+body[data-theme="v2"] .sbh-kpi .kpi-label {
+  font-size: 13px;
+  color: #6B7280;
+  margin-top: 0;
+}
+/* 4 màu số của dải KPI dùng chung — xếp theo thứ tự ô trong ảnh mẫu. */
+body[data-theme="v2"] .sbh-kpi .kpi-c1 .kpi-val { color: #16A34A; }
+body[data-theme="v2"] .sbh-kpi .kpi-c2 .kpi-val { color: #2563EB; }
+body[data-theme="v2"] .sbh-kpi .kpi-c3 .kpi-val { color: #111827; }
+body[data-theme="v2"] .sbh-kpi .kpi-c4 .kpi-val { color: #DC2626; }
+
+/* Hàng tab màn Đơn hàng: viên thuốc thay gạch chân, số đếm nằm trong huy hiệu tròn. */
+body[data-theme="v2"] .orders-tabs,
+body[data-theme="v2"] .sbh-tabs { border-bottom: none; gap: 4px; margin-bottom: 12px; }
+body[data-theme="v2"] .orders-tabs .tab,
+body[data-theme="v2"] .sbh-tabs .tab {
+  border-bottom: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  min-height: 36px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+body[data-theme="v2"] .orders-tabs .tab + .tab::before,
+body[data-theme="v2"] .sbh-tabs .tab + .tab::before { content: none; }
+body[data-theme="v2"] .orders-tabs .tab:hover,
+body[data-theme="v2"] .sbh-tabs .tab:hover { background: #F3F5F6; }
+body[data-theme="v2"] .orders-tabs .tab.active,
+body[data-theme="v2"] .sbh-tabs .tab.active { background: #E8F7EE; color: var(--primary); font-weight: 700; }
+body[data-theme="v2"] .orders-tabs .tab-count,
+body[data-theme="v2"] .sbh-tabs .tab-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; padding: 0 6px; margin-left: 6px;
+  border-radius: 999px; background: #EEF1F3; color: var(--text-2);
+  font-size: 11.5px; font-weight: 700;
+}
+body[data-theme="v2"] .orders-tabs .tab.active .tab-count,
+body[data-theme="v2"] .sbh-tabs .tab.active .tab-count { background: #DC2626; color: #fff; }
+
+/* "✕ Xoá lọc" trong ảnh mẫu là CHỮ ĐỎ không viền, không phải nút xám. */
+body[data-theme="v2"] .ord-filter-bar .btn.btn-clear {
+  background: none; border-color: transparent; color: #DC2626; font-weight: 500;
+}
+body[data-theme="v2"] .ord-filter-bar .btn.btn-clear:hover { background: #FEF2F2; }
+/* Nút khoảng ngày đang có giá trị: nền xanh nhạt như ảnh mẫu, không chỉ đổi viền. */
+body[data-theme="v2"] .ord-date-btn.has-value { background: #F0FDF4; }
+
+/* ── Task 6 Đợt 2 — Column visibility ───────────────────────────────────── */
+/* Đợt 3 (23/08/2026) — nút bấm nay dùng chung .pm-col-btn (app.css, không phân biệt theme,
+   trước đó bị display:none ngoài theme v2 khiến 4 view này thiếu hẳn nút "Hiển thị cột" ở
+   theme cũ trong khi 5 view khác vẫn có — không đồng nhất). */
+.ord-cols-wrap { position: relative; }
+.ord-cols-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  min-width: 200px;
+  z-index: 200;
+  padding: 8px 0;
+}
+.ord-col-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.ord-col-row:hover { background: #F9FAFB; }
+.ord-table [data-col].ord-col-hidden { display: none; }
+
+/* ── Task 7 Đợt 2 — Quản lý bàn visual polish ───────────────────────────── */
+body[data-theme="v2"] .tables-grid .table-card {
+  background: #fff;
+  border: 1.5px solid #DBEAFE;
+  border-radius: 10px;
+  transition: border-color .15s, box-shadow .15s;
+}
+body[data-theme="v2"] .tables-grid .table-card:hover {
+  border-color: #93C5FD;
+  box-shadow: 0 2px 8px rgba(59,130,246,.15);
+}
+body[data-theme="v2"] .tables-grid .table-card.dang-dung {
+  border-color: #16a34a;
+}
+/* Việc "Website v2" (03/09/2026) — ảnh mẫu: ô "+ Thêm bàn mới" viền đứt XÁM trên nền TRẮNG, dấu +
+   và chữ màu xanh lá. Bản cũ tô nền xanh dương nhạt nên trông như một ô bàn thật. */
+body[data-theme="v2"] .tables-grid .table-card-add {
+  border: 1.5px dashed #C9CED6;
+  background: var(--surface);
+  color: var(--primary);
+}
+body[data-theme="v2"] .tables-grid .table-card-service {
+  border: 1.5px solid #DBEAFE;
+  border-radius: 10px;
+  background: #F8FAFC;
+}
+
+/* ── Đợt 3 Task 4 — Thu chi: KPI màu, gộp cột Mã phiếu/Ngày, Xoá lọc ─────────────────────── */
+body[data-theme="v2"] .tc-td-code { font-weight: 700; font-size: 13.5px; }
+body[data-theme="v2"] .tc-td-sub { color: var(--text-3); font-size: 12px; margin-top: 2px; }
+
+.money-clear-filter { display: none; }
+.money-clear-filter.hidden { display: none !important; }
+body[data-theme="v2"] .money-clear-filter:not(.hidden) {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 34px; padding: 0 12px;
+  border-radius: var(--radius, 8px);
+  border: 1px solid #FBD5D5;
+  background: #FEF2F2;
+  color: #D92B2B;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
+body[data-theme="v2"] .money-clear-filter:not(.hidden):hover { background: #FEE2E2; }
+
+/* ── Đợt 3 Task 5 — Thu chi: Hiển thị cột + phân trang ───────────────────────────────────── */
+.tc-cols-wrap { position: relative; }
+.tc-cols-pop {
+  position: absolute; right: 0; top: calc(100% + 4px);
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); min-width: 200px; z-index: 200; padding: 8px 0;
+}
+.tc-col-row { display: flex; align-items: center; gap: 8px; padding: 6px 16px; cursor: pointer; font-size: 13px; }
+.tc-col-row:hover { background: #F9FAFB; }
+.hd-table [data-col].tc-col-hidden { display: none; }
+
+.tc-pagination { display: none; }
+body[data-theme="v2"] .tc-pagination {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  margin-top: 10px; font-size: 13px; color: var(--text-2);
+}
+body[data-theme="v2"] .tc-page-size { display: flex; align-items: center; gap: 6px; }
+body[data-theme="v2"] .tc-page-size select { min-height: 30px; border-radius: 6px; border: 1px solid var(--line); }
+body[data-theme="v2"] .tc-page-cur { font-weight: 600; }
+body[data-theme="v2"] .tc-page-btn { min-height: 28px; padding: 0 10px; }
+
+/* ── Đợt 3 Task 6 — Thu chi: toggle Thu/Chi trong modal, +Thêm phân loại, dropdown Loại GD ── */
+body[data-theme="v2"] .tx-dir-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+body[data-theme="v2"] .tx-dir-btn {
+  flex: 1; padding: 8px 0; border-radius: var(--radius, 8px);
+  border: 1.5px solid var(--line); background: #fff; color: var(--text-2);
+  font-weight: 600; font-size: 13.5px; cursor: pointer;
+}
+body[data-theme="v2"] .tx-dir-btn.thu.active { border-color: var(--money-in); background: #F0FDF4; color: var(--money-in); }
+body[data-theme="v2"] .tx-dir-btn.chi.active { border-color: var(--money-out); background: #FEF2F2; color: var(--money-out); }
+
+body[data-theme="v2"] .tx-add-category-link {
+  margin-top: 6px; background: none; border: none; padding: 0;
+  color: var(--primary); font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+body[data-theme="v2"] .tx-add-category-link:hover { text-decoration: underline; }
+
+.tc-direction-dd { position: relative; }
+.tc-dd-btn { display: none; }
+body[data-theme="v2"] .tc-dd-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 34px; padding: 0 12px;
+  border: 1px solid var(--line); border-radius: var(--radius, 8px); background: #fff;
+  font-size: 13.5px; color: var(--text);
+}
+.tc-dd-pop {
+  position: absolute; left: 0; top: calc(100% + 4px);
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); min-width: 160px; z-index: 200; padding: 8px 0;
+}
+.tc-dd-item { display: flex; align-items: center; gap: 8px; padding: 6px 14px; cursor: pointer; font-size: 13px; }
+.tc-dd-item:hover { background: #F9FAFB; }
+
+/* ── Đợt 3 Task 7 (16/08/2026) — Sổ nợ: 2 nút "Tôi đã đưa/nhận" + 4 thẻ KPI ─────────────── */
+body[data-theme="v2"] .sn-kpi-row { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+body[data-theme="v2"] .sn-kpi-thu-qh .hd-stat-value,
+body[data-theme="v2"] .sn-kpi-tra-qh .hd-stat-value { color: var(--danger); }
+body[data-theme="v2"] .sn-btn-thu {
+  background: #FEF6E7; border: 1px solid #F5E3BE; color: var(--warn);
+}
+body[data-theme="v2"] .sn-btn-thu:hover { border-color: var(--warn); }
+body[data-theme="v2"] .sn-btn-tra {
+  background: var(--primary); border: 1px solid var(--primary); color: #fff;
+}
+body[data-theme="v2"] .sn-btn-tra:hover { background: var(--primary-dark); }
+
+/* ── Đợt 3 Task 8 (16/08/2026) — Sổ nợ: filter Phân loại + sort + hiện/ẩn cột ──────────────── */
+body[data-theme="v2"] .sn-filter-wrap { position: relative; }
+body[data-theme="v2"] .sn-filter-pill { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.sn-filter-pop, .sn-sort-pop {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 200;
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); min-width: 190px; padding: 8px 0;
+}
+.sn-filter-row { display: flex; align-items: center; gap: 8px; padding: 6px 16px; cursor: pointer; font-size: 13px; }
+.sn-filter-row:hover { background: #F9FAFB; }
+.sn-sort-opt {
+  display: block; width: 100%; text-align: left; background: none; border: none;
+  padding: 8px 16px; font-size: 13px; color: var(--text); cursor: pointer; min-height: 0;
+}
+.sn-sort-opt:hover { background: #F9FAFB; }
+.sn-sort-opt.active { color: var(--primary); font-weight: 700; }
+#sn-list [data-col].sn-col-hidden { display: none; }
+
+/* ── Đợt 3 Task 9 (16/08/2026) — Sổ nợ: gợi ý đối tác theo SĐT trong modal ghi nợ ───────────── */
+.sn-suggest-wrap { position: relative; }
+.sn-suggest-pop {
+  position: absolute; left: 0; right: 0; top: calc(100% + 2px); z-index: 220;
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); max-height: 220px; overflow-y: auto;
+}
+.sn-suggest-item {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%;
+  padding: 8px 12px; background: none; border: none; border-bottom: 1px solid #F3F4F6;
+  cursor: pointer; text-align: left; min-height: 0;
+}
+.sn-suggest-item:last-child { border-bottom: none; }
+.sn-suggest-item:hover { background: #F9FAFB; }
+.sn-suggest-item b { font-size: 13.5px; color: var(--text); }
+.sn-suggest-item span { font-size: 12px; color: var(--text-3); }
+
+/* ── Đợt 3 Task 10 (16/08/2026) — Sổ quỹ: hàng Tổng cuối bảng ─────────────────────────────── */
+body[data-theme="v2"] .sq-total-row td {
+  font-weight: 700;
+  background: #F7F8FA;
+  border-top: 2px solid var(--line);
+}
+
+/* ── Đợt 3 Task 11 (16/08/2026) — Sổ quỹ: phân trang, ẩn cột theo popover ─────────────────── */
+.sq-pagination { display: none; }
+body[data-theme="v2"] .sq-pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+body[data-theme="v2"] .sq-pagination select {
+  min-height: 30px;
+  width: auto;
+  padding: 0 6px;
+}
+body[data-theme="v2"] .sq-pagination button {
+  min-height: 30px;
+  padding: 0 10px;
+}
+.hd-table [data-col].sq-col-hidden { display: none; }
+
+/* ── Đợt 3 Task 12 (16/08/2026) — Sổ quỹ: pill tab nguồn tiền, KPI nền xám, 3 ô lọc mới ──── */
+body[data-theme="v2"] .sq-multiselect .ord-dd-btn { min-width: 150px; }
+
+body[data-theme="v2"] #sq-acc-tabs {
+  border-bottom: none;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+body[data-theme="v2"] #sq-acc-tabs .tab {
+  border-radius: 999px;
+  border-bottom: none;
+  padding: 6px 16px;
+  min-height: 34px;
+  background: var(--primary-soft);
+  color: var(--text-2);
+}
+body[data-theme="v2"] #sq-acc-tabs .tab + .tab::before { content: none; }
+body[data-theme="v2"] #sq-acc-tabs .tab.active {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+body[data-theme="v2"] #sq-stats .hd-stat {
+  background: #F3F4F6;
+  border-color: #F3F4F6;
+  box-shadow: none;
+}
+
+/* ── Đợt 7 (18/08/2026) — bảng lịch 5-TAB (Mốc/Ngày/Tuần/Tháng/Năm), date-range-picker.js
+   createTabbedRangePicker()/tabbedRangePickerHtml(). Chỉ dùng ở màn Lãi lỗ — không đụng tới
+   .ord-date-pop/.odp-* gốc (Đơn hàng, Bếp vẫn 1-tab như cũ). Popup TÁI DÙNG class .ord-date-pop
+   để thừa hưởng nền/viền/bóng đổ có sẵn (xem app.css), chỉ nới thêm bề rộng vì tab "Ngày" cần chỗ
+   cho CẢ sidebar lối tắt LẪN 2 bảng lịch cạnh nhau. */
+.ll-pop { max-width: min(94vw, 760px); }
+.ll-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+.ll-tab {
+  padding: 7px 14px; border: none; background: none; border-radius: 6px 6px 0 0;
+  font-size: 13px; font-weight: 600; color: var(--text-2); cursor: pointer;
+}
+.ll-tab:hover { background: #F3F5F6; }
+.ll-tab.active { color: var(--primary); background: var(--primary-soft); }
+
+.ll-moc-list { display: flex; flex-direction: column; gap: 2px; min-width: 190px; }
+.ll-moc-item {
+  text-align: left; padding: 9px 10px; border: none; background: none; border-radius: 6px;
+  font-size: 13px; color: var(--text); cursor: pointer;
+}
+.ll-moc-item:hover { background: #F3F5F6; }
+.ll-moc-item.active { background: var(--primary-soft); color: var(--primary); font-weight: 700; }
+
+.ll-ngay-body { display: flex; gap: 16px; }
+.ll-ngay-side { border-right: 1px solid var(--line); padding-right: 12px; }
+.ll-ngay-cals .odp-cal-head b { flex: 1; text-align: center; font-size: 13.5px; }
+
+.ll-week-list { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
+.ll-week-item {
+  text-align: left; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
+  background: #fff; font-size: 13px; color: var(--text); cursor: pointer;
+}
+.ll-week-item:hover { border-color: var(--primary); }
+.ll-week-item.active { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); font-weight: 700; }
+
+@media (max-width: 720px) {
+  .ll-ngay-body { flex-direction: column; }
+  .ll-ngay-side { border-right: none; border-bottom: 1px solid var(--line); padding-right: 0; padding-bottom: 10px; }
+}
+
+/* ── Đợt 7 — màn Lãi lỗ v2: thẻ KPI + info popover + xu hướng (cột) + bảng chi tiết + Lợi nhuận theo */
+body[data-theme="v2"] .ll-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+body[data-theme="v2"] .ll-head h2 { display: flex; align-items: center; gap: 8px; margin: 0; }
+.ll-info-wrap { position: relative; display: inline-flex; }
+.ll-icon-btn {
+  width: 34px; height: 34px; min-height: 34px; padding: 0; border-radius: var(--radius, 8px);
+  border: 1px solid var(--line); background: #fff; color: var(--text-2); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.ll-icon-btn:hover { background: #F3F5F6; }
+.ll-info-pop {
+  position: absolute; z-index: 80; top: calc(100% + 6px); right: 0; width: min(94vw, 420px);
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 12px 28px rgba(16, 24, 32, .18); padding: 14px; font-size: 13px; color: var(--text-2);
+}
+.ll-info-pop h4 { margin: 0 0 8px; font-size: 13px; color: var(--text-3); font-weight: 700; }
+.ll-info-formula {
+  background: #F7F8FA; border-radius: 8px; padding: 10px 12px; text-align: center;
+  font-weight: 700; color: var(--text); margin-bottom: 10px;
+}
+.ll-info-row { padding: 8px 0; border-top: 1px solid var(--line); }
+.ll-info-row:first-of-type { border-top: none; }
+.ll-info-row b { color: var(--text); }
+
+body[data-theme="v2"] .ll-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+body[data-theme="v2"] .ll-kpi-row .hd-stat { background: #F7F8FA; border-color: #F7F8FA; }
+.ll-kpi-row .hd-stat-value.rp-positive { color: var(--money-in, #16a34a); }
+.ll-kpi-row .hd-stat-value.rp-negative { color: var(--money-out, #dc2626); }
+
+body[data-theme="v2"] .ll-trend-card { padding: 16px 18px; margin-bottom: 16px; }
+.ll-trend-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.ll-trend-head h3 { margin: 0; font-size: 15px; }
+.ll-trend-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.ll-compare-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); cursor: pointer; }
+.ll-switch { position: relative; width: 38px; height: 22px; flex: none; }
+.ll-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.ll-switch-track { position: absolute; inset: 0; background: #D1D5DB; border-radius: 999px; transition: background .15s; }
+.ll-switch-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: transform .15s; }
+.ll-switch input:checked + .ll-switch-track { background: var(--primary); }
+.ll-switch input:checked + .ll-switch-track::after { transform: translateX(16px); }
+.ll-seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.ll-seg button { border: none; background: #fff; padding: 6px 14px; font-size: 13px; font-weight: 600; color: var(--text-2); cursor: pointer; }
+.ll-seg button.active { background: var(--primary); color: #fff; }
+
+.ll-chart-wrap { display: flex; gap: 10px; }
+.ll-chart-axis { display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; color: var(--text-3); padding: 2px 0 22px; text-align: right; }
+.ll-chart-svg { flex: 1; min-width: 0; }
+.ll-chart-legend { display: flex; align-items: center; gap: 16px; font-size: 12px; color: var(--text-2); margin-top: 8px; }
+.ll-chart-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.ll-chart-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.ll-chart-empty { text-align: center; color: var(--text-3); padding: 30px 0; font-size: 13px; }
+
+body[data-theme="v2"] .ll-detail-card { padding: 16px 18px; margin-bottom: 16px; }
+.ll-detail-formula { color: var(--text-3); font-size: 12.5px; margin: 2px 0 12px; }
+.ll-detail-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.ll-detail-table td { padding: 9px 4px; border-top: 1px solid var(--line); }
+.ll-detail-table tr:first-child td { border-top: none; }
+.ll-detail-table td:last-child { text-align: right; white-space: nowrap; }
+.ll-row-main td { font-weight: 700; }
+.ll-row-sub td:first-child { padding-left: 22px; color: var(--text-2); font-weight: 400; }
+.ll-row-total td { font-weight: 700; font-size: 14.5px; border-top: 2px solid var(--line); }
+.ll-row-code { display: inline-block; min-width: 18px; height: 18px; line-height: 18px; text-align: center; border-radius: 4px; background: #F3F4F6; color: var(--text-3); font-size: 11px; font-weight: 700; margin-left: 6px; }
+.ll-cat-link { background: none; border: none; padding: 0; margin-left: 8px; color: var(--primary); font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; }
+.ll-cat-link:hover { text-decoration: underline; }
+
+.ll-cat-dd { position: relative; }
+.ll-cat-pop {
+  position: absolute; z-index: 90; top: calc(100% + 4px); left: 0; width: 240px;
+  background: #fff; border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(16, 24, 32, .18); padding: 8px;
+}
+.ll-cat-pop input[type="search"] { margin-bottom: 6px; }
+.ll-cat-pop-list { max-height: 220px; overflow-y: auto; }
+.ll-cat-pop-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.ll-cat-pop-item:hover { background: #F3F5F6; }
+.ll-cat-pop-item input { width: auto; min-height: auto; }
+
+body[data-theme="v2"] .ll-dim-card { padding: 16px 18px; }
+.ll-dim-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.ll-dim-tabs { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.ll-dim-tab { border: none; background: none; padding: 6px 2px; font-size: 13.5px; font-weight: 600; color: var(--text-2); cursor: pointer; border-bottom: 2px solid transparent; }
+.ll-dim-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.ll-dim-list { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ll-dim-list th { text-align: left; font-size: 11px; color: var(--text-3); font-weight: 700; text-transform: uppercase; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+.ll-dim-list th:last-child, .ll-dim-list td:last-child { text-align: right; }
+.ll-dim-list td { padding: 8px 4px; border-bottom: 1px solid var(--line); }
+.ll-dim-empty { text-align: center; padding: 30px 0; color: var(--text-3); }
+.ll-dim-empty svg { width: 42px; height: 42px; color: var(--text-3); opacity: .5; margin-bottom: 8px; }
+
+.ll-modal-box { width: min(94vw, 900px); }
+.ll-modal-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+.ll-modal-tools input[type="search"] { flex: 1; min-width: 180px; }
+
+/* ── Đợt 7 (18/08/2026) — Báo cáo bán hàng v2: header info/xuất/khoảng ngày, "So sánh cùng kỳ"
+   (biểu đồ SVG tự vẽ), bảng chi tiết + PTTT, "Doanh thu theo" (dropdown+tabs+modal), 2 thẻ cuối. */
+.bh-head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bh-range { flex: 0 0 auto; }
+.bh-icon-btn {
+  width: 38px; height: 38px; padding: 0; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius); border: 1px solid var(--line); background: #fff; color: var(--text-2);
+}
+.bh-icon-btn:hover { background: #F7F8FA; color: var(--primary); }
+.bh-icon-btn svg { width: 18px; height: 18px; }
+
+.bh-info-wrap { position: relative; }
+.bh-info-pop {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 300;
+  width: 360px; max-width: 82vw; background: #fff; border: 1px solid var(--line);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 16px;
+}
+.bh-info-pop.hidden { display: none; }
+.bh-info-title { font-weight: 700; margin-bottom: 10px; font-size: 14px; }
+.bh-info-formula {
+  background: #F7F8FA; border-radius: var(--radius); padding: 12px;
+  text-align: center; font-size: 13.5px; line-height: 1.6; margin-bottom: 12px;
+}
+.bh-info-list { margin: 0; font-size: 12.5px; color: var(--text-2); }
+.bh-info-list dt { font-weight: 700; color: var(--text); margin-top: 8px; }
+.bh-info-list dt:first-child { margin-top: 0; }
+.bh-info-list dd { margin: 2px 0 0; }
+
+.bh-compare-card h3 { margin: 0 0 12px; font-size: 15px; }
+.bh-compare-tabs { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.bh-metric-tabs, .bh-cumu-toggle { display: flex; gap: 8px; flex-wrap: wrap; }
+.bh-chart-legend { display: flex; justify-content: flex-end; gap: 16px; font-size: 12.5px; color: var(--text-2); margin-bottom: 4px; }
+.bh-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.bh-legend-dash { width: 16px; height: 0; border-top: 2px dashed var(--text-3); display: inline-block; }
+.bh-legend-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--primary); display: inline-block; }
+.bh-chart-wrap { width: 100%; }
+.bh-chart-svg { width: 100%; height: 220px; display: block; overflow: visible; }
+.bh-chart-line { fill: none; stroke-width: 2.4; }
+.bh-chart-line-prev { stroke: var(--text-3); stroke-dasharray: 5 4; }
+.bh-chart-line-cur { stroke: var(--primary); }
+.bh-chart-baseline { stroke: var(--line); stroke-width: 1; }
+.bh-chart-axis { font-size: 10px; fill: var(--text-3); }
+
+.bh-detail-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; margin: 12px 0; }
+@media (max-width: 900px) { .bh-detail-grid { grid-template-columns: 1fr; } }
+.bh-breakdown-card h3, .bh-payment-card h3, .bh-by-card h3 { margin: 0 0 12px; font-size: 15px; }
+.bh-breakdown-scroll { overflow-x: auto; }
+.bh-breakdown-table { width: 100%; }
+.bh-breakdown-total td { font-weight: 700; background: #F7F8FA; border-top: 2px solid var(--line); }
+
+.bh-payment-rows { display: flex; flex-direction: column; }
+.bh-payment-row { display: flex; justify-content: space-between; gap: 8px; padding: 10px 2px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.bh-payment-row:last-child { border-bottom: none; }
+.bh-payment-row b { color: var(--money-in); }
+
+.bh-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 16px; text-align: center; }
+.bh-empty-ico svg { width: 44px; height: 44px; color: var(--line); }
+.bh-empty p { margin: 8px 0 0; font-size: 13.5px; color: var(--text-2); }
+.bh-empty p.hint { font-size: 12px; color: var(--text-3); }
+
+.bh-by-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.bh-by-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bh-by-tools select { min-height: 36px; border-radius: var(--radius); border: 1px solid var(--line); padding: 0 10px; font-size: 13px; }
+
+.bh-bottom-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px; }
+@media (max-width: 640px) { .bh-bottom-cards { grid-template-columns: 1fr; } }
+.bh-bottom-card { display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer; width: 100%; }
+.bh-bottom-ico { flex: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.bh-bottom-ico svg { width: 20px; height: 20px; }
+.bh-ico-warn { background: #FEF6E7; color: #B45309; }
+.bh-ico-danger { background: #FEE2E2; color: var(--money-out); }
+.bh-bottom-body { display: flex; flex-direction: column; }
+.bh-bottom-sub { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+
+.bh-modal-tools { display: flex; align-items: center; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+.bh-modal-tools input[type="search"] { flex: 1; min-width: 160px; }
+.bh-modal-scroll { max-height: 55vh; }
+
+/* ── Đợt 7 (18/08/2026) — Báo cáo kho hàng: KPI 2 cột trên di động (giống #tk-kpi/#sk-kpi/#sp-kpi) */
+@media (max-width: 720px) {
+  #bck-kpi { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* ── Việc "Thuế" (19/08/2026) — wizard "Thiết lập sổ kế toán" (ảnh Website v2\Thuế\Screenshot
+   2026-08-12 225118.png). Thẻ chọn nhóm doanh thu/phương pháp — dựa trên .card/.field đã có. */
+.wiz-steps { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
+.wiz-step { display: flex; align-items: center; gap: 8px; color: var(--text-3); font-size: 14px; white-space: nowrap; }
+.wiz-step.active { font-weight: 600; }
+.wiz-step-num {
+  width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--line); color: var(--text-3); font-size: 13px; flex-shrink: 0;
+}
+.wiz-step.active .wiz-step-num, .wiz-step.done .wiz-step-num { background: var(--primary); color: #fff; }
+.wiz-step-line { flex: 1; height: 1px; background: var(--line); min-width: 24px; }
+.wiz-option {
+  display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px; margin-bottom: 10px; cursor: pointer;
+}
+.wiz-option.selected { border: 2px solid var(--primary); padding: 11px; }
+.wiz-option input[type="radio"], .wiz-option input[type="checkbox"] { margin-top: 3px; width: auto; min-height: auto; }
+.wiz-option-body strong { display: block; font-size: 14px; }
+.wiz-option-body span { display: block; font-size: 13px; color: var(--text-2); margin-top: 2px; }
+.wiz-note { background: var(--line); border-radius: var(--radius); padding: 12px; font-size: 13px; color: var(--text-2); margin: 12px 0; }
+.wiz-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   VIỆC "WEBSITE V2" (03/09/2026) — đối chiếu lại toàn bộ ảnh mẫu app.sobanhang.com trong
+   C:\Users\ADMIN\Downloads\SoBanHang\Website v2 và kéo giao diện v2 sát ảnh hơn.
+   Nguồn ảnh mục này: Website v2\Tổng quan\* (13 ảnh) + Website v2\Bán hàng\Đơn Hàng\*.
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Khung ngoài: cột trái chạy SUỐT từ mép trên, thanh trên bắt đầu từ mép phải cột trái ──────
+   Ảnh mẫu: khối thương hiệu "SoBanHang" nằm ở góc trên-trái, THANH TRÊN (breadcrumb, tìm kiếm,
+   chuông, tài khoản) chỉ trải trên phần nội dung. Bản cũ để thanh trên phủ hết chiều ngang nên
+   chữ "Trang chủ" đứng đúng chỗ đáng lẽ là tên app. Chỉ áp cho máy tính (>=1024px) — đúng ngưỡng
+   applyLayout() đã dùng để hiện cột trái; dưới ngưỡng đó cột trái ẩn nên phải giữ nguyên. */
+@media (min-width: 1024px) {
+  body[data-theme="v2"] .sidebar { top: 0; }
+  body[data-theme="v2"] .app-header { left: var(--sidebar-full); }
+  body[data-theme="v2"].sidebar-slim .app-header { left: var(--sidebar-slim); }
+}
+body[data-theme="v2"] .sidebar-brand { min-height: var(--header-h); padding: 6px 14px; }
+body[data-theme="v2"] .sidebar-brand-logo { width: 32px; height: 32px; border-radius: 8px; }
+body[data-theme="v2"] .sidebar-brand-logo svg { width: 20px; height: 20px; }
+body[data-theme="v2"] .sidebar-brand-name { font-size: 17px; }
+
+/* ── Cột trái: tên nhóm viết THƯỜNG, không kẻ ngang, mục đang chọn bo góc ──────────────────────
+   Ảnh mẫu ghi "Bán hàng", "Hàng hóa", "Quản lý kho" — chữ thường cỡ như mục con, không phải nhãn
+   IN HOA cỡ 11px như bản cũ (bản cũ trông như 2 tầng nhãn chồng nhau). */
+body[data-theme="v2"] .sidebar-group-btn {
+  text-transform: none; font-size: 14.5px; font-weight: 500; letter-spacing: 0;
+  color: var(--sidebar-text); border-top: none; padding: 10px 14px; min-height: 42px;
+}
+body[data-theme="v2"] .sidebar-group.has-active > .sidebar-group-btn { font-weight: 600; }
+body[data-theme="v2"] .sidebar > a,
+body[data-theme="v2"] .sidebar-group-items a { border-radius: 8px; margin: 0 8px; }
+body[data-theme="v2"] .sidebar a.active { border-left-color: transparent; }
+body[data-theme="v2"] .sidebar.collapsed > a,
+body[data-theme="v2"] .sidebar.collapsed .sidebar-group-items a { margin: 0; }
+
+/* Dòng "Quay lại giao diện cũ" ở đáy cột trái (ảnh mẫu có hẳn một dòng chữ, không phải icon trơ) */
+body[data-theme="v2"] .sidebar-footer-row { flex-wrap: wrap; }
+body[data-theme="v2"] .sidebar-theme-row {
+  flex: 0 0 100%; width: auto; height: auto; min-height: 40px; margin: 2px 0 0;
+  justify-content: flex-start; gap: 12px; padding: 8px 14px;
+  font-size: 14px; font-weight: 500; text-align: left;
+}
+body.sidebar-slim[data-theme="v2"] .sidebar-theme-row span { display: none; }
+body.sidebar-slim[data-theme="v2"] .sidebar-theme-row { justify-content: center; padding: 8px 0; }
+
+/* ── Trang chủ: 5 thẻ KPI ─────────────────────────────────────────────────────────────────────
+   Ảnh mẫu: tiêu đề thẻ viết thường cỡ 15px (không IN HOA nhỏ), ô icon góc phải nền TRẮNG với icon
+   tô màu theo thẻ (bản cũ tô đặc màu xanh lá cho cả 5 thẻ). */
+body[data-theme="v2"] .kpi-label {
+  text-transform: none; font-size: 15px; font-weight: 600; color: #374151; letter-spacing: 0;
+}
+body[data-theme="v2"] .kpi-icon {
+  background: #fff; box-shadow: 0 1px 2px rgba(16, 24, 40, .08); width: 34px; height: 34px;
+}
+body[data-theme="v2"] .kpi-icon svg { color: currentColor; width: 18px; height: 18px; }
+body[data-theme="v2"] .kpi-value { font-size: 26px; }
+
+/* ── Trang chủ: "Cần xem xét" — mỗi dòng một tông màu, số đếm là viên thuốc cùng tông ────────── */
+body[data-theme="v2"] .review-card .see-all { color: #2563EB; }
+body[data-theme="v2"] .review-ico { width: 34px; height: 34px; border-radius: 9px; }
+body[data-theme="v2"] .review-ico svg { width: 17px; height: 17px; }
+body[data-theme="v2"] .review-count {
+  min-width: 26px; height: 22px; padding: 0 8px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px;
+}
+body[data-theme="v2"] .review-ico.tone-orange { background: #FFF4E5; color: #C2620A; }
+body[data-theme="v2"] .review-ico.tone-blue   { background: #EAF2FE; color: #2563EB; }
+body[data-theme="v2"] .review-ico.tone-red    { background: #FDECEC; color: #DC2626; }
+body[data-theme="v2"] .review-ico.tone-amber  { background: #FEF7E0; color: #B45309; }
+body[data-theme="v2"] .review-ico.tone-purple { background: #F2EEFC; color: #7C3AED; }
+body[data-theme="v2"] .review-ico.tone-green  { background: #E9F7EF; color: #15803D; }
+body[data-theme="v2"] .review-count.tone-orange { background: #FFF4E5; color: #C2620A; }
+body[data-theme="v2"] .review-count.tone-blue   { background: #EAF2FE; color: #2563EB; }
+body[data-theme="v2"] .review-count.tone-red    { background: #FDECEC; color: #DC2626; }
+body[data-theme="v2"] .review-count.tone-amber  { background: #FEF7E0; color: #B45309; }
+body[data-theme="v2"] .review-count.tone-purple { background: #F2EEFC; color: #7C3AED; }
+body[data-theme="v2"] .review-count.tone-green  { background: #E9F7EF; color: #15803D; }
+
+/* ── Trang chủ: "Thao tác nhanh" — ô nền xám nhạt, icon trong ô vuông TÔ MÀU ĐẶC ─────────────── */
+body[data-theme="v2"] .qa-tile {
+  background: #F7F8F9; border-color: transparent; gap: 10px; min-height: 108px; font-size: 13px;
+}
+body[data-theme="v2"] .qa-tile:hover { background: #F0F1F3; border-color: transparent; }
+body[data-theme="v2"] .qa-ico {
+  width: 46px; height: 46px; border-radius: 12px; align-items: center; justify-content: center;
+}
+body[data-theme="v2"] .qa-ico svg { width: 22px; height: 22px; color: #fff; }
+body[data-theme="v2"] .qa-ico.tone-green  { background: #16A34A; }
+body[data-theme="v2"] .qa-ico.tone-blue   { background: #2563EB; }
+body[data-theme="v2"] .qa-ico.tone-gray   { background: #6B7280; }
+body[data-theme="v2"] .qa-ico.tone-orange { background: #D97706; }
+body[data-theme="v2"] .qa-ico.tone-purple { background: #7C3AED; }
+
+/* ── Trang chủ: cặp tab "Đơn vừa bán / Thu chi gần đây" — dạng gạt trong rãnh xám ────────────── */
+body[data-theme="v2"] .activity-tabs {
+  background: #F3F4F6; border-radius: 10px; padding: 3px; gap: 0;
+}
+body[data-theme="v2"] .activity-tabs .seg-btn {
+  border: 1px solid transparent; background: transparent; color: var(--text-2);
+  border-radius: 8px; min-height: 30px;
+}
+body[data-theme="v2"] .activity-tabs .seg-btn.active {
+  background: #fff; border-color: var(--line); color: var(--text);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .08);
+}
+
+/* ── Ô tìm kiếm dạng HỘP THOẠI giữa màn hình (Ctrl K) ──────────────────────────────────────────
+   Ảnh mẫu Website v2\Tổng quan\Screenshot 2026-08-12 2142*.png: nền mờ, hộp trắng bo góc rộng
+   ~920px cách mép trên ~12vh; đầu hộp là ô nhập có kính lúp + nút ✕; giữa là danh sách chia nhóm
+   cuộn được; chân hộp là dải chữ "↑↓ chọn · Enter mở · Esc đóng".
+   Lúc ĐÓNG, .app-search-panel/.app-search-field trong suốt nên thanh trên giữ nguyên như cũ. */
+body[data-theme="v2"] .app-search-panel { display: block; width: 100%; }
+body[data-theme="v2"] .app-search-field { display: block; position: relative; }
+body[data-theme="v2"] .app-search-close,
+body[data-theme="v2"] .app-search-hint { display: none; }
+
+body[data-theme="v2"] .app-search.open {
+  position: fixed; inset: 0; z-index: 60; max-width: none; margin: 0; padding: 12vh 16px 16px;
+  display: flex; align-items: flex-start; justify-content: center;
+  background: rgba(17, 24, 39, .38);
+}
+body[data-theme="v2"] .app-search.open .app-search-panel {
+  width: min(920px, 94vw); background: var(--surface); border-radius: 16px;
+  box-shadow: 0 24px 56px rgba(16, 24, 40, .28); overflow: hidden;
+  display: flex; flex-direction: column; max-height: 76vh;
+}
+body[data-theme="v2"] .app-search.open .app-search-field {
+  flex: none; border-bottom: 1px solid var(--line);
+}
+body[data-theme="v2"] .app-search.open .app-search-ico { left: 20px; width: 20px; height: 20px; }
+body[data-theme="v2"] .app-search.open input {
+  min-height: 60px; border: none; border-radius: 0; background: transparent;
+  padding: 0 56px 0 54px; font-size: 16px;
+}
+body[data-theme="v2"] .app-search.open input:focus { outline: none; }
+body[data-theme="v2"] .app-search.open .app-search-kbd { display: none; }
+body[data-theme="v2"] .app-search.open .app-search-close {
+  display: flex; align-items: center; justify-content: center;
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  width: 32px; height: 32px; min-height: 32px; padding: 0; border: none; border-radius: 8px;
+  background: none; color: var(--text-2); cursor: pointer;
+}
+body[data-theme="v2"] .app-search.open .app-search-close:hover { background: var(--bg); }
+body[data-theme="v2"] .app-search.open .app-search-close svg { width: 18px; height: 18px; }
+body[data-theme="v2"] .app-search.open .app-search-results {
+  position: static; border: none; border-radius: 0; box-shadow: none;
+  max-height: none; flex: 1; min-height: 0; padding: 8px;
+}
+body[data-theme="v2"] .app-search.open .app-search-hint {
+  display: block; flex: none; border-top: 1px solid var(--line);
+  padding: 10px 20px; font-size: 12.5px; color: var(--text-3);
+}
+body[data-theme="v2"] .app-search.open .app-search-item { padding: 11px 12px; font-size: 15px; }
+body[data-theme="v2"] .app-search.open .app-search-group-label { font-size: 11.5px; padding: 12px 12px 4px; }
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   VIỆC "WEBSITE V2" — thư mục 2: Bán hàng \ POS bán hàng (8 ảnh, app.sobanhang.com/pos)
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Thẻ món: ảnh VUÔNG ở trên, tên món rồi GIÁ XANH ở dưới trên nền trắng ────────────────────
+   Ảnh mẫu: thẻ trắng viền mảnh, nửa trên là ảnh, nửa dưới là chữ. Bản cũ cho ảnh phủ kín ô rồi
+   dán giá lên góc + tên trên dải mờ đáy — khó đọc khi ảnh sáng. Chỉ đổi CSS, KHÔNG đụng sell.js
+   (thứ tự thẻ con trong HTML là ảnh › giá › số lượng › đã bán › tên, nên dùng order: để tên lên
+   trước giá). Giao diện cũ giữ nguyên kiểu ảnh phủ kín. */
+/* Ô lưới cao cố định (ảnh mẫu: các thẻ cao bằng nhau) — KHÔNG dùng aspect-ratio cho ô ảnh: khi
+   ảnh món chưa tải được thì chiều rộng nội tại của ô ảnh = 0 nên lưới tính chiều cao hàng ra 13px
+   và cả thẻ bẹp dí (đã gặp thật lúc dựng, 03/09/2026). Cho ô ảnh flex:1 là an toàn. */
+body[data-theme="v2"][data-route="ban-hang"] .sell-grid,
+body[data-theme="v2"] .sell-grid { grid-auto-rows: 232px; }
+body[data-theme="v2"] .item-card {
+  display: flex; flex-direction: column; height: 100%; border-width: 1px;
+}
+body[data-theme="v2"] .item-card .thumb {
+  position: static; flex: 1 1 auto; min-height: 0; background: #F3F4F6;
+}
+body[data-theme="v2"] .item-card .item-name {
+  position: static; order: 1; background: none; color: var(--text); text-align: left;
+  font-size: 14.5px; font-weight: 500; padding: 10px 12px 2px;
+}
+body[data-theme="v2"] .item-card .item-price {
+  position: static; order: 2; background: none; color: var(--primary); border-radius: 0;
+  font-size: 16px; font-weight: 700; padding: 2px 12px 12px;
+}
+/* Số lượng đang có trong đơn + số đã bán: nay nằm trên ẢNH (2 góc trên), không đè lên chữ. */
+body[data-theme="v2"] .item-card .item-qty {
+  left: 8px; top: 8px; bottom: auto; border-radius: 999px;
+}
+body[data-theme="v2"] .item-card .item-sold {
+  left: auto; right: 0; border-radius: 0 0 0 6px;
+}
+
+/* ── Giỏ hàng trống: có tiêu đề đậm + câu hướng dẫn (ảnh mẫu) ────────────────────────────────── */
+.cart-empty-title { display: block; margin-top: 6px; }
+.cart-empty-hint { display: block; }
+body[data-theme="v2"] .cart-empty { gap: 4px; }
+body[data-theme="v2"] .cart-empty-title { font-size: 16px; font-weight: 700; color: var(--text); }
+body[data-theme="v2"] .cart-empty-hint { font-size: 13.5px; color: var(--text-3); max-width: 320px; }
+
+/* ── 2 nút phụ đáy giỏ hàng tô XANH DƯƠNG nhạt (ảnh mẫu), nút Thanh toán vẫn xanh lá ─────────── */
+body[data-theme="v2"] .cart-preview-btn,
+body[data-theme="v2"] .cart-save-btn {
+  background: #E8F0FE; border-color: #E8F0FE; color: #1D4ED8; font-weight: 600;
+}
+body[data-theme="v2"] .cart-preview-btn:hover,
+body[data-theme="v2"] .cart-save-btn:hover { background: #DBE7FD; border-color: #DBE7FD; }
+body[data-theme="v2"] .cart-preview-btn svg,
+body[data-theme="v2"] .cart-save-btn svg { color: #1D4ED8; }
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   VIỆC "WEBSITE V2" — thư mục 3: Bán hàng \ Quản lý bàn (7 ảnh, app.sobanhang.com/table)
+   LƯU Ý: ảnh mẫu gom bàn thành từng KHỐI KHU VỰC, nhưng chủ quán đã CHỐT ngày 03/09/2026 là lưới
+   phẳng xếp theo số bàn (xem ghi chú renderGrid trong js/views/tables.js). KHÔNG gom khối lại.
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Chữ nghiêng xám "(Bàn trống)" ngay sau tên bàn + gạch đứt ngăn phần đầu với phần thân,
+   chữ trạng thái canh giữa in nghiêng — đúng bố cục ô bàn trong ảnh mẫu. */
+.tc-state-note { display: none; }
+body[data-theme="v2"] .tc-state-note {
+  display: inline; margin-left: 6px; font-size: 12.5px; font-style: italic; color: var(--text-3);
+  font-weight: 400; white-space: nowrap;
+}
+body[data-theme="v2"] .tc-top { border-bottom: 1px dashed var(--line); padding-bottom: 8px; }
+body[data-theme="v2"] .tc-empty-hint { font-style: italic; text-align: center; }
+
+/* Ô "+ Thêm bàn mới": ảnh mẫu là viền đứt XÁM trên nền trắng, dấu + và chữ màu xanh lá
+   (bản cũ tô nền xanh dương nhạt, nhìn như một ô bàn thật). */
+body[data-theme="v2"] .table-card-add {
+  background: var(--surface); border: 1px dashed #C9CED6; color: var(--primary);
+}
+body[data-theme="v2"] .table-card-add:hover { background: var(--primary-soft); border-color: var(--primary); }
