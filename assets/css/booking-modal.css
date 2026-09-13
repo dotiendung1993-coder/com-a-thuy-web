@@ -1,0 +1,555 @@
+/* Booking Modal Styles */
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal.active {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: #fff;
+  color: #222;
+  padding: 30px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 28px;
+  font-weight: bold;
+  color: #999;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: #333;
+}
+
+.booking-step {
+  display: none;
+}
+
+.booking-step.active {
+  display: block;
+}
+
+.booking-step h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.booking-step form label {
+  display: block;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.booking-step form input:not([type="checkbox"]):not([type="radio"]),
+.booking-step form select,
+.booking-step form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  color: #222;
+  background-color: #fff;
+}
+
+/* Task 7 (2026-07-28): checkbox "Gọi món ngay bây giờ" kế thừa width:100%/padding:10px của rule input
+   phía trên (không loại trừ checkbox) nên bị kéo giãn full-width, đẩy chữ nhãn xuống dòng dưới thay vì
+   nằm ngay cạnh phải của ô tích. Ép label thành hàng ngang để ô tích luôn ở ĐẦU DÒNG, chữ theo ngay sau. */
+.preorder-section label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preorder-section input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+/* Task (2026-07-28): 2 lựa chọn chọn bàn ở bước 1 — cùng pattern flex như .preorder-section label
+   (checkbox/radio thừa hưởng width:100% của rule input phía trên nếu không loại trừ). */
+.table-mode-group {
+  margin-top: 5px;
+}
+
+.table-mode-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+  margin-top: 8px;
+}
+
+.table-mode-group input[type="radio"] {
+  width: auto;
+  margin: 0;
+}
+
+/* Task (2026-08-02): thực đơn gọi món trước trong bước 3 của modal đặt bàn — dạng lưới thẻ có ảnh,
+   lấy cảm hứng thị giác từ order.html (POS tại quán: renderMenuTab/thumbHtml) nhưng viết riêng cho
+   kiến trúc booking-modal.js (script độc lập, không dùng chung state S.menu/S.cart của POS). */
+.preorder-toolbar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 2px 8px;
+  margin-top: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.preorder-chip {
+  flex-shrink: 0;
+  border: 1.5px solid #ddd;
+  background: #fff;
+  color: #555;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.preorder-chip.active {
+  background: #007bff;
+  border-color: #007bff;
+  color: #fff;
+}
+
+.preorder-cat-group {
+  margin-top: 14px;
+}
+
+.preorder-cat-title {
+  margin: 0 0 8px;
+  color: #333;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.preorder-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.preorder-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.preorder-card-media {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #f2f2f2;
+  flex-shrink: 0;
+}
+
+.preorder-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.preorder-card-ph {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  background: #f2f2f2;
+}
+
+.preorder-card-body {
+  padding: 8px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.preorder-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #222;
+  line-height: 1.3;
+}
+
+.preorder-card-desc {
+  font-size: 12px;
+  color: #777;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.preorder-card-footer {
+  margin-top: auto;
+  padding-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.preorder-card-price {
+  font-weight: 700;
+  color: #007bff;
+  font-size: 13px;
+}
+
+/* Cơm mâm: ảnh bên trái, tên/mô tả + danh sách size bên phải — giống bố cục .mam-item của order.html,
+   để khách phân biệt rõ ràng với thẻ Cơm phần/Đồ uống/Món ăn thêm (1 giá) ở trên. */
+.preorder-card-mam {
+  grid-column: 1 / -1;
+  flex-direction: row;
+}
+
+.preorder-card-mam .preorder-card-media {
+  width: 110px;
+  aspect-ratio: auto;
+}
+
+.preorder-card-mam .preorder-card-body {
+  flex: 1;
+}
+
+.preorder-size-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.preorder-size-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  padding: 5px 8px;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.preorder-size-chip.active {
+  border-color: #007bff;
+  background: #eef6ff;
+}
+
+.preorder-size-label {
+  font-weight: 700;
+  color: #333;
+  font-size: 12px;
+  min-width: 20px;
+}
+
+.preorder-size-price {
+  color: #666;
+  font-size: 12px;
+  flex: 1;
+}
+
+.preorder-qty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.preorder-qty button {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #007bff;
+  background: #fff;
+  color: #007bff;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.preorder-qty button:hover {
+  background: #007bff;
+  color: #fff;
+}
+
+.preorder-qty span {
+  min-width: 16px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.preorder-total-row {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 2px solid #007bff;
+  font-weight: bold;
+  color: #222;
+  text-align: right;
+}
+
+.preorder-loading,
+.preorder-error {
+  color: #666;
+  font-style: italic;
+}
+
+@media (max-width: 520px) {
+  .preorder-card-mam {
+    flex-direction: column;
+  }
+
+  .preorder-card-mam .preorder-card-media {
+    width: 100%;
+    height: 160px;
+    aspect-ratio: auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .preorder-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}
+
+.booking-step form select option {
+  color: #222;
+  background-color: #fff;
+}
+
+.booking-step form small {
+  color: #666;
+  font-size: 14px;
+}
+
+.required {
+  color: red;
+}
+
+/* Table Grid */
+.table-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.table-card {
+  border: 2px solid #007bff;
+  background: #fff;
+  padding: 20px;
+  text-align: center;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.table-card:hover {
+  background: #f0f8ff;
+  border-width: 3px;
+}
+
+.table-card.selected {
+  background: #cce5ff;
+  border-width: 3px;
+  border-color: #0056b3;
+}
+
+.table-card.booked {
+  background: #f0f0f0;
+  border-color: #ccc;
+  opacity: 0.5;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.table-card.booked::before {
+  content: '\1F512';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 16px;
+}
+
+.table-card .table-no {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.table-card .table-zone {
+  font-size: 14px;
+  color: #666;
+}
+
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-actions button {
+  flex: 1;
+}
+
+/* Scoped to #booking-modal so these generic .btn names can't collide with any
+   global button styles elsewhere on the site (none existed at time of writing,
+   confirmed via repo-wide grep, but this keeps it safe going forward). */
+#booking-modal .btn {
+  padding: 12px 24px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+#booking-modal .btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+#booking-modal .btn-primary:hover {
+  background: #0056b3;
+}
+
+#booking-modal .btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+#booking-modal .btn-secondary:hover {
+  background: #5a6268;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .table-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .table-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Toast notifications — thay cho alert() mặc định của trình duyệt */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 90%;
+  max-width: 420px;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #fff;
+  color: #222;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  border-left: 4px solid #007bff;
+  font-size: 15px;
+  line-height: 1.4;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: auto;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  flex: 1;
+  white-space: pre-line;
+}
+
+.toast-close {
+  cursor: pointer;
+  color: #999;
+  font-size: 16px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.toast-close:hover {
+  color: #333;
+}
+
+.toast.toast-error {
+  border-left-color: #dc3545;
+}
+
+.toast.toast-success {
+  border-left-color: #28a745;
+}
+
+.toast.toast-warning {
+  border-left-color: #ffc107;
+}

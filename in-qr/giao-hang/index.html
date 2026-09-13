@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cơm A Thuý — In QR Giao hàng</title>
+<meta name="robots" content="noindex">
+<!-- Trang trung gian CỐ ĐỊNH cho chủ quán in QR giao hàng từ xa: domain GitHub Pages không
+     bao giờ đổi, trang này tự chuyển tiếp sang trang in QR thật trên POS (tunnel — hay đổi URL).
+     URL POS đọc từ order-config.js, được scripts/pos-tunnel.sh tự cập nhật + deploy lại. -->
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:#0d0f0e; color:#f5f2ea; text-align:center;
+    font-family:'Be Vietnam Pro','Segoe UI',system-ui,sans-serif; padding:24px;
+  }
+  .card { max-width:340px; }
+  .logo { font-size:44px; margin-bottom:14px; }
+  h1 { font-size:20px; font-weight:700; margin-bottom:8px; }
+  p  { font-size:14px; color:#b8b3a6; line-height:1.6; }
+  .spin {
+    width:34px; height:34px; margin:20px auto 0; border-radius:50%;
+    border:3px solid rgba(245,242,234,.15); border-top-color:#34d399;
+    animation:r .8s linear infinite;
+  }
+  @keyframes r { to { transform:rotate(360deg); } }
+  #err { display:none; margin-top:18px; }
+  #err a { color:#34d399; text-decoration:none; font-weight:600; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">🛵</div>
+    <h1>In QR Giao hàng</h1>
+    <p>Đang mở trang in QR giao hàng, chờ xíu nha…</p>
+    <div class="spin" id="spin"></div>
+    <div id="err">
+      <p>⚠️ Không kết nối được máy chủ POS.<br>
+      Kiểm tra máy tính/POS ở quán đang bật chưa, rồi thử lại.</p>
+      <p style="margin-top:8px"><a href="../../">← Về trang chủ</a></p>
+    </div>
+  </div>
+  <script src="../../assets/js/order-config.js"></script>
+  <script>
+    (function () {
+      var pos = (window.POS_PUBLIC_URL || '').replace(/\/+$/, '');
+      if (pos) {
+        location.replace(pos + '/qr/giao-hang/ship-qr.html');
+        setTimeout(function () {
+          document.getElementById('spin').style.display = 'none';
+          document.getElementById('err').style.display = 'block';
+        }, 6000);
+      } else {
+        document.getElementById('spin').style.display = 'none';
+        document.getElementById('err').style.display = 'block';
+      }
+    })();
+  </script>
+</body>
+</html>
