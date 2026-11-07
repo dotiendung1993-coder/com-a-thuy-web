@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cơm A Thuý — Chọn bàn</title>
+<meta name="robots" content="noindex">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    min-height:100vh; background:#0d0f0e; color:#f5f2ea;
+    font-family:'Be Vietnam Pro','Segoe UI',system-ui,sans-serif; padding:24px;
+  }
+  .wrap { max-width:500px; margin:0 auto; padding-top:32px; text-align:center; }
+  .logo { font-size:44px; margin-bottom:12px; }
+  h1 { font-size:22px; font-weight:700; margin-bottom:6px; }
+  .sub { font-size:14px; color:#b8b3a6; line-height:1.6; margin-bottom:28px; }
+  .table-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; text-align:left; }
+  @media (min-width:420px) { .table-grid { grid-template-columns:repeat(3,1fr); } }
+  .table-btn {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+    border-radius:16px; padding:18px 12px; cursor:pointer; text-decoration:none;
+    color:#f5f2ea; transition:background .2s, border-color .2s;
+    min-height:80px;
+  }
+  .table-btn:hover, .table-btn:active {
+    background:rgba(52,211,153,.12); border-color:rgba(52,211,153,.5);
+  }
+  .table-no { font-size:20px; font-weight:700; }
+  .table-zone { font-size:11px; color:#86a395; margin-top:4px; }
+  .spin {
+    width:34px; height:34px; margin:32px auto; border-radius:50%;
+    border:3px solid rgba(245,242,234,.15); border-top-color:#34d399;
+    animation:r .8s linear infinite;
+  }
+  @keyframes r { to { transform:rotate(360deg); } }
+  #err { display:none; margin-top:24px; }
+  #err p { color:#b8b3a6; font-size:14px; line-height:1.6; }
+  #err a { color:#34d399; text-decoration:none; font-weight:600; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="logo">🪑</div>
+    <h1>Chọn bàn của bạn</h1>
+    <p class="sub">Chọn bàn bên dưới để bắt đầu gọi món ngay từ điện thoại nhé.</p>
+    <div id="table-grid" class="table-grid"></div>
+    <div class="spin" id="spin"></div>
+    <div id="err">
+      <p>⚠️ Không thể tải danh sách bàn.<br>Quán có thể đang tắt máy hoặc mạng yếu.</p>
+      <p style="margin-top:12px"><a href="../../">← Về trang chủ</a></p>
+    </div>
+  </div>
+  <script src="../../assets/js/order-config.js"></script>
+  <script>
+    (function () {
+      var pos = (window.POS_PUBLIC_URL || '').replace(/\/+$/, '');
+      var grid = document.getElementById('table-grid');
+      var spin = document.getElementById('spin');
+      var err  = document.getElementById('err');
+
+      function zoneLabel(z) {
+        if (z === 'trong-nha') return 'Trong nhà';
+        if (z === 'ngoai-san') return 'Ngoài sân';
+        return z || '';
+      }
+
+      function showErr() {
+        spin.style.display = 'none';
+        err.style.display = 'block';
+      }
+
+      if (!pos) { showErr(); return; }
+
+      var controller = new AbortController();
+      var timer = setTimeout(function () { controller.abort(); }, 8000);
+
+      fetch(pos + '/api/tables', { signal: controller.signal })
+        .then(function (r) {
+          clearTimeout(timer);
+          return r.ok ? r.json() : Promise.reject(r.status);
+        })
+        .then(function (tables) {
+          spin.style.display = 'none';
+          if (!tables || !tables.length) { showErr(); return; }
+          grid.innerHTML = tables.map(function (t) {
+            var no  = String(t.table_no).padStart(2, '0');
+            var url = '../../order/?go=/ban/' + encodeURIComponent(t.qr_token);
+            return '<a class="table-btn" href="' + url + '">'
+              + '<span class="table-no">Bàn ' + no + '</span>'
+              + (t.zone ? '<span class="table-zone">' + zoneLabel(t.zone) + '</span>' : '')
+              + '</a>';
+          }).join('');
+        })
+        .catch(function () { showErr(); });
+    })();
+  </script>
+</body>
+</html>
